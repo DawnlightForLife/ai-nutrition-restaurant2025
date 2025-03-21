@@ -1,0 +1,54 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "开启 Git 代理（Clash）",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "chcp 65001; ${workspaceFolder}\\enable_git_proxy.bat"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "关闭 Git 代理",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "chcp 65001; ${workspaceFolder}\\disable_git_proxy.bat"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Git 一键提交并推送",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "chcp 65001; ${workspaceFolder}\\git_push.bat"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}
