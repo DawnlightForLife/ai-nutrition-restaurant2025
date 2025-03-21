@@ -1,0 +1,32 @@
+﻿version: '3.8'
+services:
+  frontend:
+    build: ./frontend/flutter
+    ports:
+      - "80:80"
+    restart: always
+
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/ai_nutrition_db  # 示例环境变量
+
+  ai_service:
+    build: ./ai_service
+    ports:
+      - "8000:8000"
+    restart: always
+
+  mongo:
+    image: mongo:8.0.5
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

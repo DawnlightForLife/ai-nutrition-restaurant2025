@@ -1,0 +1,43 @@
+﻿# 基础依赖和辅助工具
+annotated-types==0.7.0        # 用于类型注解扩展
+anyio==4.9.0                  # 异步 I/O 支持库
+click==8.1.8                  # 命令行工具构建库
+colorama==0.4.6               # 跨平台终端颜色支持
+filelock==3.18.0              # 文件锁定机制
+fsspec==2025.3.0              # 文件系统抽象接口，用于统一访问本地和远程文件
+h11==0.14.0                  # HTTP/1.1 实现，FastAPI 底层依赖
+idna==3.10                   # 国际化域名支持库
+Jinja2==3.1.6                # 模板引擎（可能被 FastAPI 或其他工具使用）
+MarkupSafe==3.0.2            # Jinja2 所依赖的安全标记工具
+mpmath==1.3.0                # 数值计算库，某些数学计算场景使用
+networkx==3.4.2                # 图论算法库（部分数据处理或分析可能会用到）
+numpy==2.2.4                 # 数值计算库
+pillow==11.1.0               # 图像处理库
+pydantic==2.10.6             # 数据校验和设置管理（FastAPI 底层依赖）
+setuptools==77.0.1          # 包安装和管理工具
+sniffio==1.3.1              # 异步 I/O 辅助工具
+starlette==0.46.1           # FastAPI 底层 ASGI 框架
+sympy==1.13.1                # 符号数学库
+
+# FastAPI 框架及 Uvicorn ASGI 服务器
+fastapi==0.115.11            # FastAPI，用于构建高性能 API
+uvicorn==0.34.0              # ASGI 服务器，用于运行 FastAPI 应用
+
+# 深度学习相关（GPU 版本）
+torch==2.6.0           # PyTorch GPU 版本，依赖于你的 CUDA 版本（此处为 cu124）
+torchaudio==2.6.0      # PyTorch 的音频库，匹配 CUDA 版本
+torchvision==0.21.0    # PyTorch 的视觉库，匹配 CUDA 版本
+
+
+# Transformers 库，用于加载和微调预训练模型（例如 Deepseek 70B）
+transformers==4.49.0         # Hugging Face Transformers，用于 NLP 模型加载和微调
+tokenizers==0.21.1  # 显式指定一个预编译轮子版本，以避免与其他库冲突
+# 数据处理和网络请求
+typing_extensions==4.12.2     # 类型扩展（用于兼容性）
+wheel==0.45.1                # 包构建工具
+
+
+# 日志记录工具
+loguru==0.7.3
+tqdm==4.67.1
+requests==2.32.3
