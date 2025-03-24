@@ -28,6 +28,7 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
+      // 安卓模拟器下使用 10.0.2.2 访问宿主机服务
       final url = Uri.parse('http://10.0.2.2:3000/api/users/login');
       final response = await http.post(
         url,
@@ -38,8 +39,23 @@ class _LoginPageState extends State<LoginPage> {
       final Map<String, dynamic> responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200 && responseData['success'] == true) {
-        _showDialog("登录成功！");
-        // TODO: 这里可以跳转主页或者保存 token
+        // 登录成功，显示弹窗，点击确定后跳转到健康信息填写页面
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text("登录成功"),
+            content: const Text("欢迎回来！"),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx); // 关闭弹窗
+                  Navigator.pushReplacementNamed(context, '/health'); // 跳转到健康信息填写页面
+                },
+                child: const Text("确定"),
+              ),
+            ],
+          ),
+        );
       } else {
         _showDialog(responseData['message'] ?? "登录失败");
       }
@@ -52,14 +68,15 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // 简单错误提示弹窗
   void _showDialog(String message) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text("确定"),
           ),
         ],
@@ -92,6 +109,12 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: _login,
                     child: const Text("登录"),
                   ),
+            TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/register');
+              },
+              child: const Text("还没有账号？去注册"),
+            ),
           ],
         ),
       ),

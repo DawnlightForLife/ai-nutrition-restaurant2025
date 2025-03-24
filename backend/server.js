@@ -14,9 +14,7 @@ app.use(express.json());
 app.use('/api/users', userRoutes);
 
 // 连接 MongoDB
-mongoose.connect('mongodb://localhost:27017/ai_nutrition_db', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
+mongoose.connect('mongodb://mongo:27017/ai_nutrition_db', {
 }).then(() => {
   console.log('MongoDB 已连接');
   app.listen(PORT, () => {

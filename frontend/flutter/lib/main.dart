@@ -1,9 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/user_provider.dart';
-import 'screens/onboarding/onboarding_page.dart';
-import 'screens/user//auth/login_page.dart';
-import 'screens/user/health/health_form_page.dart';
+import 'providers/index.dart';
+import 'screens/onboarding/index.dart';
+import 'screens/user//auth/index.dart';
+import 'screens/user/health/index.dart';
 
 void main() {
   runApp(
@@ -33,6 +33,7 @@ class SmartNutritionRestaurantApp extends StatelessWidget {
         '/onboarding': (context) => const OnboardingPage(),
         '/login': (context) => const LoginPage(),
         '/health/form': (context) => const HealthFormPage(),
+        '/register': (context) => const RegisterPage(),
 
         // 其他页面继续补充
       },
