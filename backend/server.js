@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
+const profileRoutes = require('./routes/profileRoutes');
 
 const app = express();
 const PORT = 3000;
@@ -12,6 +13,7 @@ app.use(express.json());
 
 // 路由
 app.use('/api/users', userRoutes);
+app.use('/api/profiles', profileRoutes);
 
 // 连接 MongoDB
 mongoose.connect('mongodb://mongo:27017/ai_nutrition_db', {
