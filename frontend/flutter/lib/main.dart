@@ -1,11 +1,18 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/index.dart';
-import 'screens/onboarding/index.dart';
-import 'screens/user/auth/index.dart';
-import 'screens/user/health/index.dart';
-import 'screens/user/home/index.dart';
-import 'screens/user/profile/index.dart';
+import 'providers/user_provider.dart';
+import 'providers/nutrition_provider.dart';
+import 'providers/admin_provider.dart';
+import 'screens/onboarding/onboarding_page.dart';
+import 'screens/user/auth/login_page.dart';
+import 'screens/user/auth/register_page.dart';
+import 'screens/user/health/nutrition_profile_list_page.dart';
+import 'screens/user/health/nutrition_profile_form_page.dart';
+import 'screens/user/home/home_page.dart';
+import 'screens/nutritionist/nutritionist_verification_page.dart';
+import 'screens/nutritionist/nutritionist_home_page.dart';
+import 'screens/admin/admin_home_page.dart';
+import 'screens/admin/merchant_code_management.dart';
 
 void main() {
   runApp(
@@ -13,6 +20,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => NutritionProvider()),
+        ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
       child: const SmartNutritionRestaurantApp(),
     ),
@@ -61,6 +69,12 @@ class SmartNutritionRestaurantApp extends StatelessWidget {
         '/home': (context) => const HomePage(),
         '/nutrition/profiles': (context) => const NutritionProfileListPage(),
         '/nutrition/profile/form': (context) => const NutritionProfileFormPage(),
+        '/nutritionist/verification': (context) => const NutritionistVerificationPage(),
+        '/nutritionist/home': (context) => const NutritionistHomePage(),
+        
+        // 管理员路由
+        '/admin/home': (context) => const AdminHomePage(),
+        '/admin/merchant-codes': (context) => const MerchantCodeManagement(),
 
         // 其他页面继续补充
       },

@@ -1,6 +1,9 @@
 name: my_flutter_app
+description: A new Flutter project.
+version: 1.0.0+1
+
 environment:
-  sdk: ">=2.17.0"
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -8,6 +11,8 @@ dependencies:
   flutter_lints: ^2.0.0
   provider: ^6.1.1
   http: ^0.13.3
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

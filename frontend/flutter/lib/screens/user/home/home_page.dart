@@ -71,7 +71,7 @@ class _HomePageState extends State<HomePage> {
             ),
             child: Stack(
               children: [
-                Positioned(
+                const Positioned(
                   right: -10,
                   bottom: -10,
                   child: Opacity(
@@ -558,7 +558,7 @@ class _HomePageState extends State<HomePage> {
   
   @override
   Widget build(BuildContext context) {
-    final List<Widget> _pageWidgets = <Widget>[
+    final List<Widget> pageWidgets = <Widget>[
       _buildHomeContent(),
       _buildAiRecommendationContent(),
       _buildCommunityContent(),
@@ -578,7 +578,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ) : null,
-      body: _pageWidgets[_selectedIndex],
+      body: pageWidgets[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         items: const <BottomNavigationBarItem>[

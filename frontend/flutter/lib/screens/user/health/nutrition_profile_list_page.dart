@@ -24,7 +24,7 @@ class _NutritionProfileListPageState extends State<NutritionProfileListPage> {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final nutritionProvider = Provider.of<NutritionProvider>(context, listen: false);
     
-    if (userProvider.isLoggedIn && userProvider.user != null) {
+    if (userProvider.isLoggedIn && userProvider.user != null && userProvider.user!.id.isNotEmpty) {
       setState(() {
         _isLoading = true;
       });
@@ -34,6 +34,15 @@ class _NutritionProfileListPageState extends State<NutritionProfileListPage> {
       setState(() {
         _isLoading = false;
       });
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('请先登录后再查看营养档案')),
+        );
+      }
     }
   }
 

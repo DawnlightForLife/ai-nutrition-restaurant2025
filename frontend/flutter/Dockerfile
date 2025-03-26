@@ -1,31 +1,41 @@
-﻿# Stage 1: Build Flutter Web Application
-FROM cirrusci/flutter:latest AS builder
+﻿# 1. 使用 Flutter 官方镜像
+FROM ghcr.io/cirruslabs/flutter:stable AS builder
 
-# 允许以 root 运行 Flutter
-ENV FLUTTER_ALLOW_ROOT=true
+# 2. 复制 Flutter SDK 到可写目录（避免 `/sdks/flutter` 只读问题）
+RUN cp -r /sdks/flutter /opt/flutter && \
+    chown -R root:root /opt/flutter && \
+    chmod -R 777 /opt/flutter
 
-# 设置工作目录为项目根目录，确保该目录下有 pubspec.yaml
+# 3. 设置 Flutter SDK 目录（绕开 `/sdks/flutter`）
+ENV FLUTTER_HOME=/opt/flutter
+ENV PATH="$FLUTTER_HOME/bin:$FLUTTER_HOME/bin/cache/dart-sdk/bin:$PATH"
+
+# 4. 设置工作目录
 WORKDIR /app
 
-# 复制当前构建上下文的所有文件到容器中
+# 5. 复制项目文件
 COPY . .
 
-# 可选：列出当前目录文件，确认 pubspec.yaml 存在
-RUN ls -la /app
+# 6. 修复 `/app` 目录的权限
+RUN chmod -R 777 /app
 
-# 安装 Flutter 依赖
+# 7. 让 Git 允许 Flutter 目录
+RUN git config --global --add safe.directory /opt/flutter
+
+# 8. 获取 Flutter 依赖
 RUN flutter pub get
 
-# 构建 Flutter Web 应用（生成到 /app/build/web）
+# 9. 构建 Flutter Web 应用
 RUN flutter build web
 
-# Stage 2: Serve with Nginx
+# 10. 使用 Nginx 提供 Web 服务器
 FROM nginx:alpine
 
-# 复制构建产物到 Nginx 默认的静态文件目录
+# 11. 复制 Flutter Web 构建后的文件到 Nginx 目录
 COPY --from=builder /app/build/web /usr/share/nginx/html
 
-# 暴露 80 端口
+# 12. 公开 80 端口
 EXPOSE 80
 
+# 13. 启动 Nginx 服务器
 CMD ["nginx", "-g", "daemon off;"]

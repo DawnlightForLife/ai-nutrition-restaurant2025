@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:provider/provider.dart';
 import '../../../providers/index.dart';
+import '../../../models/index.dart';
 import '../../../constants/api.dart';
 
 class LoginPage extends StatefulWidget {
@@ -51,19 +52,30 @@ class _LoginPageState extends State<LoginPage> {
         // 保存用户信息到Provider
         if(responseData['user'] != null && responseData['token'] != null) {
           final userProvider = Provider.of<UserProvider>(context, listen: false);
-          userProvider.setUser(responseData['user']);
-          userProvider.setToken(responseData['token']);
+          userProvider.login(User.fromJson(responseData['user']), responseData['token']);
+          
+          // 检查用户角色，如果是管理员，导航到管理员页面
+          if (responseData['user']['role'] == 'admin') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('管理员登录成功！'), duration: Duration(seconds: 1)),
+            );
+            
+            // 延迟一小段时间再跳转，让用户能看到提示
+            Future.delayed(const Duration(milliseconds: 500), () {
+              Navigator.pushReplacementNamed(context, '/admin/home');
+            });
+          } else {
+            // 非管理员用户，显示普通登录成功提示，跳转到主页
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('登录成功！'), duration: Duration(seconds: 1)),
+            );
+            
+            // 延迟一小段时间再跳转，让用户能看到提示
+            Future.delayed(const Duration(milliseconds: 500), () {
+              Navigator.pushReplacementNamed(context, '/home');
+            });
+          }
         }
-        
-        // 登录成功，显示简短提示，然后跳转到主页
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('登录成功！'), duration: Duration(seconds: 1)),
-        );
-        
-        // 延迟一小段时间再跳转，让用户能看到提示
-        Future.delayed(const Duration(milliseconds: 500), () {
-          Navigator.pushReplacementNamed(context, '/home');
-        });
       } else {
         _showDialog(responseData['message'] ?? "登录失败");
       }
@@ -108,6 +120,7 @@ class _LoginPageState extends State<LoginPage> {
           "nickname": mockUserData["nickname"],
           "phone": mockUserData["phone"],
           "email": mockUserData["email"],
+          "role": "user", // 默认为普通用户
         },
         "token": "mock_jwt_token_${DateTime.now().millisecondsSinceEpoch}",
       };
@@ -117,18 +130,34 @@ class _LoginPageState extends State<LoginPage> {
       userProvider.setUser(mockResponseData['user']);
       userProvider.setToken(mockResponseData['token']);
       
-      // 显示登录成功提示
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$provider 登录成功！'), 
-          duration: const Duration(seconds: 1)
-        ),
-      );
-      
-      // 跳转到主页
-      Future.delayed(const Duration(milliseconds: 500), () {
-        Navigator.pushReplacementNamed(context, '/home');
-      });
+      // 检查角色，但第三方登录默认不会有管理员角色
+      // 这里为了完整性保留逻辑
+      if (mockResponseData['user']['role'] == 'admin') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('管理员登录成功！'), 
+            duration: Duration(seconds: 1)
+          ),
+        );
+        
+        // 跳转到管理员主页
+        Future.delayed(const Duration(milliseconds: 500), () {
+          Navigator.pushReplacementNamed(context, '/admin/home');
+        });
+      } else {
+        // 显示登录成功提示
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$provider 登录成功！'), 
+            duration: const Duration(seconds: 1)
+          ),
+        );
+        
+        // 跳转到主页
+        Future.delayed(const Duration(milliseconds: 500), () {
+          Navigator.pushReplacementNamed(context, '/home');
+        });
+      }
     } catch (e) {
       print('第三方登录出错: $e');
       _showDialog("登录失败: $e");
@@ -258,8 +287,8 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 30),
               
               // 分割线
-              Row(
-                children: const [
+              const Row(
+                children: [
                   Expanded(child: Divider()),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16),

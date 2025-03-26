@@ -48,7 +48,7 @@ class ProfilePage extends StatelessWidget {
                         radius: 40,
                         backgroundColor: Colors.white,
                         child: Text(
-                          (userProvider.user?.nickname?.isNotEmpty == true)
+                          (userProvider.user?.nickname.isNotEmpty == true)
                               ? userProvider.user!.nickname[0].toUpperCase()
                               : '用',
                           style: const TextStyle(
@@ -114,6 +114,13 @@ class ProfilePage extends StatelessWidget {
                       _showFeatureComingSoon(context, '营养师咨询');
                     },
                   ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // 身份切换模块
+                  _buildSectionTitle('身份中心'),
+                  const SizedBox(height: 8),
+                  _buildIdentitySwitchCard(context, userProvider),
                   
                   const SizedBox(height: 16),
                   
@@ -607,6 +614,230 @@ class ProfilePage extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('知道了'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // 身份切换卡片
+  Widget _buildIdentitySwitchCard(BuildContext context, UserProvider userProvider) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 当前身份信息
+            Row(
+              children: [
+                Icon(
+                  _getIdentityIcon(userProvider),
+                  size: 24,
+                  color: Colors.green,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  '当前身份: ${_getIdentityName(userProvider)}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+            
+            // 身份切换按钮
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.spaceAround,
+              children: [
+                // 用户身份
+                _buildIdentitySwitchButton(
+                  context,
+                  '用户',
+                  Icons.person,
+                  userProvider.isUserActive,
+                  () => _switchToUser(context, userProvider),
+                ),
+                
+                // 营养师身份
+                _buildIdentitySwitchButton(
+                  context,
+                  '营养师',
+                  Icons.medical_services,
+                  userProvider.isNutritionistActive,
+                  () => _switchToNutritionist(context, userProvider),
+                ),
+                
+                // 商家身份
+                _buildIdentitySwitchButton(
+                  context,
+                  '商家',
+                  Icons.store,
+                  userProvider.isMerchantActive,
+                  () => _switchToMerchant(context, userProvider),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  // 身份切换按钮
+  Widget _buildIdentitySwitchButton(
+    BuildContext context,
+    String title,
+    IconData icon,
+    bool isActive,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isActive ? Colors.green.shade50 : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isActive ? Colors.green : Colors.grey.shade300,
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 24,
+              color: isActive ? Colors.green : Colors.grey,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                color: isActive ? Colors.green : Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  // 获取当前身份图标
+  IconData _getIdentityIcon(UserProvider userProvider) {
+    if (userProvider.isNutritionistActive) {
+      return Icons.medical_services;
+    } else if (userProvider.isMerchantActive) {
+      return Icons.store;
+    } else {
+      return Icons.person;
+    }
+  }
+  
+  // 获取当前身份名称
+  String _getIdentityName(UserProvider userProvider) {
+    if (userProvider.isNutritionistActive) {
+      return '营养师';
+    } else if (userProvider.isMerchantActive) {
+      return '商家';
+    } else {
+      return '用户';
+    }
+  }
+  
+  // 切换到用户身份
+  void _switchToUser(BuildContext context, UserProvider userProvider) {
+    userProvider.switchToUserRole();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('已切换到用户身份')),
+    );
+  }
+  
+  // 切换到营养师身份
+  void _switchToNutritionist(BuildContext context, UserProvider userProvider) {
+    // 检查用户是否有营养师认证
+    if (userProvider.user?.isNutritionistVerified == true) {
+      if (userProvider.switchToNutritionistRole(context: context)) {
+        // 导航已经在provider中处理
+      }
+    } else {
+      // 用户未认证，检查是否有认证申请
+      if (userProvider.user?.nutritionistVerificationStatus == 'pending') {
+        _showVerificationPendingDialog(context, '营养师');
+      } else {
+        _showVerificationNeededDialog(context, '营养师');
+      }
+    }
+  }
+  
+  // 切换到商家身份
+  void _switchToMerchant(BuildContext context, UserProvider userProvider) {
+    // 检查用户是否有商家认证
+    if (userProvider.user?.isMerchantVerified == true) {
+      if (userProvider.switchToMerchantRole(context: context)) {
+        // 导航已经在provider中处理
+      }
+    } else {
+      // 用户未认证，检查是否有认证申请
+      if (userProvider.user?.merchantVerificationStatus == 'pending') {
+        _showVerificationPendingDialog(context, '商家');
+      } else {
+        _showVerificationNeededDialog(context, '商家');
+      }
+    }
+  }
+  
+  // 显示认证申请等待中对话框
+  void _showVerificationPendingDialog(BuildContext context, String role) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('$role认证审核中'),
+        content: Text('您的$role认证申请正在审核中，请耐心等待。\n审核通过后即可切换身份。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('我知道了'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // 显示需要认证对话框
+  void _showVerificationNeededDialog(BuildContext context, String role) {
+    String routeName = role == '营养师' ? '/nutritionist/verification' : '/merchant/verification';
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('需要$role认证'),
+        content: Text('您需要完成$role认证后才能使用该身份。\n认证通过后可以享受更多专业功能。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, routeName);
+            },
+            child: const Text('去认证'),
           ),
         ],
       ),

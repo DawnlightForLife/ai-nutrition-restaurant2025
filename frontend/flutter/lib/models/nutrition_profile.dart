@@ -1,34 +1,45 @@
-import 'package:flutter/material.dart';
 
 /// 营养推荐档案模型类
 /// 与账号本身分开，一个账号可建立多个档案（自己、家人等）
 class NutritionProfile {
   final String id;
-  final String ownerId;
+  final String userId;
   final String name;
-  final String? gender;
-  final int? age;
+  final String? description;
   final double? height;
   final double? weight;
+  final int? age;
+  final String? gender;
   final String? activityLevel;
   final List<String>? healthConditions;
-  final DietaryPreferences? dietaryPreferences;
   final String? goals;
+  final List<String>? allergies;
+  final List<String>? avoidedIngredients;
+  final String? cuisinePreference;
+  final String? spicyPreference;
+  final DietaryPreferences? dietaryPreferences;
+  final bool hasCompletedHealthInfo;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   NutritionProfile({
     required this.id,
-    required this.ownerId,
+    required this.userId,
     required this.name,
-    this.gender,
-    this.age,
+    this.description,
     this.height,
     this.weight,
+    this.age,
+    this.gender,
     this.activityLevel,
     this.healthConditions,
-    this.dietaryPreferences,
     this.goals,
+    this.allergies,
+    this.avoidedIngredients,
+    this.cuisinePreference,
+    this.spicyPreference,
+    this.dietaryPreferences,
+    this.hasCompletedHealthInfo = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -41,46 +52,103 @@ class NutritionProfile {
     return null;
   }
 
-  /// 工厂构造函数：将 JSON 转换为 NutritionProfile 实例
+  // 从JSON创建NutritionProfile对象
   factory NutritionProfile.fromJson(Map<String, dynamic> json) {
     return NutritionProfile(
-      id: json['_id'],
-      ownerId: json['ownerId'],
+      id: json['_id'] ?? json['id'],
+      userId: json['userId'],
       name: json['name'],
-      gender: json['gender'],
-      age: json['age'],
+      description: json['description'],
       height: json['height']?.toDouble(),
       weight: json['weight']?.toDouble(),
+      age: json['age'],
+      gender: json['gender'],
       activityLevel: json['activityLevel'],
-      healthConditions: json['healthConditions'] != null
-          ? List<String>.from(json['healthConditions'])
-          : null,
-      dietaryPreferences: json['dietaryPreferences'] != null
-          ? DietaryPreferences.fromJson(json['dietaryPreferences'])
+      healthConditions: json['healthConditions'] != null 
+          ? List<String>.from(json['healthConditions']) 
           : null,
       goals: json['goals'],
+      allergies: json['allergies'] != null 
+          ? List<String>.from(json['allergies']) 
+          : null,
+      avoidedIngredients: json['avoidedIngredients'] != null 
+          ? List<String>.from(json['avoidedIngredients']) 
+          : null,
+      cuisinePreference: json['cuisinePreference'],
+      spicyPreference: json['spicyPreference'],
+      dietaryPreferences: json['dietaryPreferences'] != null 
+          ? DietaryPreferences.fromJson(json['dietaryPreferences']) 
+          : null,
+      hasCompletedHealthInfo: json['hasCompletedHealthInfo'] ?? false,
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
     );
   }
 
-  /// 转换为 JSON，用于传输或存储
+  // 将NutritionProfile对象转换为JSON
   Map<String, dynamic> toJson() {
     return {
-      '_id': id,
-      'ownerId': ownerId,
+      'id': id,
+      'userId': userId,
       'name': name,
-      'gender': gender,
-      'age': age,
+      'description': description,
       'height': height,
       'weight': weight,
+      'age': age,
+      'gender': gender,
       'activityLevel': activityLevel,
       'healthConditions': healthConditions,
-      'dietaryPreferences': dietaryPreferences?.toJson(),
       'goals': goals,
+      'allergies': allergies,
+      'avoidedIngredients': avoidedIngredients,
+      'cuisinePreference': cuisinePreference,
+      'spicyPreference': spicyPreference,
+      'dietaryPreferences': dietaryPreferences?.toJson(),
+      'hasCompletedHealthInfo': hasCompletedHealthInfo,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
+  }
+
+  // 创建带有更新属性的NutritionProfile副本
+  NutritionProfile copyWith({
+    String? name,
+    String? description,
+    double? height,
+    double? weight,
+    int? age,
+    String? gender,
+    String? activityLevel,
+    List<String>? healthConditions,
+    String? goals,
+    List<String>? allergies,
+    List<String>? avoidedIngredients,
+    String? cuisinePreference,
+    String? spicyPreference,
+    DietaryPreferences? dietaryPreferences,
+    bool? hasCompletedHealthInfo,
+  }) {
+    return NutritionProfile(
+      id: id,
+      userId: userId,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      height: height ?? this.height,
+      weight: weight ?? this.weight,
+      age: age ?? this.age,
+      gender: gender ?? this.gender,
+      activityLevel: activityLevel ?? this.activityLevel,
+      healthConditions: healthConditions ?? this.healthConditions,
+      goals: goals ?? this.goals,
+      allergies: allergies ?? this.allergies,
+      avoidedIngredients: avoidedIngredients ?? this.avoidedIngredients,
+      cuisinePreference: cuisinePreference ?? this.cuisinePreference,
+      spicyPreference: spicyPreference ?? this.spicyPreference,
+      dietaryPreferences: dietaryPreferences ?? this.dietaryPreferences,
+      hasCompletedHealthInfo: hasCompletedHealthInfo ?? this.hasCompletedHealthInfo,
+      createdAt: createdAt,
+      updatedAt: DateTime.now(),
+    );
   }
 }
 

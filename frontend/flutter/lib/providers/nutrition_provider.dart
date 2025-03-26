@@ -20,12 +20,12 @@ class NutritionProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final url = Uri.parse('${ApiConstants.baseUrl}/api/profiles?ownerId=$userId');
+      final url = Uri.parse('${ApiConstants.baseUrl}/api/profiles?userId=$userId');
       
       print('获取营养档案URL: $url');
       
       final response = await http.get(url)
-          .timeout(Duration(seconds: ApiConstants.connectionTimeout));
+          .timeout(const Duration(seconds: ApiConstants.connectionTimeout));
       
       print('响应状态码: ${response.statusCode}');
       final data = json.decode(response.body);
@@ -63,7 +63,7 @@ class NutritionProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: json.encode(profileData),
-      ).timeout(Duration(seconds: ApiConstants.connectionTimeout));
+      ).timeout(const Duration(seconds: ApiConstants.connectionTimeout));
 
       final data = json.decode(response.body);
       
@@ -105,7 +105,7 @@ class NutritionProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: json.encode(profileData),
-      ).timeout(Duration(seconds: ApiConstants.connectionTimeout));
+      ).timeout(const Duration(seconds: ApiConstants.connectionTimeout));
 
       final data = json.decode(response.body);
       
@@ -148,7 +148,7 @@ class NutritionProvider with ChangeNotifier {
         headers: {
           'Authorization': 'Bearer $token',
         },
-      ).timeout(Duration(seconds: ApiConstants.connectionTimeout));
+      ).timeout(const Duration(seconds: ApiConstants.connectionTimeout));
 
       final data = json.decode(response.body);
       
