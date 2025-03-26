@@ -8,7 +8,10 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # 安装依赖
-RUN npm install
+RUN npm install --legacy-peer-deps
+
+# 创建上传目录
+RUN mkdir -p uploads/medical-reports
 
 # 复制项目文件
 COPY . .

@@ -4,6 +4,8 @@ services:
     build: ./frontend/flutter
     ports:
       - "80:80"
+    depends_on:
+      - backend
     restart: always
 
   backend:
@@ -13,15 +15,21 @@ services:
     volumes:
       - ./backend:/usr/src/app
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     environment:
-      - MONGO_URL=mongodb://mongo:27017/ai_nutrition_db  # 示例环境变量
+      - PORT=3000
+      - MONGO_URI=mongodb://mongo:27017/smart_nutrition_restaurant
+    networks:
+      - app-network
 
   ai_service:
     build: ./ai_service
     ports:
       - "8000:8000"
     restart: always
+    networks:
+      - app-network
 
   mongo:
     image: mongo
@@ -29,6 +37,18 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
 volumes:
   mongo-data:
+
+networks:
+  app-network:
+    driver: bridge
