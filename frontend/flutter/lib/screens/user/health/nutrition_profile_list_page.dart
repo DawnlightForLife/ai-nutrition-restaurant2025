@@ -17,31 +17,42 @@ class _NutritionProfileListPageState extends State<NutritionProfileListPage> {
   @override
   void initState() {
     super.initState();
-    _loadProfiles();
+    // 使用 WidgetsBinding 确保在构建完成后加载数据
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadProfiles();
+    });
   }
 
   Future<void> _loadProfiles() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final nutritionProvider = Provider.of<NutritionProvider>(context, listen: false);
     
-    if (userProvider.isLoggedIn && userProvider.user != null && userProvider.user!.id.isNotEmpty) {
-      setState(() {
-        _isLoading = true;
-      });
-      
-      await nutritionProvider.fetchProfiles(userProvider.user!.id);
-      
-      setState(() {
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
+    if (!userProvider.isLoggedIn || userProvider.user == null || userProvider.user!.id.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('请先登录后再查看营养档案')),
         );
+      }
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      await nutritionProvider.fetchProfiles(userProvider.user!.id);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('加载失败：$e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }

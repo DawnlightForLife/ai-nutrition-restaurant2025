@@ -121,112 +121,112 @@ class _MerchantVerificationManagementState extends State<MerchantVerificationMan
                     ),
                   ),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _pendingVerifications.length,
-                  itemBuilder: (context, index) {
-                    final user = _pendingVerifications[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  child: Text(user.nickname[0]),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        user.nickname,
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
+              : SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: _pendingVerifications.map((user) => Card(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    child: Text(user.nickname[0]),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          user.nickname,
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                      ),
-                                      Text(
-                                        user.phone,
-                                        style: const TextStyle(
-                                          color: Colors.grey,
+                                        Text(
+                                          user.phone,
+                                          style: const TextStyle(
+                                            color: Colors.grey,
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orange.shade100,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text(
-                                    '待审核',
-                                    style: TextStyle(
-                                      color: Colors.orange,
-                                      fontWeight: FontWeight.bold,
+                                      ],
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            const Divider(),
-                            const SizedBox(height: 16),
-                            _buildVerificationInfo(
-                              '营业执照',
-                              user.merchantVerificationData?['businessLicense'] ?? '未提供',
-                            ),
-                            const SizedBox(height: 8),
-                            _buildVerificationInfo(
-                              '经营地址',
-                              user.merchantVerificationData?['address'] ?? '未提供',
-                            ),
-                            const SizedBox(height: 8),
-                            _buildVerificationInfo(
-                              '经营类型',
-                              user.merchantVerificationData?['businessType'] ?? '未提供',
-                            ),
-                            const SizedBox(height: 8),
-                            _buildVerificationInfo(
-                              '商家简介',
-                              user.merchantVerificationData?['description'] ?? '未提供',
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                TextButton(
-                                  onPressed: () => _handleVerification(user, false),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: Colors.red,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.shade100,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text(
+                                      '待审核',
+                                      style: TextStyle(
+                                        color: Colors.orange,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
-                                  child: const Text('拒绝'),
-                                ),
-                                const SizedBox(width: 8),
-                                ElevatedButton(
-                                  onPressed: () => _handleVerification(user, true),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
-                                    foregroundColor: Colors.white,
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              const Divider(),
+                              const SizedBox(height: 16),
+                              _buildVerificationInfo(
+                                '营业执照',
+                                user.merchantVerificationData?['businessLicense'] ?? '未提供',
+                              ),
+                              const SizedBox(height: 8),
+                              _buildVerificationInfo(
+                                '经营地址',
+                                user.merchantVerificationData?['address'] ?? '未提供',
+                              ),
+                              const SizedBox(height: 8),
+                              _buildVerificationInfo(
+                                '经营类型',
+                                user.merchantVerificationData?['businessType'] ?? '未提供',
+                              ),
+                              const SizedBox(height: 8),
+                              _buildVerificationInfo(
+                                '商家简介',
+                                user.merchantVerificationData?['description'] ?? '未提供',
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  TextButton(
+                                    onPressed: () => _handleVerification(user, false),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                    ),
+                                    child: const Text('拒绝'),
                                   ),
-                                  child: const Text('通过'),
-                                ),
-                              ],
-                            ),
-                          ],
+                                  const SizedBox(width: 8),
+                                  ElevatedButton(
+                                    onPressed: () => _handleVerification(user, true),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: const Text('通过'),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      )).toList(),
+                    ),
+                  ),
                 ),
     );
   }

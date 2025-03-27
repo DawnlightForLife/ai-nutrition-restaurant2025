@@ -13,8 +13,22 @@ import 'screens/nutritionist/nutritionist_verification_page.dart';
 import 'screens/nutritionist/nutritionist_home_page.dart';
 import 'screens/admin/admin_home_page.dart';
 import 'screens/admin/merchant_code_management.dart';
+import 'screens/admin/merchant_verification/merchant_verification_management.dart';
+import 'screens/merchant/merchant_verification_apply_page.dart';
+import 'constants/api.dart';
 
 void main() {
+  // 应用启动时打印API配置
+  ApiConstants.printConfig();
+  
+  // 验证API常量
+  final baseUrl = ApiConstants.baseUrl;
+  if (baseUrl.isEmpty) {
+    print('警告: API基础URL为空！');
+  } else {
+    print('应用启动: API基础URL = $baseUrl');
+  }
+  
   runApp(
     MultiProvider(
       providers: [
@@ -75,8 +89,10 @@ class SmartNutritionRestaurantApp extends StatelessWidget {
         // 管理员路由
         '/admin/home': (context) => const AdminHomePage(),
         '/admin/merchant-codes': (context) => const MerchantCodeManagement(),
-
-        // 其他页面继续补充
+        '/admin/merchant-verification': (context) => const MerchantVerificationManagement(),
+        
+        // 商家路由
+        '/merchant/verification': (context) => const MerchantVerificationApplyPage(),
       },
     );
   }

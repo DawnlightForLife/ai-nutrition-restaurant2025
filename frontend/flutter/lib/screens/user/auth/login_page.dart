@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:math';
 import 'package:provider/provider.dart';
 import '../../../providers/index.dart';
 import '../../../models/index.dart';
 import '../../../constants/api.dart';
+import '../../../utils/api_helper.dart';
+import '../../../utils/logger.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -23,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
     final String password = _passwordController.text;
 
     if (phone.isEmpty || password.isEmpty) {
-      _showDialog("请输入手机号和密码");
+      ApiHelper.showErrorDialog(context, "请输入手机号和密码");
       return;
     }
 
@@ -32,56 +34,64 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      // 使用API常量中定义的基础URL
-      final url = Uri.parse('${ApiConstants.baseUrl}/api/users/login');
+      // 使用API常量中定义的基础URL和路径
+      final url = '${ApiConstants.baseUrl}${ApiConstants.userLoginPath}';
       
-      print('正在请求URL: $url'); // 添加调试信息
-      
-      final response = await http.post(
+      // 使用统一的API调用和日志记录
+      final responseData = await ApiHelper.post(
         url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"phone": phone, "password": password}),
-      ).timeout(const Duration(seconds: 10)); // 添加超时处理
-      
-      print('收到响应状态码: ${response.statusCode}'); // 添加调试信息
-      
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
-      print('响应数据: $responseData'); // 添加调试信息
+        data: {"phone": phone, "password": password},
+        logPrefix: Logger.AUTH,
+        timeout: ApiConstants.connectionTimeout,
+      );
 
-      if (response.statusCode == 200 && responseData['success'] == true) {
+      if (responseData['success'] == true) {
         // 保存用户信息到Provider
         if(responseData['user'] != null && responseData['token'] != null) {
           final userProvider = Provider.of<UserProvider>(context, listen: false);
-          userProvider.login(User.fromJson(responseData['user']), responseData['token']);
           
-          // 检查用户角色，如果是管理员，导航到管理员页面
-          if (responseData['user']['role'] == 'admin') {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('管理员登录成功！'), duration: Duration(seconds: 1)),
-            );
+          final userId = responseData['user']['id'] ?? responseData['user']['_id'];
+          Logger.i(Logger.AUTH, '登录成功，令牌长度: ${responseData['token'].length}');
+          Logger.i(Logger.AUTH, '用户ID: $userId, 昵称: ${responseData['user']['nickname']}');
+          
+          try {
+            final user = User.fromJson(responseData['user']);
+            Logger.i(Logger.AUTH, '用户对象创建成功: $user');
+            userProvider.login(user, responseData['token']);
             
-            // 延迟一小段时间再跳转，让用户能看到提示
-            Future.delayed(const Duration(milliseconds: 500), () {
-              Navigator.pushReplacementNamed(context, '/admin/home');
-            });
-          } else {
-            // 非管理员用户，显示普通登录成功提示，跳转到主页
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('登录成功！'), duration: Duration(seconds: 1)),
-            );
-            
-            // 延迟一小段时间再跳转，让用户能看到提示
-            Future.delayed(const Duration(milliseconds: 500), () {
-              Navigator.pushReplacementNamed(context, '/home');
-            });
+            // 检查用户角色，如果是管理员，导航到管理员页面
+            if (responseData['user']['role'] == 'admin') {
+              ApiHelper.showSuccessSnackBar(context, '管理员登录成功！');
+              
+              // 延迟一小段时间再跳转，让用户能看到提示
+              Future.delayed(const Duration(milliseconds: 500), () {
+                Navigator.pushReplacementNamed(context, '/admin/home');
+              });
+            } else {
+              // 非管理员用户，显示普通登录成功提示，跳转到主页
+              ApiHelper.showSuccessSnackBar(context, '登录成功！');
+              
+              // 延迟一小段时间再跳转，让用户能看到提示
+              Future.delayed(const Duration(milliseconds: 500), () {
+                Navigator.pushReplacementNamed(context, '/home');
+              });
+            }
+          } catch (e) {
+            Logger.e(Logger.AUTH, '创建用户对象失败', e);
+            Logger.d(Logger.AUTH, '用户数据: ${responseData['user']}');
+            ApiHelper.showErrorDialog(context, "登录处理错误: $e");
           }
+        } else {
+          Logger.w(Logger.AUTH, '响应缺少用户数据或令牌');
+          ApiHelper.showErrorDialog(context, responseData['message'] ?? "登录返回数据不完整");
         }
       } else {
-        _showDialog(responseData['message'] ?? "登录失败");
+        Logger.w(Logger.AUTH, '登录失败: ${responseData['message']}');
+        ApiHelper.showErrorDialog(context, responseData['message'] ?? "登录失败");
       }
     } catch (e) {
-      print('登录出错: $e'); // 添加调试信息
-      _showDialog("网络错误：$e");
+      Logger.e(Logger.AUTH, '登录出错', e);
+      ApiHelper.showErrorDialog(context, "网络错误: $e");
     } finally {
       setState(() {
         isLoading = false;

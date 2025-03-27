@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const ModelFactory = require('./modelFactory');
 
 // 营业时间子模式
 const operatingHoursSchema = new mongoose.Schema({
@@ -559,36 +560,147 @@ const merchantSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
-// 创建索引
-merchantSchema.index({ business_name: 'text', 'business_profile.description': 'text' });
+// 添加索引以优化查询性能
+merchantSchema.index({ user_id: 1 }, { unique: true });
+merchantSchema.index({ business_name: 1 });
 merchantSchema.index({ business_type: 1 });
 merchantSchema.index({ 'address.city': 1, 'address.state': 1 });
-merchantSchema.index({ 'verification.is_verified': 1, 'account_status.is_active': 1 });
+merchantSchema.index({ 'address.coordinates': '2dsphere' }, { sparse: true });
 merchantSchema.index({ 'business_profile.cuisine_types': 1 });
 merchantSchema.index({ 'nutrition_features.specialty_diets': 1 });
 merchantSchema.index({ 'nutrition_features.has_nutritionist': 1 });
-merchantSchema.index({ 'nutrition_features.nutritionist_id': 1 });
-merchantSchema.index({ 'menu_settings.uses_ai_recommendations': 1 });
-merchantSchema.index({ 'stats.avg_rating': -1 });
-merchantSchema.index({ 'access_grants.granted_to': 1, 'access_grants.granted_to_type': 1 });
-merchantSchema.index({ user_id: 1 });
-// 添加地理位置索引用于位置搜索
-merchantSchema.index({ 'address.coordinates': '2dsphere' });
-// 添加部分索引仅对活跃和已验证的商家建立索引，优化搜索性能
-merchantSchema.index(
-  { 'business_profile.cuisine_types': 1, 'address.city': 1 },
-  { partialFilterExpression: { 'verification.is_verified': true, 'account_status.is_active': true } }
-);
-merchantSchema.index(
-  { 'nutrition_features.specialty_diets': 1 },
-  { partialFilterExpression: { 'verification.is_verified': true, 'account_status.is_active': true } }
-);
+merchantSchema.index({ 'verification_status': 1 });
 
-// 更新前自动更新时间
+// 添加虚拟字段
+merchantSchema.virtual('is_open').get(function() {
+  const now = new Date();
+  const dayOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
+  const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+  
+  const todayHours = this.business_profile.operating_hours.find(h => h.day_of_week === dayOfWeek);
+  if (!todayHours || !todayHours.is_open) return false;
+  
+  // 检查是否在营业时间内
+  if (currentTime >= todayHours.opening_time && currentTime <= todayHours.closing_time) {
+    // 检查是否在休息时间
+    if (todayHours.break_start && todayHours.break_end) {
+      if (currentTime >= todayHours.break_start && currentTime <= todayHours.break_end) {
+        return false; // 在休息时间
+      }
+    }
+    return true; // 在营业时间内且不在休息时间
+  }
+  
+  return false; // 不在营业时间内
+});
+
+// 与用户关联的虚拟字段
+merchantSchema.virtual('user', {
+  ref: 'User',
+  localField: 'user_id',
+  foreignField: '_id',
+  justOne: true
+});
+
+// 与菜品关联的虚拟字段
+merchantSchema.virtual('dishes', {
+  ref: 'Dish',
+  localField: '_id',
+  foreignField: 'merchant_id'
+});
+
+// 实例方法
+merchantSchema.methods.getPublicProfile = function() {
+  return {
+    id: this._id,
+    business_name: this.business_name,
+    business_type: this.business_type,
+    contact: {
+      email: this.contact.email,
+      phone: this.contact.phone,
+      website: this.contact.website
+    },
+    address: {
+      city: this.address.city,
+      state: this.address.state,
+      country: this.address.country,
+      coordinates: this.address.coordinates
+    },
+    business_profile: {
+      description: this.business_profile.description,
+      establishment_year: this.business_profile.establishment_year,
+      operating_hours: this.business_profile.operating_hours,
+      cuisine_types: this.business_profile.cuisine_types,
+      average_price_range: this.business_profile.average_price_range,
+      facilities: this.business_profile.facilities,
+      images: this.business_profile.images,
+      logo_url: this.business_profile.logo_url
+    },
+    nutrition_features: {
+      has_nutritionist: this.nutrition_features.has_nutritionist,
+      nutrition_certified: this.nutrition_features.nutrition_certified,
+      specialty_diets: this.nutrition_features.specialty_diets
+    },
+    is_open: this.is_open
+  };
+};
+
+merchantSchema.methods.supportsSpecialDiet = function(dietType) {
+  return this.nutrition_features && 
+         this.nutrition_features.specialty_diets && 
+         this.nutrition_features.specialty_diets.includes(dietType);
+};
+
+merchantSchema.methods.getOperatingHoursForDay = function(dayOfWeek) {
+  if (!this.business_profile || !this.business_profile.operating_hours) {
+    return null;
+  }
+  
+  return this.business_profile.operating_hours.find(
+    hours => hours.day_of_week === dayOfWeek.toLowerCase()
+  );
+};
+
+// 静态方法
+merchantSchema.statics.findByBusinessType = function(businessType) {
+  return this.find({ business_type: businessType });
+};
+
+merchantSchema.statics.findBySpecialtyDiet = function(dietType) {
+  return this.find({ 'nutrition_features.specialty_diets': dietType });
+};
+
+merchantSchema.statics.findNearby = function(lat, lng, radiusInKm = 5) {
+  return this.find({
+    'address.coordinates': {
+      $near: {
+        $geometry: {
+          type: 'Point',
+          coordinates: [lng, lat]
+        },
+        $maxDistance: radiusInKm * 1000 // 转换为米
+      }
+    }
+  });
+};
+
+// 中间件
 merchantSchema.pre('save', function(next) {
-  this.updated_at = Date.now();
+  // 确保坐标字段格式正确（用于地理空间查询）
+  if (this.address && this.address.coordinates && 
+      this.address.coordinates.latitude && this.address.coordinates.longitude) {
+    // 确保坐标字段为GeoJSON格式
+    this.address.coordinates = {
+      type: 'Point',
+      coordinates: [this.address.coordinates.longitude, this.address.coordinates.latitude]
+    };
+  }
   next();
 });
 
@@ -860,6 +972,6 @@ merchantSchema.statics.findWithPermissionCheck = async function(query = {}, opti
   return [];
 };
 
-const Merchant = mongoose.model('Merchant', merchantSchema);
+const Merchant = ModelFactory.model('Merchant', merchantSchema);
 
 module.exports = Merchant; 

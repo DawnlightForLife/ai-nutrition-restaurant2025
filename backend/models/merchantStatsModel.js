@@ -1,5 +1,11 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const ModelFactory = require('./modelFactory');
+
+// 导入需要的模型
+const Order = require('./orderModel');
+const Dish = require('./dishModel');
+const AiRecommendation = require('./aiRecommendationModel');
 
 // 商家销售统计预聚合模型
 const merchantStatsSchema = new Schema({
@@ -100,20 +106,122 @@ const merchantStatsSchema = new Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: { createdAt: 'created_at', updatedAt: 'last_updated' },
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
 // 索引
 merchantStatsSchema.index({ merchant_id: 1, period_type: 1, start_date: 1 });
 merchantStatsSchema.index({ last_updated: 1 });
 
+// 添加复合索引以加速按日期检索
+merchantStatsSchema.index({ start_date: -1, period_type: 1 });
+merchantStatsSchema.index({ end_date: -1, period_type: 1 });
+
+// 添加虚拟字段
+merchantStatsSchema.virtual('period_label').get(function() {
+  // 根据周期类型生成人类可读的标签
+  const start = new Date(this.start_date);
+  const end = new Date(this.end_date);
+  
+  if (this.period_type === 'daily') {
+    return start.toISOString().split('T')[0];
+  } else if (this.period_type === 'weekly') {
+    return `${start.toISOString().split('T')[0]} 至 ${end.toISOString().split('T')[0]}`;
+  } else if (this.period_type === 'monthly') {
+    return `${start.getFullYear()}年${start.getMonth() + 1}月`;
+  }
+  
+  return 'Unknown period';
+});
+
+merchantStatsSchema.virtual('days_count').get(function() {
+  // 计算统计周期包含多少天
+  const start = new Date(this.start_date);
+  const end = new Date(this.end_date);
+  const diffTime = Math.abs(end - start);
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 包含开始和结束当天
+});
+
+merchantStatsSchema.virtual('sale_growth_rate').get(function() {
+  // 如果有上一期数据，可以计算环比增长率
+  if (this._previousPeriodStats && this._previousPeriodStats.sales && 
+      this._previousPeriodStats.sales.total_revenue > 0) {
+    const currentRevenue = this.sales.total_revenue;
+    const previousRevenue = this._previousPeriodStats.sales.total_revenue;
+    return ((currentRevenue - previousRevenue) / previousRevenue) * 100;
+  }
+  return null;
+});
+
+merchantStatsSchema.virtual('conversion_rate').get(function() {
+  // AI推荐转化率
+  if (this.nutrition_stats && 
+      this.nutrition_stats.ai_recommendation_conversions && 
+      this.nutrition_stats.ai_recommendation_conversions.recommended_count > 0) {
+    return (this.nutrition_stats.ai_recommendation_conversions.followed_count / 
+            this.nutrition_stats.ai_recommendation_conversions.recommended_count) * 100;
+  }
+  return 0;
+});
+
 // 保存前设置唯一键
 merchantStatsSchema.pre('save', function(next) {
   this.key = `${this.merchant_id}_${this.period_type}_${this.start_date.toISOString().split('T')[0]}`;
+  
+  // 如果是新记录，确保所有数值字段有合法默认值
+  if (this.isNew) {
+    // 确保销售数据有默认值
+    if (!this.sales) {
+      this.sales = {
+        order_count: 0,
+        total_revenue: 0,
+        avg_order_value: 0,
+        payment_methods: {
+          credit_card: 0,
+          debit_card: 0,
+          cash: 0,
+          mobile_payment: 0
+        }
+      };
+    }
+    
+    // 确保菜品统计有默认值
+    if (!this.dish_stats) {
+      this.dish_stats = {
+        top_dishes: [],
+        category_sales: []
+      };
+    }
+    
+    // 确保用户统计有默认值
+    if (!this.customer_stats) {
+      this.customer_stats = {
+        new_customers: 0,
+        returning_customers: 0,
+        avg_rating: 0
+      };
+    }
+    
+    // 确保营养统计有默认值
+    if (!this.nutrition_stats) {
+      this.nutrition_stats = {
+        ai_recommendation_conversions: {
+          recommended_count: 0,
+          followed_count: 0,
+          conversion_rate: 0
+        }
+      };
+    }
+  }
+  
   next();
 });
 
 /**
- * 计算指定周期的商家统计数据
+ * 计算并生成统计数据
  * @param {ObjectId} merchantId 商家ID
  * @param {String} periodType 周期类型 ('daily', 'weekly', 'monthly')
  * @param {Date} startDate 开始日期
@@ -121,10 +229,7 @@ merchantStatsSchema.pre('save', function(next) {
  * @returns {Promise<Object>} 计算的统计数据
  */
 merchantStatsSchema.statics.calculateStats = async function(merchantId, periodType, startDate, endDate) {
-  const Order = mongoose.model('Order');
-  const Dish = mongoose.model('Dish');
-  const AiRecommendation = mongoose.model('AiRecommendation');
-  
+  // 使用导入的模型
   // 获取销售数据
   const salesData = await Order.aggregate([
     { 
@@ -393,62 +498,316 @@ merchantStatsSchema.statics.calculateStats = async function(merchantId, periodTy
 };
 
 /**
- * 更新商家的所有统计数据（日、周、月）
+ * 获取或创建指定周期的统计记录
  * @param {ObjectId} merchantId 商家ID
- * @returns {Promise<Object>} 更新结果
+ * @param {String} periodType 周期类型 ('daily', 'weekly', 'monthly')
+ * @param {Date} date 日期（将自动计算对应周期的开始和结束日期）
+ * @returns {Promise<Object>} 统计记录
  */
-merchantStatsSchema.statics.updateAllStats = async function(merchantId) {
-  // 计算日期范围
-  const now = new Date();
+merchantStatsSchema.statics.getOrCreatePeriodStats = async function(merchantId, periodType, date) {
+  const { startDate, endDate } = this.getPeriodDateRange(periodType, date);
   
-  // 日统计 - 过去24小时
-  const dailyEnd = new Date(now);
-  const dailyStart = new Date(dailyEnd);
-  dailyStart.setDate(dailyStart.getDate() - 1);
+  // 尝试查找已有记录
+  let stats = await this.findOne({
+    merchant_id: merchantId,
+    period_type: periodType,
+    start_date: startDate
+  });
   
-  // 周统计 - 过去7天
-  const weeklyEnd = new Date(now);
-  const weeklyStart = new Date(weeklyEnd);
-  weeklyStart.setDate(weeklyStart.getDate() - 7);
+  // 如果不存在则创建新记录
+  if (!stats) {
+    stats = new this({
+      merchant_id: merchantId,
+      period_type: periodType,
+      start_date: startDate,
+      end_date: endDate
+    });
+    
+    // 计算并填充统计数据
+    const calculatedStats = await this.calculateStats(merchantId, periodType, startDate, endDate);
+    
+    // 合并计算的数据到新记录
+    if (calculatedStats) {
+      if (calculatedStats.sales) stats.sales = calculatedStats.sales;
+      if (calculatedStats.dish_stats) stats.dish_stats = calculatedStats.dish_stats;
+      if (calculatedStats.customer_stats) stats.customer_stats = calculatedStats.customer_stats;
+      if (calculatedStats.nutrition_stats) stats.nutrition_stats = calculatedStats.nutrition_stats;
+    }
+    
+    await stats.save();
+  }
   
-  // 月统计 - 过去30天
-  const monthlyEnd = new Date(now);
-  const monthlyStart = new Date(monthlyEnd);
-  monthlyStart.setDate(monthlyStart.getDate() - 30);
-  
-  // 异步计算各时间段统计数据
-  const [dailyStats, weeklyStats, monthlyStats] = await Promise.all([
-    this.calculateStats(merchantId, 'daily', dailyStart, dailyEnd),
-    this.calculateStats(merchantId, 'weekly', weeklyStart, weeklyEnd),
-    this.calculateStats(merchantId, 'monthly', monthlyStart, monthlyEnd)
-  ]);
-  
-  // 更新或创建各时间段统计记录
-  const results = await Promise.all([
-    this.findOneAndUpdate(
-      { merchant_id: merchantId, period_type: 'daily', start_date: dailyStart },
-      dailyStats,
-      { upsert: true, new: true }
-    ),
-    this.findOneAndUpdate(
-      { merchant_id: merchantId, period_type: 'weekly', start_date: weeklyStart },
-      weeklyStats,
-      { upsert: true, new: true }
-    ),
-    this.findOneAndUpdate(
-      { merchant_id: merchantId, period_type: 'monthly', start_date: monthlyStart },
-      monthlyStats,
-      { upsert: true, new: true }
-    )
-  ]);
-  
-  return {
-    daily: results[0],
-    weekly: results[1],
-    monthly: results[2]
-  };
+  return stats;
 };
 
-const MerchantStats = mongoose.model('MerchantStats', merchantStatsSchema);
+/**
+ * 计算指定周期的日期范围
+ * @param {String} periodType 周期类型 ('daily', 'weekly', 'monthly')
+ * @param {Date} date 参考日期
+ * @returns {Object} 包含开始日期和结束日期的对象
+ */
+merchantStatsSchema.statics.getPeriodDateRange = function(periodType, date) {
+  const refDate = new Date(date);
+  let startDate, endDate;
+  
+  if (periodType === 'daily') {
+    // 日期范围为当天的0点到23:59:59
+    startDate = new Date(refDate);
+    startDate.setHours(0, 0, 0, 0);
+    
+    endDate = new Date(refDate);
+    endDate.setHours(23, 59, 59, 999);
+  } else if (periodType === 'weekly') {
+    // 获取本周的周一和周日
+    const day = refDate.getDay();
+    const diff = refDate.getDate() - day + (day === 0 ? -6 : 1); // 将周日调整为-6，使周一为第一天
+    
+    startDate = new Date(refDate);
+    startDate.setDate(diff);
+    startDate.setHours(0, 0, 0, 0);
+    
+    endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6);
+    endDate.setHours(23, 59, 59, 999);
+  } else if (periodType === 'monthly') {
+    // 获取本月第一天和最后一天
+    startDate = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
+    startDate.setHours(0, 0, 0, 0);
+    
+    endDate = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 0);
+    endDate.setHours(23, 59, 59, 999);
+  } else {
+    throw new Error('不支持的周期类型: ' + periodType);
+  }
+  
+  return { startDate, endDate };
+};
+
+/**
+ * 更新统计数据（基于新的交易/订单）
+ * @param {ObjectId} merchantId 商家ID
+ * @param {Object} order 订单数据
+ * @returns {Promise<void>}
+ */
+merchantStatsSchema.statics.updateStatsFromOrder = async function(merchantId, order) {
+  // 获取订单创建日期
+  const orderDate = order.created_at ? new Date(order.created_at) : new Date();
+  
+  // 只处理已完成或已交付的订单
+  if (!['completed', 'delivered'].includes(order.status)) {
+    return;
+  }
+  
+  // 更新所有周期的统计
+  const updatePromises = ['daily', 'weekly', 'monthly'].map(async (periodType) => {
+    try {
+      // 获取或创建对应周期的统计记录
+      const stats = await this.getOrCreatePeriodStats(merchantId, periodType, orderDate);
+      
+      // 更新销售数据
+      stats.sales.order_count += 1;
+      stats.sales.total_revenue += order.total_amount || 0;
+      
+      // 更新平均订单金额
+      if (stats.sales.order_count > 0) {
+        stats.sales.avg_order_value = stats.sales.total_revenue / stats.sales.order_count;
+      }
+      
+      // 更新支付方式
+      if (order.payment_method && stats.sales.payment_methods[order.payment_method] !== undefined) {
+        stats.sales.payment_methods[order.payment_method] += 1;
+      }
+      
+      // 更新菜品销售数据
+      if (order.items && Array.isArray(order.items)) {
+        for (const item of order.items) {
+          // 更新热门菜品
+          const existing = stats.dish_stats.top_dishes.find(
+            d => d.dish_id && d.dish_id.toString() === item.dish_id.toString()
+          );
+          
+          if (existing) {
+            existing.quantity += item.quantity || 1;
+            existing.revenue += (item.price * item.quantity) || 0;
+          } else {
+            stats.dish_stats.top_dishes.push({
+              dish_id: item.dish_id,
+              dish_name: item.dish_name,
+              quantity: item.quantity || 1,
+              revenue: (item.price * item.quantity) || 0
+            });
+          }
+          
+          // 限制仅保留前10个热门菜品
+          if (stats.dish_stats.top_dishes.length > 10) {
+            stats.dish_stats.top_dishes.sort((a, b) => b.revenue - a.revenue);
+            stats.dish_stats.top_dishes = stats.dish_stats.top_dishes.slice(0, 10);
+          }
+        }
+      }
+      
+      // 更新AI推荐转化率
+      if (order.ai_recommendation_id) {
+        stats.nutrition_stats.ai_recommendation_conversions.followed_count += 1;
+        
+        // 重新计算转化率
+        if (stats.nutrition_stats.ai_recommendation_conversions.recommended_count > 0) {
+          stats.nutrition_stats.ai_recommendation_conversions.conversion_rate = 
+            (stats.nutrition_stats.ai_recommendation_conversions.followed_count / 
+             stats.nutrition_stats.ai_recommendation_conversions.recommended_count) * 100;
+        }
+      }
+      
+      // 保存更新后的统计
+      await stats.save();
+    } catch (error) {
+      console.error(`更新${periodType}统计失败:`, error);
+    }
+  });
+  
+  await Promise.all(updatePromises);
+};
+
+/**
+ * 获取商家增长趋势数据
+ * @param {ObjectId} merchantId 商家ID
+ * @param {String} periodType 周期类型 ('daily', 'weekly', 'monthly')
+ * @param {Number} limit 获取的周期数量
+ * @returns {Promise<Array>} 趋势数据
+ */
+merchantStatsSchema.statics.getGrowthTrend = async function(merchantId, periodType = 'daily', limit = 30) {
+  // 查询最近的统计记录
+  const stats = await this.find({
+    merchant_id: merchantId,
+    period_type: periodType
+  })
+  .sort({ start_date: -1 })
+  .limit(limit);
+  
+  // 反转以按时间升序
+  stats.reverse();
+  
+  // 计算环比增长率
+  for (let i = 1; i < stats.length; i++) {
+    const current = stats[i];
+    const previous = stats[i - 1];
+    
+    // 存储前一期数据以计算虚拟字段
+    current._previousPeriodStats = previous;
+    
+    // 计算环比增长
+    if (previous.sales && previous.sales.total_revenue > 0) {
+      const growth = ((current.sales.total_revenue - previous.sales.total_revenue) / 
+                    previous.sales.total_revenue) * 100;
+      
+      // 添加到结果中
+      current.growth = {
+        revenue_growth: growth,
+        order_count_growth: previous.sales.order_count > 0 ? 
+          ((current.sales.order_count - previous.sales.order_count) / 
+           previous.sales.order_count) * 100 : 0
+      };
+    }
+  }
+  
+  return stats;
+};
+
+/**
+ * 汇总多个商家的统计数据
+ * @param {Array} merchantIds 商家ID数组
+ * @param {String} periodType 周期类型
+ * @param {Date} startDate 开始日期
+ * @param {Date} endDate 结束日期
+ * @returns {Promise<Object>} 汇总数据
+ */
+merchantStatsSchema.statics.getAggregatedStats = async function(merchantIds, periodType, startDate, endDate) {
+  const query = {
+    merchant_id: { $in: merchantIds },
+    period_type: periodType
+  };
+  
+  if (startDate) {
+    query.start_date = { $gte: startDate };
+  }
+  
+  if (endDate) {
+    query.end_date = { $lte: endDate };
+  }
+  
+  const stats = await this.find(query);
+  
+  // 初始化汇总结果
+  const aggregated = {
+    total_merchants: merchantIds.length,
+    period_type: periodType,
+    start_date: startDate,
+    end_date: endDate,
+    sales: {
+      order_count: 0,
+      total_revenue: 0,
+      avg_order_value: 0,
+      payment_methods: {
+        credit_card: 0,
+        debit_card: 0,
+        cash: 0,
+        mobile_payment: 0
+      }
+    },
+    customer_stats: {
+      new_customers: 0,
+      returning_customers: 0
+    },
+    nutrition_stats: {
+      ai_recommendation_conversions: {
+        recommended_count: 0,
+        followed_count: 0,
+        conversion_rate: 0
+      }
+    }
+  };
+  
+  // 汇总数据
+  for (const stat of stats) {
+    // 汇总销售数据
+    aggregated.sales.order_count += stat.sales.order_count || 0;
+    aggregated.sales.total_revenue += stat.sales.total_revenue || 0;
+    
+    // 汇总支付方式
+    if (stat.sales.payment_methods) {
+      Object.keys(stat.sales.payment_methods).forEach(method => {
+        aggregated.sales.payment_methods[method] += stat.sales.payment_methods[method] || 0;
+      });
+    }
+    
+    // 汇总客户统计
+    aggregated.customer_stats.new_customers += stat.customer_stats.new_customers || 0;
+    aggregated.customer_stats.returning_customers += stat.customer_stats.returning_customers || 0;
+    
+    // 汇总营养统计
+    if (stat.nutrition_stats && stat.nutrition_stats.ai_recommendation_conversions) {
+      aggregated.nutrition_stats.ai_recommendation_conversions.recommended_count += 
+        stat.nutrition_stats.ai_recommendation_conversions.recommended_count || 0;
+      aggregated.nutrition_stats.ai_recommendation_conversions.followed_count += 
+        stat.nutrition_stats.ai_recommendation_conversions.followed_count || 0;
+    }
+  }
+  
+  // 计算平均订单金额
+  if (aggregated.sales.order_count > 0) {
+    aggregated.sales.avg_order_value = aggregated.sales.total_revenue / aggregated.sales.order_count;
+  }
+  
+  // 计算AI推荐转化率
+  if (aggregated.nutrition_stats.ai_recommendation_conversions.recommended_count > 0) {
+    aggregated.nutrition_stats.ai_recommendation_conversions.conversion_rate = 
+      (aggregated.nutrition_stats.ai_recommendation_conversions.followed_count / 
+       aggregated.nutrition_stats.ai_recommendation_conversions.recommended_count) * 100;
+  }
+  
+  return aggregated;
+};
+
+const MerchantStats = ModelFactory.model('MerchantStats', merchantStatsSchema);
 
 module.exports = MerchantStats; 

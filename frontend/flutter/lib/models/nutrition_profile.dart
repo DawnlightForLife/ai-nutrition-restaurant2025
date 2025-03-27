@@ -1,9 +1,8 @@
-
 /// 营养推荐档案模型类
 /// 与账号本身分开，一个账号可建立多个档案（自己、家人等）
 class NutritionProfile {
   final String id;
-  final String userId;
+  final String user_id;
   final String name;
   final String? description;
   final double? height;
@@ -24,7 +23,7 @@ class NutritionProfile {
 
   NutritionProfile({
     required this.id,
-    required this.userId,
+    required this.user_id,
     required this.name,
     this.description,
     this.height,
@@ -55,15 +54,15 @@ class NutritionProfile {
   // 从JSON创建NutritionProfile对象
   factory NutritionProfile.fromJson(Map<String, dynamic> json) {
     return NutritionProfile(
-      id: json['_id'] ?? json['id'],
-      userId: json['userId'],
-      name: json['name'],
+      id: json['_id'] ?? json['id'] ?? '',
+      user_id: json['user_id'] ?? json['ownerId'] ?? '',
+      name: json['name'] ?? '',
       description: json['description'],
       height: json['height']?.toDouble(),
       weight: json['weight']?.toDouble(),
       age: json['age'],
       gender: json['gender'],
-      activityLevel: json['activityLevel'],
+      activityLevel: json['activityLevel'] ?? json['activity_level'],
       healthConditions: json['healthConditions'] != null 
           ? List<String>.from(json['healthConditions']) 
           : null,
@@ -74,23 +73,33 @@ class NutritionProfile {
       avoidedIngredients: json['avoidedIngredients'] != null 
           ? List<String>.from(json['avoidedIngredients']) 
           : null,
-      cuisinePreference: json['cuisinePreference'],
-      spicyPreference: json['spicyPreference'],
+      cuisinePreference: json['cuisinePreference'] ?? json['cuisine_preference'],
+      spicyPreference: json['spicyPreference'] ?? json['spicy_preference'],
       dietaryPreferences: json['dietaryPreferences'] != null 
           ? DietaryPreferences.fromJson(json['dietaryPreferences']) 
-          : null,
+          : (json['dietary_preferences'] != null
+              ? DietaryPreferences.fromJson(json['dietary_preferences'])
+              : null),
       hasCompletedHealthInfo: json['hasCompletedHealthInfo'] ?? false,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      createdAt: json['createdAt'] != null 
+          ? DateTime.parse(json['createdAt']) 
+          : (json['created_at'] != null 
+              ? DateTime.parse(json['created_at']) 
+              : DateTime.now()),
+      updatedAt: json['updatedAt'] != null 
+          ? DateTime.parse(json['updatedAt']) 
+          : (json['updated_at'] != null 
+              ? DateTime.parse(json['updated_at']) 
+              : DateTime.now()),
     );
   }
 
   // 将NutritionProfile对象转换为JSON
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'userId': userId,
+    final map = {
+      '_id': id,
       'name': name,
+      'user_id': user_id,
       'description': description,
       'height': height,
       'weight': weight,
@@ -99,20 +108,41 @@ class NutritionProfile {
       'activityLevel': activityLevel,
       'healthConditions': healthConditions,
       'goals': goals,
-      'allergies': allergies,
-      'avoidedIngredients': avoidedIngredients,
-      'cuisinePreference': cuisinePreference,
-      'spicyPreference': spicyPreference,
-      'dietaryPreferences': dietaryPreferences?.toJson(),
       'hasCompletedHealthInfo': hasCompletedHealthInfo,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
+    
+    // 如果有饮食偏好，则添加饮食偏好对象
+    if (dietaryPreferences != null) {
+      map['dietaryPreferences'] = dietaryPreferences!.toJson();
+    } else {
+      // 如果没有饮食偏好对象但有单独的偏好字段，则创建饮食偏好对象
+      if (cuisinePreference != null || spicyPreference != null || allergies != null || avoidedIngredients != null) {
+        map['dietaryPreferences'] = {
+          'cuisinePreference': cuisinePreference,
+          'spicyPreference': spicyPreference,
+          'allergies': allergies,
+          'avoidedIngredients': avoidedIngredients,
+        };
+      }
+    }
+    
+    return map;
+  }
+
+  // 返回营养档案的调试信息
+  @override
+  String toString() {
+    return 'NutritionProfile{id: $id, name: $name, user_id: $user_id, '
+           'height: $height, weight: $weight, age: $age}';
   }
 
   // 创建带有更新属性的NutritionProfile副本
   NutritionProfile copyWith({
+    String? id,
     String? name,
+    String? user_id,
     String? description,
     double? height,
     double? weight,
@@ -129,8 +159,8 @@ class NutritionProfile {
     bool? hasCompletedHealthInfo,
   }) {
     return NutritionProfile(
-      id: id,
-      userId: userId,
+      id: id ?? this.id,
+      user_id: user_id ?? this.user_id,
       name: name ?? this.name,
       description: description ?? this.description,
       height: height ?? this.height,

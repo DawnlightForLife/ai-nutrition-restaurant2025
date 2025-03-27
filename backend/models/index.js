@@ -21,6 +21,10 @@ const ForumPost = require('./forumPostModel');
 const ForumComment = require('./forumCommentModel');
 const Consultation = require('./consultationModel');
 const MerchantStats = require('./merchantStatsModel');
+const Store = require('./storeModel');
+const StoreDish = require('./storeDishModel');
+const UserFavorite = require('./userFavoriteModel');
+const DbMetrics = require('./dbMetricsModel');
 
 // 连接数据库 - 使用新的数据库管理器
 const connectDB = async () => {
@@ -146,7 +150,10 @@ module.exports = {
   ForumComment,
   Consultation,
   MerchantStats,
-  DbMetrics: ModelFactory.model('DbMetrics'),
+  Store,
+  StoreDish,
+  UserFavorite,
+  DbMetrics,
   
   // 便捷的数据库操作方法
   createIndexes: async () => {
@@ -168,7 +175,11 @@ module.exports = {
       ForumPost.createIndexes(),
       ForumComment.createIndexes(),
       Consultation.createIndexes(),
-      MerchantStats.createIndexes()
+      MerchantStats.createIndexes(),
+      Store.createIndexes(),
+      StoreDish.createIndexes(),
+      UserFavorite.createIndexes(),
+      DbMetrics.createIndexes()
     ]);
     console.log('所有数据库索引创建完成');
   },
@@ -196,7 +207,11 @@ module.exports = {
       ForumPost.deleteMany({}),
       ForumComment.deleteMany({}),
       Consultation.deleteMany({}),
-      MerchantStats.deleteMany({})
+      MerchantStats.deleteMany({}),
+      Store.deleteMany({}),
+      StoreDish.deleteMany({}),
+      UserFavorite.deleteMany({}),
+      DbMetrics.deleteMany({})
     ]);
     console.log('测试数据库已清空');
   }

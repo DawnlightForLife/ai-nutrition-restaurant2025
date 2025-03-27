@@ -1,125 +1,42 @@
-const { MongoClient } = require('mongodb');
+const mongoose = require('mongoose');
+const dbConfig = require('../config/db.config');
 
-// MongoDB连接配置
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongo:27017/smart_nutrition_restaurant';
-
-// MongoDB连接选项
-const options = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 30000, // 服务器选择超时时间
-  socketTimeoutMS: 30000, // Socket超时时间
-  connectTimeoutMS: 30000, // 连接超时时间
-  maxPoolSize: 10, // 连接池大小
-  minPoolSize: 5, // 最小连接池大小
-  retryWrites: true, // 启用重试写入
-  w: 'majority', // 写入确认级别
-  readPreference: 'secondaryPreferred' // 读取偏好
+// 用于全局 mongoose 连接（如果需要）
+const connectGlobal = async () => {
+    try {
+        await mongoose.connect(dbConfig.mongoURI, {
+            ...dbConfig.options,
+            autoReconnect: true,
+            reconnectTries: Number.MAX_VALUE,
+            reconnectInterval: 1000
+        });
+        console.log('Global MongoDB connected successfully');
+    } catch (error) {
+        console.error('Global MongoDB connection error:', error);
+        throw error;
+    }
 };
 
-// 创建MongoDB客户端
-const client = new MongoClient(MONGO_URI, options);
-let db = null;
-
-// 数据库连接
-const connect = async () => {
-  try {
-    if (!db) {
-      await client.connect();
-      console.log('MongoDB连接成功');
-      db = client.db();
-      
-      // 初始化分片集合索引
-      if (process.env.ENABLE_SHARDING === 'true') {
-        await initShardCollectionIndexes(db);
-      }
+// 用于关闭全局连接
+const disconnectGlobal = async () => {
+    try {
+        await mongoose.disconnect();
+        console.log('Global MongoDB disconnected successfully');
+    } catch (error) {
+        console.error('Global MongoDB disconnection error:', error);
+        throw error;
     }
-    return db;
-  } catch (error) {
-    console.error('MongoDB连接失败:', error);
-    // 添加重试逻辑
-    setTimeout(() => {
-      console.log('尝试重新连接数据库...');
-      connect();
-    }, 5000);
-    throw error;
-  }
 };
 
-// 初始化分片集合索引
-const initShardCollectionIndexes = async (db) => {
-  try {
-    // 用户分片索引
-    const userShardCollections = await db.listCollections({ name: /^user_shard_/ }).toArray();
-    for (const collection of userShardCollections) {
-      await db.collection(collection.name).createIndex({ phone: 1 }, { unique: true });
-    }
-    
-    // 健康数据分片索引
-    const healthDataCollections = await db.listCollections({ name: /^healthdata_user_/ }).toArray();
-    for (const collection of healthDataCollections) {
-      await db.collection(collection.name).createIndex({ userId: 1 });
-    }
-    
-    // 订单分片索引
-    const orderCollections = await db.listCollections({ name: /^order_/ }).toArray();
-    for (const collection of orderCollections) {
-      await db.collection(collection.name).createIndex({ userId: 1 });
-      await db.collection(collection.name).createIndex({ createdAt: 1 });
-    }
-    
-    // 商家分片索引
-    const merchantCollections = await db.listCollections({ name: /^merchant_region_/ }).toArray();
-    for (const collection of merchantCollections) {
-      await db.collection(collection.name).createIndex({ region: 1 });
-    }
-    
-    console.log('分片集合索引初始化完成');
-  } catch (error) {
-    console.error('初始化分片集合索引失败:', error);
-    throw error;
-  }
+// 用于检查全局连接状态
+const isGlobalConnected = () => {
+    return mongoose.connection.readyState === 1;
 };
 
-// 关闭数据库连接
-const close = async () => {
-  try {
-    if (client) {
-      await client.close();
-      db = null;
-      console.log('MongoDB连接已关闭');
-    }
-  } catch (error) {
-    console.error('关闭MongoDB连接失败:', error);
-    throw error;
-  }
-};
-
-// 获取数据库实例
-const getDb = async () => {
-  try {
-    if (!db) {
-      await connect();
-    }
-    
-    // 检查连接状态
-    const isConnected = await client.db().command({ ping: 1 });
-    if (!isConnected) {
-      console.log('数据库连接已断开，尝试重新连接...');
-      db = null;
-      await connect();
-    }
-    
-    return db;
-  } catch (error) {
-    console.error('获取数据库实例失败:', error);
-    db = null;
-    throw error;
-  }
-};
-
-module.exports = {
-  connect,
-  close,
-  getDb
+module.exports = { 
+    connectGlobal, 
+    disconnectGlobal,
+    isGlobalConnected,
+    // 导出 mongoose 实例，供其他模块使用
+    mongoose 
 }; 

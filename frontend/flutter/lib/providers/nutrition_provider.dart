@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/nutrition_profile.dart';
 import '../constants/api.dart';
+import '../utils/api_helper.dart';
+import '../utils/logger.dart';
 
 class NutritionProvider with ChangeNotifier {
   List<NutritionProfile> _profiles = [];
@@ -20,26 +22,28 @@ class NutritionProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final url = Uri.parse('${ApiConstants.baseUrl}/api/profiles?userId=$userId');
+      final url = '${ApiConstants.baseUrl}${ApiConstants.nutritionProfilesPath}?ownerId=$userId';
       
-      print('获取营养档案URL: $url');
+      Logger.i(Logger.NUTRITION, '获取营养档案列表，用户ID: $userId');
       
-      final response = await http.get(url)
-          .timeout(const Duration(seconds: ApiConstants.connectionTimeout));
+      final responseData = await ApiHelper.get(
+        url,
+        logPrefix: Logger.NUTRITION,
+        timeout: ApiConstants.connectionTimeout,
+      );
       
-      print('响应状态码: ${response.statusCode}');
-      final data = json.decode(response.body);
-      
-      if (response.statusCode == 200 && data['success'] == true) {
-        final List<dynamic> profilesData = data['profiles'];
+      if (responseData['success'] == true) {
+        final List<dynamic> profilesData = responseData['profiles'];
         _profiles = profilesData.map((profile) => NutritionProfile.fromJson(profile)).toList();
         _error = null;
+        Logger.i(Logger.NUTRITION, '成功获取${_profiles.length}个营养档案');
       } else {
-        _error = data['message'] ?? '获取营养档案失败';
+        _error = responseData['message'] ?? '获取营养档案失败';
         _profiles = [];
+        Logger.w(Logger.NUTRITION, '获取营养档案失败: $_error');
       }
     } catch (e) {
-      print('获取营养档案出错: $e');
+      Logger.e(Logger.NUTRITION, '获取营养档案出错', e);
       _error = '无法连接到服务器，请检查网络连接';
       _profiles = [];
     } finally {
@@ -55,32 +59,35 @@ class NutritionProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final url = Uri.parse('${ApiConstants.baseUrl}/api/profiles');
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: json.encode(profileData),
-      ).timeout(const Duration(seconds: ApiConstants.connectionTimeout));
-
-      final data = json.decode(response.body);
+      print('创建营养档案请求数据: ${jsonEncode(profileData)}');
       
-      if (response.statusCode == 201 && data['success'] == true) {
+      final url = '${ApiConstants.baseUrl}${ApiConstants.nutritionProfilesPath}';
+      Logger.i(Logger.NUTRITION, '创建营养档案: ${profileData['name']}');
+      
+      final responseData = await ApiHelper.post(
+        url,
+        data: profileData,
+        token: token,
+        logPrefix: Logger.NUTRITION,
+        timeout: ApiConstants.connectionTimeout,
+      );
+
+      if (responseData['success'] == true) {
         // 创建成功后刷新列表
-        final newProfile = NutritionProfile.fromJson(data['profile']);
+        final newProfile = NutritionProfile.fromJson(responseData['profile']);
         _profiles.insert(0, newProfile);
         _error = null;
+        Logger.i(Logger.NUTRITION, '创建档案成功: ${newProfile.id}');
         notifyListeners();
         return true;
       } else {
-        _error = data['message'] ?? '创建营养档案失败';
+        _error = responseData['message'] ?? '创建营养档案失败';
+        Logger.w(Logger.NUTRITION, '创建档案失败: $_error');
         notifyListeners();
         return false;
       }
     } catch (e) {
-      print('创建营养档案出错: $e');
+      Logger.e(Logger.NUTRITION, '创建营养档案出错', e);
       _error = '无法连接到服务器，请检查网络连接';
       notifyListeners();
       return false;
@@ -97,35 +104,41 @@ class NutritionProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final url = Uri.parse('${ApiConstants.baseUrl}/api/profiles/$profileId');
-      final response = await http.put(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: json.encode(profileData),
-      ).timeout(const Duration(seconds: ApiConstants.connectionTimeout));
-
-      final data = json.decode(response.body);
+      print('更新营养档案请求数据: ${jsonEncode(profileData)}');
       
-      if (response.statusCode == 200 && data['success'] == true) {
+      // 确保ownerId包含在URL参数中
+      final ownerId = profileData['ownerId'];
+      final url = '${ApiConstants.baseUrl}${ApiConstants.nutritionProfilesPath}/$profileId?ownerId=$ownerId';
+      
+      Logger.i(Logger.NUTRITION, '更新营养档案ID: $profileId, 名称: ${profileData['name']}');
+      
+      final responseData = await ApiHelper.put(
+        url,
+        data: profileData,
+        token: token,
+        logPrefix: Logger.NUTRITION,
+        timeout: ApiConstants.connectionTimeout,
+      );
+
+      if (responseData['success'] == true) {
         // 更新成功后更新本地数据
-        final updatedProfile = NutritionProfile.fromJson(data['profile']);
+        final updatedProfile = NutritionProfile.fromJson(responseData['profile']);
         final index = _profiles.indexWhere((p) => p.id == profileId);
         if (index != -1) {
           _profiles[index] = updatedProfile;
         }
         _error = null;
+        Logger.i(Logger.NUTRITION, '更新档案成功: $profileId');
         notifyListeners();
         return true;
       } else {
-        _error = data['message'] ?? '更新营养档案失败';
+        _error = responseData['message'] ?? '更新营养档案失败';
+        Logger.w(Logger.NUTRITION, '更新档案失败: $_error');
         notifyListeners();
         return false;
       }
     } catch (e) {
-      print('更新营养档案出错: $e');
+      Logger.e(Logger.NUTRITION, '更新营养档案出错', e);
       _error = '无法连接到服务器，请检查网络连接';
       notifyListeners();
       return false;
@@ -136,35 +149,37 @@ class NutritionProvider with ChangeNotifier {
   }
 
   // 删除营养档案
-  Future<bool> deleteProfile(String token, String profileId) async {
+  Future<bool> deleteProfile(String token, String profileId, {required String ownerId}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final url = Uri.parse('${ApiConstants.baseUrl}/api/profiles/$profileId');
-      final response = await http.delete(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(const Duration(seconds: ApiConstants.connectionTimeout));
-
-      final data = json.decode(response.body);
+      final url = '${ApiConstants.baseUrl}${ApiConstants.nutritionProfilesPath}/$profileId?ownerId=$ownerId';
+      Logger.i(Logger.NUTRITION, '删除营养档案ID: $profileId, 用户ID: $ownerId');
       
-      if (response.statusCode == 200 && data['success'] == true) {
+      final responseData = await ApiHelper.delete(
+        url,
+        token: token,
+        logPrefix: Logger.NUTRITION,
+        timeout: ApiConstants.connectionTimeout,
+      );
+
+      if (responseData['success'] == true) {
         // 删除成功后更新本地数据
         _profiles.removeWhere((p) => p.id == profileId);
         _error = null;
+        Logger.i(Logger.NUTRITION, '删除档案成功: $profileId');
         notifyListeners();
         return true;
       } else {
-        _error = data['message'] ?? '删除营养档案失败';
+        _error = responseData['message'] ?? '删除营养档案失败';
+        Logger.w(Logger.NUTRITION, '删除档案失败: $_error');
         notifyListeners();
         return false;
       }
     } catch (e) {
-      print('删除营养档案出错: $e');
+      Logger.e(Logger.NUTRITION, '删除营养档案出错', e);
       _error = '无法连接到服务器，请检查网络连接';
       notifyListeners();
       return false;

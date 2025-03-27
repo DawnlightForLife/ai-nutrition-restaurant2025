@@ -228,6 +228,10 @@ const dishSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, { 
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
 // 创建索引用于搜索
@@ -246,6 +250,115 @@ dishSchema.index({ created_by: 1 });
 dishSchema.index({ tags: 1 });
 dishSchema.index({ 'ratings.average': -1 }); // 用于按评分排序
 dishSchema.index({ price: 1 }); // 价格排序
+dishSchema.index({ merchant_id: 1, is_active: 1 }); // 查询特定商家的活跃菜品
+
+// 添加虚拟字段
+dishSchema.virtual('has_discount').get(function() {
+  return this.discounted_price && this.discounted_price < this.price;
+});
+
+dishSchema.virtual('discount_percentage').get(function() {
+  if (!this.has_discount) return 0;
+  return Math.round(((this.price - this.discounted_price) / this.price) * 100);
+});
+
+dishSchema.virtual('final_price').get(function() {
+  if (this.has_discount) return this.discounted_price;
+  return this.price;
+});
+
+dishSchema.virtual('calories_per_price').get(function() {
+  if (!this.nutrition_facts || !this.nutrition_facts.calories) return 0;
+  const effectivePrice = this.final_price || 1; // 避免除以零
+  return Math.round(this.nutrition_facts.calories / effectivePrice);
+});
+
+dishSchema.virtual('protein_per_price').get(function() {
+  if (!this.nutrition_facts || !this.nutrition_facts.protein) return 0;
+  const effectivePrice = this.final_price || 1; // 避免除以零
+  return Math.round(this.nutrition_facts.protein / effectivePrice);
+});
+
+// 商家关联
+dishSchema.virtual('merchant', {
+  ref: 'Merchant',
+  localField: 'merchant_id',
+  foreignField: '_id',
+  justOne: true
+});
+
+// 实例方法
+dishSchema.methods.isAllergicFor = function(allergens) {
+  if (!this.allergens || !Array.isArray(allergens)) return false;
+  
+  // 检查是否有任何过敏原重叠
+  return allergens.some(allergen => this.allergens.includes(allergen));
+};
+
+dishSchema.methods.isSuitableFor = function(diet) {
+  if (!this.suitable_diets) return false;
+  return this.suitable_diets.includes(diet);
+};
+
+dishSchema.methods.isSuitableForHealthCondition = function(condition) {
+  if (!this.health_benefits) return false;
+  return this.health_benefits.some(benefit => benefit.target_condition === condition);
+};
+
+dishSchema.methods.getNutritionalValue = function() {
+  const nutrition = this.nutrition_facts || {};
+  
+  // 计算宏量素百分比
+  let totalMacros = (nutrition.protein || 0) + (nutrition.fat || 0) + (nutrition.carbohydrates || 0);
+  totalMacros = totalMacros || 1; // 避免除以零
+  
+  const proteinPercentage = Math.round(((nutrition.protein || 0) / totalMacros) * 100);
+  const fatPercentage = Math.round(((nutrition.fat || 0) / totalMacros) * 100);
+  const carbsPercentage = Math.round(((nutrition.carbohydrates || 0) / totalMacros) * 100);
+  
+  return {
+    calories: nutrition.calories || 0,
+    protein: nutrition.protein || 0,
+    fat: nutrition.fat || 0,
+    carbohydrates: nutrition.carbohydrates || 0,
+    macroRatio: {
+      protein: proteinPercentage,
+      fat: fatPercentage,
+      carbs: carbsPercentage
+    },
+    // 为前端生成友好的描述
+    nutritionSummary: `${nutrition.calories || 0}卡路里, 蛋白质${proteinPercentage}%, 脂肪${fatPercentage}%, 碳水${carbsPercentage}%`
+  };
+};
+
+// 静态方法
+dishSchema.statics.findByNutritionAttribute = function(attribute) {
+  return this.find({ nutrition_attributes: attribute, is_active: true });
+};
+
+dishSchema.statics.findBySuitableDiet = function(diet) {
+  return this.find({ suitable_diets: diet, is_active: true });
+};
+
+dishSchema.statics.findByHealthCondition = function(condition) {
+  return this.find({ 
+    'health_benefits.target_condition': condition,
+    is_active: true 
+  });
+};
+
+dishSchema.statics.findHighProtein = function(proteinThreshold = 20) {
+  return this.find({ 
+    'nutrition_facts.protein': { $gte: proteinThreshold },
+    is_active: true 
+  });
+};
+
+dishSchema.statics.getTopRated = function(limit = 10) {
+  return this.find({ is_active: true })
+    .sort({ 'ratings.average': -1 })
+    .limit(limit);
+};
 
 // 更新前自动更新时间
 dishSchema.pre('save', function(next) {
@@ -270,6 +383,55 @@ dishSchema.pre('save', function(next) {
       });
     }
   }
+  
+  // 自动判断并更新营养属性标签
+  const nutrition = this.nutrition_facts || {};
+  const attributes = new Set(this.nutrition_attributes || []);
+  
+  // 高蛋白质检查 (>20g)
+  if (nutrition.protein >= 20) {
+    attributes.add('high_protein');
+  } else if (attributes.has('high_protein')) {
+    attributes.delete('high_protein');
+  }
+  
+  // 低脂肪检查 (<10g)
+  if (nutrition.fat !== undefined && nutrition.fat < 10) {
+    attributes.add('low_fat');
+  } else if (attributes.has('low_fat')) {
+    attributes.delete('low_fat');
+  }
+  
+  // 低碳水检查 (<20g)
+  if (nutrition.carbohydrates !== undefined && nutrition.carbohydrates < 20) {
+    attributes.add('low_carb');
+  } else if (attributes.has('low_carb')) {
+    attributes.delete('low_carb');
+  }
+  
+  // 高纤维检查 (>5g)
+  if (nutrition.fiber !== undefined && nutrition.fiber > 5) {
+    attributes.add('high_fiber');
+  } else if (attributes.has('high_fiber')) {
+    attributes.delete('high_fiber');
+  }
+  
+  // 低钠检查 (<500mg)
+  if (nutrition.sodium !== undefined && nutrition.sodium < 500) {
+    attributes.add('low_sodium');
+  } else if (attributes.has('low_sodium')) {
+    attributes.delete('low_sodium');
+  }
+  
+  // 低卡路里检查 (<300卡)
+  if (nutrition.calories !== undefined && nutrition.calories < 300) {
+    attributes.add('low_calorie');
+  } else if (attributes.has('low_calorie')) {
+    attributes.delete('low_calorie');
+  }
+  
+  // 更新营养属性
+  this.nutrition_attributes = Array.from(attributes);
   
   next();
 });
@@ -325,17 +487,6 @@ dishSchema.methods.isSuitableForMerchantType = function(merchantType) {
   
   return this.suitable_merchant_types.includes(merchantType) || 
          this.suitable_merchant_types.includes('all');
-};
-
-// 验证菜品是否适合特定健康条件
-dishSchema.methods.isSuitableForHealthCondition = function(condition) {
-  if (!this.health_benefits || this.health_benefits.length === 0) {
-    return false; // 如果未设置健康益处，则默认不适合特定健康条件
-  }
-  
-  return this.health_benefits.some(benefit => 
-    benefit.target_condition === condition || benefit.target_condition === 'general_health'
-  );
 };
 
 // 获取套餐总价格

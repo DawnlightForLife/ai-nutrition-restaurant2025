@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const ModelFactory = require('./modelFactory');
 
 // 订阅项目子模式（如餐品、营养指导等）
 const subscriptionItemSchema = new mongoose.Schema({
@@ -303,17 +304,279 @@ const subscriptionSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
-// 创建索引
+// 添加索引以优化查询性能
 subscriptionSchema.index({ user_id: 1 });
 subscriptionSchema.index({ merchant_id: 1 });
-subscriptionSchema.index({ subscription_number: 1 }, { unique: true });
 subscriptionSchema.index({ status: 1 });
-subscriptionSchema.index({ 'payment.next_billing_date': 1 });
-subscriptionSchema.index({ 'access_grants.granted_to': 1, 'access_grants.granted_to_type': 1 });
-subscriptionSchema.index({ nutrition_profile_id: 1 });
-subscriptionSchema.index({ start_date: 1, end_date: 1 });
+subscriptionSchema.index({ subscription_type: 1 });
+subscriptionSchema.index({ 'plan.id': 1 });
+subscriptionSchema.index({ start_date: 1 });
+subscriptionSchema.index({ end_date: 1 });
+subscriptionSchema.index({ 'payment.next_payment_date': 1 });
+subscriptionSchema.index({ 'nutrition_profile_id': 1 });
+
+// 添加虚拟字段
+subscriptionSchema.virtual('is_active').get(function() {
+  const now = new Date();
+  const startDate = new Date(this.start_date);
+  const endDate = this.end_date ? new Date(this.end_date) : null;
+  
+  return this.status === 'active' && 
+         startDate <= now && 
+         (!endDate || endDate >= now);
+});
+
+subscriptionSchema.virtual('days_remaining').get(function() {
+  if (!this.is_active || !this.end_date) return 0;
+  
+  const now = new Date();
+  const endDate = new Date(this.end_date);
+  const diffTime = endDate - now;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  return Math.max(0, diffDays);
+});
+
+subscriptionSchema.virtual('renewal_status').get(function() {
+  if (!this.is_active) return 'inactive';
+  if (this.auto_renew) return 'auto_renewal';
+  if (this.days_remaining <= 7) return 'expiring_soon';
+  return 'active_no_renewal';
+});
+
+subscriptionSchema.virtual('current_period').get(function() {
+  const now = new Date();
+  
+  // 查找当前周期
+  if (!this.billing_cycles || this.billing_cycles.length === 0) {
+    return null;
+  }
+  
+  return this.billing_cycles
+    .sort((a, b) => new Date(b.period_start) - new Date(a.period_start))
+    .find(cycle => {
+      const periodStart = new Date(cycle.period_start);
+      const periodEnd = new Date(cycle.period_end);
+      return periodStart <= now && periodEnd >= now;
+    }) || null;
+});
+
+// 关联
+subscriptionSchema.virtual('user', {
+  ref: 'User',
+  localField: 'user_id',
+  foreignField: '_id',
+  justOne: true
+});
+
+subscriptionSchema.virtual('merchant', {
+  ref: 'Merchant',
+  localField: 'merchant_id',
+  foreignField: '_id',
+  justOne: true
+});
+
+subscriptionSchema.virtual('nutrition_profile', {
+  ref: 'NutritionProfile',
+  localField: 'nutrition_profile_id',
+  foreignField: '_id',
+  justOne: true
+});
+
+// 实例方法
+subscriptionSchema.methods.calculateNextPaymentDate = function() {
+  if (!this.is_active || !this.auto_renew) return null;
+  
+  const now = new Date();
+  let nextPaymentDate;
+  
+  if (this.billing_frequency === 'monthly') {
+    nextPaymentDate = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  } else if (this.billing_frequency === 'quarterly') {
+    nextPaymentDate = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
+  } else if (this.billing_frequency === 'annual') {
+    nextPaymentDate = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+  } else {
+    // 默认按月
+    nextPaymentDate = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  }
+  
+  // 更新下次付款日期
+  if (!this.payment) this.payment = {};
+  this.payment.next_payment_date = nextPaymentDate;
+  
+  return nextPaymentDate;
+};
+
+subscriptionSchema.methods.addBillingCycle = function(amount, status = 'pending') {
+  const now = new Date();
+  let periodEnd;
+  
+  if (this.billing_frequency === 'monthly') {
+    periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  } else if (this.billing_frequency === 'quarterly') {
+    periodEnd = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
+  } else if (this.billing_frequency === 'annual') {
+    periodEnd = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+  } else {
+    // 默认按月
+    periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  }
+  
+  const newCycle = {
+    period_start: now,
+    period_end: periodEnd,
+    amount: amount,
+    status: status,
+    created_at: now
+  };
+  
+  if (!this.billing_cycles) this.billing_cycles = [];
+  this.billing_cycles.push(newCycle);
+  
+  // 更新订阅结束日期
+  this.end_date = periodEnd;
+  
+  return newCycle;
+};
+
+subscriptionSchema.methods.cancel = function(reason = '用户取消', immediate = false) {
+  if (immediate) {
+    this.status = 'cancelled';
+    this.end_date = new Date(); // 立即结束
+  } else {
+    // 只取消自动续费，让订阅到期后结束
+    this.auto_renew = false;
+    this.status = 'ending'; // 标记为即将结束
+  }
+  
+  this.cancellation = {
+    date: new Date(),
+    reason: reason
+  };
+  
+  return this;
+};
+
+subscriptionSchema.methods.pause = function(resumeDate = null, reason = null) {
+  if (this.status !== 'active') {
+    throw new Error('只有活跃的订阅才能被暂停');
+  }
+  
+  this.status = 'paused';
+  this.pause_history = this.pause_history || [];
+  
+  this.pause_history.push({
+    paused_at: new Date(),
+    scheduled_resume_date: resumeDate,
+    reason: reason
+  });
+  
+  // 如果指定了恢复日期，相应延长订阅结束日期
+  if (resumeDate && this.end_date) {
+    const now = new Date();
+    const resumeDateObj = new Date(resumeDate);
+    const pauseDuration = resumeDateObj - now;
+    
+    if (pauseDuration > 0) {
+      const newEndDate = new Date(this.end_date);
+      newEndDate.setTime(newEndDate.getTime() + pauseDuration);
+      this.end_date = newEndDate;
+    }
+  }
+  
+  return this;
+};
+
+subscriptionSchema.methods.resume = function() {
+  if (this.status !== 'paused') {
+    throw new Error('只有已暂停的订阅才能被恢复');
+  }
+  
+  this.status = 'active';
+  
+  // 更新最后一次暂停记录
+  if (this.pause_history && this.pause_history.length > 0) {
+    const lastPause = this.pause_history[this.pause_history.length - 1];
+    lastPause.resumed_at = new Date();
+    
+    // 计算实际暂停时间与计划的差异
+    if (lastPause.scheduled_resume_date) {
+      const scheduledResume = new Date(lastPause.scheduled_resume_date);
+      const actualResume = new Date(lastPause.resumed_at);
+      
+      // 如果提前恢复，缩短结束日期
+      if (actualResume < scheduledResume && this.end_date) {
+        const timeDiff = scheduledResume - actualResume;
+        const newEndDate = new Date(this.end_date);
+        newEndDate.setTime(newEndDate.getTime() - timeDiff);
+        this.end_date = newEndDate;
+      }
+    }
+  }
+  
+  return this;
+};
+
+// 静态方法
+subscriptionSchema.statics.findActiveByUser = function(userId) {
+  const now = new Date();
+  
+  return this.find({
+    user_id: userId,
+    status: 'active',
+    start_date: { $lte: now },
+    $or: [
+      { end_date: { $gte: now } },
+      { end_date: null }
+    ]
+  });
+};
+
+subscriptionSchema.statics.findExpiringSubscriptions = function(daysThreshold = 7) {
+  const now = new Date();
+  const thresholdDate = new Date();
+  thresholdDate.setDate(now.getDate() + daysThreshold);
+  
+  return this.find({
+    status: 'active',
+    auto_renew: false,
+    start_date: { $lte: now },
+    end_date: { $gte: now, $lte: thresholdDate }
+  });
+};
+
+subscriptionSchema.statics.getTotalActiveSubscriptions = async function(merchantId = null) {
+  const match = {
+    status: 'active',
+    start_date: { $lte: new Date() },
+    $or: [
+      { end_date: { $gte: new Date() } },
+      { end_date: null }
+    ]
+  };
+  
+  if (merchantId) {
+    match.merchant_id = mongoose.Types.ObjectId(merchantId);
+  }
+  
+  const result = await this.aggregate([
+    { $match: match },
+    { $group: {
+      _id: null,
+      total: { $sum: 1 },
+      revenue: { $sum: '$price' }
+    }}
+  ]);
+  
+  return result.length > 0 ? result[0] : { total: 0, revenue: 0 };
+};
 
 // 生成唯一订阅号
 subscriptionSchema.pre('save', async function(next) {
@@ -605,6 +868,18 @@ subscriptionSchema.statics.findWithPermissionCheck = async function(query = {}, 
   return [];
 };
 
-const Subscription = mongoose.model('Subscription', subscriptionSchema);
+// 前置钩子 - 保存前自动计算下次付款日期
+subscriptionSchema.pre('save', function(next) {
+  if (this.isNew || this.isModified('auto_renew') || this.isModified('billing_frequency')) {
+    if (this.is_active && this.auto_renew) {
+      this.calculateNextPaymentDate();
+    }
+  }
+  
+  next();
+});
+
+// 使用ModelFactory创建支持读写分离的模型
+const Subscription = ModelFactory.model('Subscription', subscriptionSchema);
 
 module.exports = Subscription; 

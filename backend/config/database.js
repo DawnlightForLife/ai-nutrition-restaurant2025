@@ -1,95 +1,44 @@
 const mongoose = require('mongoose');
-const { MongoClient } = require('mongodb');
+const config = require('./db.config');
 
-// MongoDB连接配置
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/smart_nutrition_restaurant';
+// 创建一个默认连接
+mongoose.connect(config.mongoURI, config.options)
+  .then(() => console.log('默认Mongoose连接已建立'))
+  .catch(err => console.error('连接MongoDB失败:', err));
 
-// MongoDB连接选项
-const options = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 30000, // 服务器选择超时时间
-  socketTimeoutMS: 30000, // Socket超时时间
-  connectTimeoutMS: 30000, // 连接超时时间
-  maxPoolSize: 10, // 连接池大小
-  minPoolSize: 5, // 最小连接池大小
-  retryWrites: true, // 启用重试写入
-  w: 'majority', // 写入确认级别
-  readPreference: 'secondaryPreferred' // 读取偏好
-};
+// 当连接成功建立时
+mongoose.connection.on('connected', () => {
+  console.log('Mongoose默认连接已打开');
+});
 
-// 创建MongoDB客户端
-const client = new MongoClient(MONGO_URI, options);
+// 当连接发生错误时
+mongoose.connection.on('error', err => {
+  console.error('Mongoose连接错误:', err);
+});
 
-// 数据库连接
-const connect = async () => {
-  try {
-    await client.connect();
-    console.log('MongoDB连接成功');
-    
-    // 获取数据库实例
-    const db = client.db();
-    
-    // 初始化分片集合索引
-    if (process.env.ENABLE_SHARDING === 'true') {
-      await initShardCollectionIndexes(db);
-    }
-    
-    return db;
-  } catch (error) {
-    console.error('MongoDB连接失败:', error);
-    throw error;
+// 当连接断开时
+mongoose.connection.on('disconnected', () => {
+  console.log('Mongoose连接已断开');
+});
+
+// 当应用退出时，关闭连接
+process.on('SIGINT', () => {
+  mongoose.connection.close(() => {
+    console.log('应用终止，Mongoose连接已关闭');
+    process.exit(0);
+  });
+});
+
+// 导出数据库管理器，保留以前的API以兼容现有代码
+const dbManager = {
+  connect: async () => mongoose.connection,
+  close: async () => mongoose.connection.close(),
+  isConnected: () => mongoose.connection.readyState === 1,
+  getPrimaryConnection: () => mongoose.connection,
+  getConnectionState: () => {
+    const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+    return states[mongoose.connection.readyState];
   }
 };
 
-// 初始化分片集合索引
-const initShardCollectionIndexes = async (db) => {
-  try {
-    // 用户分片索引
-    const userShardCollections = await db.listCollections({ name: /^user_shard_/ }).toArray();
-    for (const collection of userShardCollections) {
-      await db.collection(collection.name).createIndex({ phone: 1 }, { unique: true });
-    }
-    
-    // 健康数据分片索引
-    const healthDataCollections = await db.listCollections({ name: /^healthdata_user_/ }).toArray();
-    for (const collection of healthDataCollections) {
-      await db.collection(collection.name).createIndex({ userId: 1 });
-    }
-    
-    // 订单分片索引
-    const orderCollections = await db.listCollections({ name: /^order_/ }).toArray();
-    for (const collection of orderCollections) {
-      await db.collection(collection.name).createIndex({ userId: 1 });
-      await db.collection(collection.name).createIndex({ createdAt: 1 });
-    }
-    
-    // 商家分片索引
-    const merchantCollections = await db.listCollections({ name: /^merchant_region_/ }).toArray();
-    for (const collection of merchantCollections) {
-      await db.collection(collection.name).createIndex({ region: 1 });
-    }
-    
-    console.log('分片集合索引初始化完成');
-  } catch (error) {
-    console.error('初始化分片集合索引失败:', error);
-    throw error;
-  }
-};
-
-// 关闭数据库连接
-const close = async () => {
-  try {
-    await client.close();
-    console.log('MongoDB连接已关闭');
-  } catch (error) {
-    console.error('关闭MongoDB连接失败:', error);
-    throw error;
-  }
-};
-
-module.exports = {
-  connect,
-  close,
-  client
-}; 
+module.exports = dbManager; 

@@ -47,21 +47,22 @@ const adminSchema = new mongoose.Schema({
   // 角色和权限
   role: {
     type: String,
-    enum: ['admin', 'super_admin'],
-    default: 'admin'
+    enum: ['super_admin', 'content_admin', 'user_admin', 'merchant_admin', 'data_admin', 'read_only'],
+    default: 'read_only'
   },
   permissions: [{
     type: String,
     enum: [
       'manage_users', 
-      'manage_nutritionists', 
       'manage_merchants', 
+      'manage_nutritionists', 
       'manage_content', 
-      'view_reports', 
-      'manage_system',
+      'manage_orders',
+      'view_analytics', 
+      'manage_settings',
       'manage_admins',
-      'view_audit_logs',
-      'manage_security_settings'
+      'view_logs',
+      'manage_health_data'
     ]
   }],
   // 双因素认证
@@ -161,6 +162,10 @@ const adminSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
 // 添加索引
@@ -206,6 +211,34 @@ adminSchema.pre('save', async function(next) {
     // 替换明文密码为加密后的hash
     admin.password = hashedPassword;
     admin.password_changed_at = Date.now();
+    
+    // 根据角色自动分配权限
+    if (admin.isModified('role')) {
+      switch (admin.role) {
+        case 'super_admin':
+          admin.permissions = [
+            'manage_users', 'manage_merchants', 'manage_nutritionists', 
+            'manage_content', 'manage_orders', 'view_analytics', 
+            'manage_settings', 'manage_admins', 'view_logs', 'manage_health_data'
+          ];
+          break;
+        case 'content_admin':
+          admin.permissions = ['manage_content', 'view_analytics'];
+          break;
+        case 'user_admin':
+          admin.permissions = ['manage_users', 'manage_nutritionists', 'view_logs'];
+          break;
+        case 'merchant_admin':
+          admin.permissions = ['manage_merchants', 'manage_orders', 'view_analytics'];
+          break;
+        case 'data_admin':
+          admin.permissions = ['view_analytics', 'view_logs', 'manage_health_data'];
+          break;
+        case 'read_only':
+          admin.permissions = ['view_analytics'];
+          break;
+      }
+    }
     
     next();
   } catch (error) {

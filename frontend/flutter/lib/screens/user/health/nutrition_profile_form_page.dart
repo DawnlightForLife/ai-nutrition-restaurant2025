@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../providers/index.dart';
 import '../../../models/nutrition_profile.dart';
 import 'dart:convert';
+import '../../../utils/logger.dart';
 
 class NutritionProfileFormPage extends StatefulWidget {
   final NutritionProfile? profile;
@@ -23,12 +24,15 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
   final _ageController = TextEditingController();
-  String _gender = 'male';
-  String _activityLevel = 'moderate';
-  final _healthConditionsController = TextEditingController();
-  String _goals = 'health_improvement';
-  final List<String> _cuisinePreferences = [];
+  final _descriptionController = TextEditingController();
+  String? _selectedGender;
+  String? _selectedActivityLevel;
+  String? _selectedGoal;
+  String? _selectedCuisine;
+  String? _selectedSpicyLevel;
+  final List<String> _healthConditions = [];
   final List<String> _allergies = [];
+  final List<String> _avoidedIngredients = [];
   
   // 活动水平选项
   final List<String> _activityLevels = [
@@ -46,6 +50,39 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
     'maintenance',
     'muscle_gain',
     'health_improvement'
+  ];
+  
+  // 辣度偏好选项
+  final List<String> _spicyLevels = [
+    'not_spicy',
+    'mild',
+    'medium',
+    'hot',
+    'extra_hot'
+  ];
+  
+  // 饮食偏好选项
+  final List<String> _availableCuisinePreferences = [
+    '中餐',
+    '西餐',
+    '日料',
+    '韩餐',
+    '泰餐',
+    '意餐',
+    '墨西哥餐',
+    '印度餐'
+  ];
+
+  // 过敏原选项
+  final List<String> _availableAllergies = [
+    '花生',
+    '海鲜',
+    '乳制品',
+    '鸡蛋',
+    '麸质',
+    '坚果',
+    '大豆',
+    '芒果'
   ];
   
   // 活动水平显示名称
@@ -72,30 +109,6 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
     }
   }
   
-  // 饮食偏好选项
-  final List<String> _availableCuisinePreferences = [
-    '中餐',
-    '西餐',
-    '日料',
-    '韩餐',
-    '泰餐',
-    '意餐',
-    '墨西哥餐',
-    '印度餐'
-  ];
-
-  // 过敏原选项
-  final List<String> _availableAllergies = [
-    '花生',
-    '海鲜',
-    '乳制品',
-    '鸡蛋',
-    '麸质',
-    '坚果',
-    '大豆',
-    '芒果'
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -103,21 +116,26 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
     // 如果是编辑模式，填充现有数据
     if (widget.profile != null) {
       _nameController.text = widget.profile!.name;
+      _descriptionController.text = widget.profile!.description ?? '';
       _heightController.text = widget.profile!.height?.toString() ?? '';
       _weightController.text = widget.profile!.weight?.toString() ?? '';
       _ageController.text = widget.profile!.age?.toString() ?? '';
-      _gender = widget.profile!.gender ?? 'male';
-      _activityLevel = widget.profile!.activityLevel ?? 'moderate';
-      _healthConditionsController.text = widget.profile!.healthConditions?.join(', ') ?? '';
-      _goals = widget.profile!.goals ?? 'health_improvement';
+      _selectedGender = widget.profile!.gender;
+      _selectedActivityLevel = widget.profile!.activityLevel;
+      _healthConditions.addAll(widget.profile!.healthConditions ?? []);
+      _selectedGoal = widget.profile!.goals;
       
       // 填充饮食偏好
       if (widget.profile!.dietaryPreferences != null) {
-        if (widget.profile!.dietaryPreferences!.cuisinePreference != null) {
-          _cuisinePreferences.add(widget.profile!.dietaryPreferences!.cuisinePreference!);
-        }
+        _selectedCuisine = widget.profile!.dietaryPreferences!.cuisinePreference;
+        _selectedSpicyLevel = widget.profile!.dietaryPreferences!.spicyPreference;
+        
         if (widget.profile!.dietaryPreferences!.allergies != null) {
           _allergies.addAll(widget.profile!.dietaryPreferences!.allergies!);
+        }
+        
+        if (widget.profile!.dietaryPreferences!.avoidedIngredients != null) {
+          _avoidedIngredients.addAll(widget.profile!.dietaryPreferences!.avoidedIngredients!);
         }
       }
     }
@@ -129,7 +147,7 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
     _heightController.dispose();
     _weightController.dispose();
     _ageController.dispose();
-    _healthConditionsController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -144,27 +162,28 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
       _errorMessage = null;
     });
     
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final nutritionProvider = Provider.of<NutritionProvider>(context, listen: false);
-    
-    if (!userProvider.isLoggedIn || userProvider.user == null) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = '请先登录';
-      });
-      return;
-    }
-    
     try {
-      // 构建档案数据
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final nutritionProvider = Provider.of<NutritionProvider>(context, listen: false);
+      
+      // 确保用户已登录
+      if (userProvider.user == null || userProvider.token == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = '用户未登录';
+        });
+        return;
+      }
+      
+      // 准备要提交的数据
+      // 主要字段
       final Map<String, dynamic> simplifiedData = {
-        'ownerId': userProvider.user!.id,
         'name': _nameController.text,
-        'gender': _gender,
-        'activityLevel': _activityLevel,
-        'goals': _goals
+        'ownerId': userProvider.user!.id,  // 使用ownerId匹配后端控制器期望的参数名
+        'description': _descriptionController.text.isEmpty ? null : _descriptionController.text,
       };
       
+      // 可选字段
       if (_heightController.text.isNotEmpty) {
         simplifiedData['height'] = double.parse(_heightController.text);
       }
@@ -177,50 +196,67 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
         simplifiedData['age'] = int.parse(_ageController.text);
       }
       
-      if (_healthConditionsController.text.isNotEmpty) {
-        simplifiedData['healthConditions'] = _healthConditionsController.text
-            .split(',')
-            .map((e) => e.trim())
-            .toList();
+      if (_selectedGender != null) {
+        simplifiedData['gender'] = _selectedGender;
       }
       
-      if (_cuisinePreferences.isNotEmpty || _allergies.isNotEmpty) {
-        final Map<String, dynamic> dietaryPrefs = {};
+      if (_selectedActivityLevel != null) {
+        simplifiedData['activityLevel'] = _selectedActivityLevel;
+      }
+      
+      if (_selectedGoal != null) {
+        simplifiedData['goals'] = _selectedGoal;
+      }
+      
+      // 健康状况
+      if (_healthConditions.isNotEmpty) {
+        simplifiedData['healthConditions'] = _healthConditions;
+      }
+      
+      // 饮食偏好
+      if (_selectedCuisine != null || _selectedSpicyLevel != null || _allergies.isNotEmpty || _avoidedIngredients.isNotEmpty) {
+        Map<String, dynamic> dietaryPrefs = {};
         
-        if (_cuisinePreferences.isNotEmpty) {
-          // 将中文菜系名称转换为后端期望的枚举值
-          final String cuisineValue = _mapCuisineToBackendValue(_cuisinePreferences.first);
-          dietaryPrefs['cuisinePreference'] = cuisineValue;
+        if (_selectedCuisine != null) {
+          dietaryPrefs['cuisinePreference'] = _mapCuisineToBackendValue(_selectedCuisine!);
+        }
+        
+        if (_selectedSpicyLevel != null) {
+          dietaryPrefs['spicyPreference'] = _selectedSpicyLevel;
         }
         
         if (_allergies.isNotEmpty) {
-          dietaryPrefs['allergies'] = _allergies;
+          dietaryPrefs['allergies'] = _allergies.toList();
+        }
+        
+        if (_avoidedIngredients.isNotEmpty) {
+          dietaryPrefs['avoidedIngredients'] = _avoidedIngredients.toList();
         }
         
         simplifiedData['dietaryPreferences'] = dietaryPrefs;
       }
       
-      print('准备保存简化档案: ${json.encode(simplifiedData)}');
-      print('用户Token: ${userProvider.token}');
+      print('[营养档案] 准备保存档案数据: ${json.encode(simplifiedData)}');
+      print('[营养档案] 用户ID: ${userProvider.user!.id}, Token长度: ${userProvider.token?.length ?? 0}');
       
       // 保存档案
       bool success;
       try {
         if (widget.profile == null) {
           // 创建新档案
-          print('正在创建新档案...');
+          print('[营养档案] 正在创建新档案...');
           success = await nutritionProvider.createProfile(userProvider.token!, simplifiedData);
-          print('创建结果: $success');
+          print('[营养档案] 创建结果: $success');
         } else {
           // 更新现有档案
-          print('正在更新档案 ID: ${widget.profile!.id}...');
+          print('[营养档案] 正在更新档案 ID: ${widget.profile!.id}...');
           // 添加ID到数据中
           simplifiedData['_id'] = widget.profile!.id;
           success = await nutritionProvider.updateProfile(userProvider.token!, widget.profile!.id, simplifiedData);
-          print('更新结果: $success');
+          print('[营养档案] 更新结果: $success');
         }
       } catch (e) {
-        print('API调用异常: $e');
+        print('[营养档案] API调用异常: $e');
         setState(() {
           _isLoading = false;
           _errorMessage = '调用API异常: $e';
@@ -275,6 +311,15 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.profile == null ? '创建营养档案' : '编辑营养档案'),
+        actions: [
+          // 仅当编辑现有档案时显示删除按钮
+          if (widget.profile != null)
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: _confirmDelete,
+              tooltip: '删除档案',
+            ),
+        ],
       ),
       body: _isLoading 
         ? const Center(child: CircularProgressIndicator())
@@ -324,6 +369,18 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
                       }
                       return null;
                     },
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // 档案描述
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: const InputDecoration(
+                      labelText: '档案描述',
+                      hintText: '可选：对该档案的简短描述',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
                   ),
                   const SizedBox(height: 16),
                   
@@ -401,7 +458,7 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: _gender,
+                          value: _selectedGender,
                           decoration: const InputDecoration(
                             labelText: '性别',
                             border: OutlineInputBorder(),
@@ -414,7 +471,7 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
                           onChanged: (value) {
                             if (value != null) {
                               setState(() {
-                                _gender = value;
+                                _selectedGender = value;
                               });
                             }
                           },
@@ -435,7 +492,7 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
                   const SizedBox(height: 16),
                   
                   DropdownButtonFormField<String>(
-                    value: _activityLevel,
+                    value: _selectedActivityLevel,
                     decoration: const InputDecoration(
                       labelText: '活动水平',
                       border: OutlineInputBorder(),
@@ -446,22 +503,82 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
                     onChanged: (value) {
                       if (value != null) {
                         setState(() {
-                          _activityLevel = value;
+                          _selectedActivityLevel = value;
                         });
                       }
                     },
                   ),
                   const SizedBox(height: 16),
                   
-                  // 健康状况
-                  TextFormField(
-                    controller: _healthConditionsController,
+                  // 健康状况 - 使用Chips而不是文本框
+                  const Text(
+                    '健康状况（可多选）',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      '高血压',
+                      '糖尿病',
+                      '高血脂',
+                      '心脏病',
+                      '哮喘',
+                      '关节炎',
+                      '贫血',
+                      '消化不良'
+                    ].map((condition) {
+                      final isSelected = _healthConditions.contains(condition);
+                      return FilterChip(
+                        label: Text(condition),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              _healthConditions.add(condition);
+                            } else {
+                              _healthConditions.remove(condition);
+                            }
+                          });
+                        },
+                        selectedColor: Colors.amber.shade100,
+                        checkmarkColor: Colors.amber.shade800,
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // 健康目标
+                  const Text(
+                    '健康目标',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  DropdownButtonFormField<String>(
+                    value: _selectedGoal,
                     decoration: const InputDecoration(
-                      labelText: '健康状况（用逗号分隔）',
-                      hintText: '例如：高血压, 糖尿病, 高血脂',
+                      labelText: '健康目标',
                       border: OutlineInputBorder(),
                     ),
-                    maxLines: 2,
+                    items: _goalsList.map((goal) => 
+                      DropdownMenuItem(value: goal, child: Text(getGoalsName(goal)))
+                    ).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _selectedGoal = value;
+                        });
+                      }
+                    },
                   ),
                   const SizedBox(height: 24),
                   
@@ -473,10 +590,11 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   
+                  // 喜好的菜系
                   const Text(
-                    '喜欢的菜系（选择一项）',
+                    '喜好的菜系',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey,
@@ -488,17 +606,13 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
                     spacing: 8,
                     runSpacing: 8,
                     children: _availableCuisinePreferences.map((cuisine) {
-                      final isSelected = _cuisinePreferences.contains(cuisine);
+                      final isSelected = _selectedCuisine == _mapCuisineToBackendValue(cuisine);
                       return FilterChip(
                         label: Text(cuisine),
                         selected: isSelected,
                         onSelected: (selected) {
                           setState(() {
-                            // 单选模式
-                            _cuisinePreferences.clear();
-                            if (selected) {
-                              _cuisinePreferences.add(cuisine);
-                            }
+                            _selectedCuisine = selected ? _mapCuisineToBackendValue(cuisine) : null;
                           });
                         },
                         selectedColor: Colors.green.shade100,
@@ -508,6 +622,43 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
                   ),
                   const SizedBox(height: 16),
                   
+                  // 辣度偏好
+                  const Text(
+                    '辣度偏好',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      {'value': 'not_spicy', 'label': '不辣'},
+                      {'value': 'mild', 'label': '微辣'},
+                      {'value': 'medium', 'label': '中辣'},
+                      {'value': 'hot', 'label': '辣'},
+                      {'value': 'extra_hot', 'label': '特辣'},
+                    ].map((spicy) {
+                      final isSelected = _selectedSpicyLevel == spicy['value'];
+                      return FilterChip(
+                        label: Text(spicy['label'] as String),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setState(() {
+                            _selectedSpicyLevel = selected ? spicy['value'] as String : null;
+                          });
+                        },
+                        selectedColor: Colors.red.shade100,
+                        checkmarkColor: Colors.red,
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // 食物过敏原
                   const Text(
                     '食物过敏原（可多选）',
                     style: TextStyle(
@@ -539,34 +690,48 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
                       );
                     }).toList(),
                   ),
-                  const SizedBox(height: 24),
-                  
-                  // 健康目标
-                  const Text(
-                    '健康目标',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
                   const SizedBox(height: 16),
                   
-                  DropdownButtonFormField<String>(
-                    value: _goals,
-                    decoration: const InputDecoration(
-                      labelText: '健康目标',
-                      border: OutlineInputBorder(),
+                  // 避免的食材
+                  const Text(
+                    '希望避免的食材（可多选）',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
                     ),
-                    items: _goalsList.map((goal) => 
-                      DropdownMenuItem(value: goal, child: Text(getGoalsName(goal)))
-                    ).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _goals = value;
-                        });
-                      }
-                    },
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      '葱',
+                      '蒜',
+                      '姜',
+                      '香菜',
+                      '芹菜',
+                      '胡椒',
+                      '茄子',
+                      '香菇'
+                    ].map((ingredient) {
+                      final isSelected = _avoidedIngredients.contains(ingredient);
+                      return FilterChip(
+                        label: Text(ingredient),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              _avoidedIngredients.add(ingredient);
+                            } else {
+                              _avoidedIngredients.remove(ingredient);
+                            }
+                          });
+                        },
+                        selectedColor: Colors.orange.shade100,
+                        checkmarkColor: Colors.orange,
+                      );
+                    }).toList(),
                   ),
                   const SizedBox(height: 32),
                   
@@ -588,5 +753,85 @@ class _NutritionProfileFormPageState extends State<NutritionProfileFormPage> {
             ),
           ),
     );
+  }
+
+  // 确认删除档案
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认删除'),
+        content: const Text('您确定要删除这个营养档案吗？此操作无法撤销。'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // 关闭对话框
+            },
+            child: const Text('取消'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            onPressed: () {
+              Navigator.of(context).pop(); // 关闭对话框
+              _deleteProfile(); // 执行删除
+            },
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // 执行删除档案操作
+  Future<void> _deleteProfile() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final nutritionProvider = Provider.of<NutritionProvider>(context, listen: false);
+    
+    // 确保用户已登录并且档案ID存在
+    if (userProvider.user == null || userProvider.token == null || widget.profile == null) {
+      setState(() {
+        _errorMessage = '用户未登录或档案无效';
+      });
+      return;
+    }
+    
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    
+    try {
+      Logger.i(Logger.NUTRITION, '尝试删除档案: ${widget.profile!.id}');
+      
+      final success = await nutritionProvider.deleteProfile(
+        userProvider.token!, 
+        widget.profile!.id,
+        ownerId: userProvider.user!.id,
+      );
+      
+      if (success) {
+        Logger.i(Logger.NUTRITION, '档案删除成功');
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('档案已删除')),
+          );
+          Navigator.pop(context, true); // 返回上一页并传递更新成功的信号
+        }
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = '删除失败: ${nutritionProvider.error ?? "未知错误"}';
+        });
+      }
+    } catch (e) {
+      Logger.e(Logger.NUTRITION, '删除档案时发生异常', e);
+      setState(() {
+        _isLoading = false;
+        _errorMessage = '发生错误: $e';
+      });
+    }
   }
 } 

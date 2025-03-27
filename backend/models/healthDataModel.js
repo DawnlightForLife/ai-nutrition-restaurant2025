@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const ModelFactory = require('./modelFactory');
 
 // 用于加密敏感健康数据的密钥和IV
 const ENCRYPTION_KEY = process.env.HEALTH_DATA_ENCRYPTION_KEY || 'default_key_please_change_in_production';
@@ -614,6 +615,7 @@ healthDataSchema.methods.filterSensitiveData = function(userRole, accessLevel) {
   return filterSensitiveFields(data);
 };
 
-const HealthData = mongoose.model('HealthData', healthDataSchema);
+// 使用ModelFactory创建模型
+const HealthData = ModelFactory.model('HealthData', healthDataSchema);
 
-module.exports = HealthData; 
+module.exports = HealthData;

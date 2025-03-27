@@ -83,6 +83,13 @@ class User {
     };
   }
 
+  // 返回用户的调试信息
+  @override
+  String toString() {
+    return 'User{id: $id, nickname: $nickname, phone: $phone, email: $email, role: $role, '
+           'isNutritionistVerified: $isNutritionistVerified, isMerchantVerified: $isMerchantVerified}';
+  }
+
   // 检查是否可以切换到营养师身份
   bool canSwitchToNutritionist() {
     return isNutritionistVerified && nutritionistVerificationStatus == 'approved';

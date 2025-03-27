@@ -11,4 +11,5 @@ final Map<String, WidgetBuilder> appRoutes = {
   '/admin/home': (context) => const AdminHomePage(),
   '/admin/nutritionist-verification': (context) => const NutritionistVerificationManagement(),
   '/admin/merchant-verification': (context) => const MerchantVerificationManagement(),
+  '/merchant/verification': (context) => const MerchantVerificationManagement(),
 };

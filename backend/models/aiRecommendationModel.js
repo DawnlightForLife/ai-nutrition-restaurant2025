@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const ModelFactory = require('./modelFactory');
 
 // 推荐菜品项目的子模式
 const recommendedDishSchema = new mongoose.Schema({
@@ -321,254 +322,390 @@ const aiRecommendationSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
-// 创建索引
-aiRecommendationSchema.index({ user_id: 1, created_at: -1 });
+// 添加索引以优化查询性能
+aiRecommendationSchema.index({ user_id: 1, createdAt: -1 });
 aiRecommendationSchema.index({ nutrition_profile_id: 1 });
 aiRecommendationSchema.index({ recommendation_type: 1 });
 aiRecommendationSchema.index({ status: 1 });
+aiRecommendationSchema.index({ 'feedback.rating': 1 });
 aiRecommendationSchema.index({ 'recommended_dishes.dish_id': 1 });
 aiRecommendationSchema.index({ 'recommended_dishes.merchant_id': 1 });
+aiRecommendationSchema.index({ privacy_level: 1 });
 aiRecommendationSchema.index({ 'access_grants.granted_to': 1, 'access_grants.granted_to_type': 1 });
-aiRecommendationSchema.index({ 'feedback.rating': 1 });
-aiRecommendationSchema.index({ 'nutritionist_review.reviewed_by': 1 });
-// 添加TTL索引，使推荐数据7天后自动过期删除
-aiRecommendationSchema.index({ expires_at: 1 }, { expireAfterSeconds: 0 });
-// 添加部分索引，仅对完成且未被用户喜欢的推荐创建索引，用于记录不受欢迎的推荐
-aiRecommendationSchema.index(
-  { created_at: -1 },
-  { partialFilterExpression: { status: 'completed', 'feedback.liked': false } }
-);
-// 为位置信息创建索引以支持地理位置搜索
-aiRecommendationSchema.index({ 'location.coordinates': '2dsphere' });
+aiRecommendationSchema.index({ 'related_orders': 1 });
+aiRecommendationSchema.index({ 'context.location': 1 });
+aiRecommendationSchema.index({ 'context.weather': 1 });
+aiRecommendationSchema.index({ 'context.season': 1 });
+aiRecommendationSchema.index({ 'recommendation_time': 1 });
 
-// 更新前自动更新时间和设置过期时间
-aiRecommendationSchema.pre('save', function(next) {
-  const now = Date.now();
-  this.updated_at = now;
+// 添加虚拟字段
+aiRecommendationSchema.virtual('is_recent').get(function() {
+  if (!this.createdAt) return false;
   
-  // 如果是新创建的且未设置过期时间，则默认设置为7天后
-  if (this.isNew && !this.expires_at) {
-    const expiry = new Date();
-    expiry.setDate(expiry.getDate() + 7);
-    this.expires_at = expiry;
-  }
+  const now = new Date();
+  const recDate = new Date(this.createdAt);
+  const diffDays = Math.floor((now - recDate) / (1000 * 60 * 60 * 24));
   
-  next();
+  return diffDays < 7; // 7天内的推荐视为近期
 });
 
+aiRecommendationSchema.virtual('dishes_count').get(function() {
+  return this.recommended_dishes ? this.recommended_dishes.length : 0;
+});
+
+aiRecommendationSchema.virtual('has_feedback').get(function() {
+  return !!(this.feedback && (this.feedback.rating || this.feedback.comments));
+});
+
+aiRecommendationSchema.virtual('meal_plan_days').get(function() {
+  if (!this.recommended_meal_plan || !this.recommended_meal_plan.daily_plans) return 0;
+  return this.recommended_meal_plan.daily_plans.length;
+});
+
+aiRecommendationSchema.virtual('has_been_ordered').get(function() {
+  return !!(this.related_orders && this.related_orders.length > 0);
+});
+
+// 关联
+aiRecommendationSchema.virtual('user', {
+  ref: 'User',
+  localField: 'user_id',
+  foreignField: '_id',
+  justOne: true
+});
+
+aiRecommendationSchema.virtual('nutrition_profile', {
+  ref: 'NutritionProfile',
+  localField: 'nutrition_profile_id',
+  foreignField: '_id',
+  justOne: true
+});
+
+aiRecommendationSchema.virtual('orders', {
+  ref: 'Order',
+  localField: 'related_orders',
+  foreignField: '_id'
+});
+
+// 实例方法
+aiRecommendationSchema.methods.calculateNutritionAlignment = function(nutritionProfile) {
+  if (!nutritionProfile || !this.recommended_dishes || this.recommended_dishes.length === 0) {
+    return { score: 0, details: '无法计算营养匹配度：缺少必要数据' };
+  }
+  
+  // 获取用户的营养目标
+  const targets = nutritionProfile.nutrition_targets || {};
+  if (!targets.calories || !targets.protein_percentage || !targets.carbs_percentage || !targets.fat_percentage) {
+    return { score: 0, details: '无法计算营养匹配度：缺少营养目标数据' };
+  }
+  
+  // 计算推荐菜品的总营养
+  const totalNutrition = {
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0
+  };
+  
+  this.recommended_dishes.forEach(dish => {
+    totalNutrition.calories += dish.calories || 0;
+    totalNutrition.protein += dish.protein || 0;
+    totalNutrition.carbs += dish.carbs || 0;
+    totalNutrition.fat += dish.fat || 0;
+  });
+  
+  // 计算宏营养素比例
+  const totalMacros = totalNutrition.protein + totalNutrition.carbs + totalNutrition.fat;
+  let proteinPercentage = 0, carbsPercentage = 0, fatPercentage = 0;
+  
+  if (totalMacros > 0) {
+    proteinPercentage = Math.round((totalNutrition.protein / totalMacros) * 100);
+    carbsPercentage = Math.round((totalNutrition.carbs / totalMacros) * 100);
+    fatPercentage = Math.round((totalNutrition.fat / totalMacros) * 100);
+  }
+  
+  // 计算与目标的偏差
+  const calorieDeviation = Math.abs(totalNutrition.calories - targets.calories) / targets.calories;
+  const proteinDeviation = Math.abs(proteinPercentage - targets.protein_percentage) / targets.protein_percentage;
+  const carbsDeviation = Math.abs(carbsPercentage - targets.carbs_percentage) / targets.carbs_percentage;
+  const fatDeviation = Math.abs(fatPercentage - targets.fat_percentage) / targets.fat_percentage;
+  
+  // 计算总体匹配分数 (0-100)
+  const calorieScore = Math.max(0, 100 - (calorieDeviation * 100));
+  const proteinScore = Math.max(0, 100 - (proteinDeviation * 100));
+  const carbsScore = Math.max(0, 100 - (carbsDeviation * 100));
+  const fatScore = Math.max(0, 100 - (fatDeviation * 100));
+  
+  const totalScore = Math.round((calorieScore * 0.4) + (proteinScore * 0.3) + (carbsScore * 0.15) + (fatScore * 0.15));
+  
+  // 生成详细分析
+  const details = `
+    总热量: ${totalNutrition.calories}卡路里 (目标: ${targets.calories}卡路里, 匹配度: ${calorieScore.toFixed(0)}%)
+    蛋白质: ${proteinPercentage}% (目标: ${targets.protein_percentage}%, 匹配度: ${proteinScore.toFixed(0)}%)
+    碳水化合物: ${carbsPercentage}% (目标: ${targets.carbs_percentage}%, 匹配度: ${carbsScore.toFixed(0)}%)
+    脂肪: ${fatPercentage}% (目标: ${targets.fat_percentage}%, 匹配度: ${fatScore.toFixed(0)}%)
+  `;
+  
+  return {
+    score: totalScore,
+    details: details,
+    nutrition_comparison: {
+      actual: {
+        calories: totalNutrition.calories,
+        protein_percentage: proteinPercentage,
+        carbs_percentage: carbsPercentage,
+        fat_percentage: fatPercentage
+      },
+      target: {
+        calories: targets.calories,
+        protein_percentage: targets.protein_percentage,
+        carbs_percentage: targets.carbs_percentage,
+        fat_percentage: targets.fat_percentage
+      }
+    }
+  };
+};
+
+aiRecommendationSchema.methods.updateFeedback = function(feedbackData) {
+  if (!this.feedback) {
+    this.feedback = {};
+  }
+  
+  if (feedbackData.liked !== undefined) {
+    this.feedback.liked = feedbackData.liked;
+  }
+  
+  if (feedbackData.rating !== undefined) {
+    this.feedback.rating = feedbackData.rating;
+  }
+  
+  if (feedbackData.comments !== undefined) {
+    this.feedback.comments = feedbackData.comments;
+  }
+  
+  if (feedbackData.follow_through !== undefined) {
+    this.feedback.follow_through = feedbackData.follow_through;
+    this.feedback.followed_at = new Date();
+  }
+  
+  return this;
+};
+
+aiRecommendationSchema.methods.linkOrder = function(orderId) {
+  if (!this.related_orders) {
+    this.related_orders = [];
+  }
+  
+  // 检查订单是否已经链接
+  const orderExists = this.related_orders.some(id => id.toString() === orderId.toString());
+  
+  if (!orderExists) {
+    this.related_orders.push(orderId);
+    
+    // 更新反馈，标记为已订购
+    if (!this.feedback) {
+      this.feedback = {};
+    }
+    
+    this.feedback.follow_through = 'ordered';
+    this.feedback.followed_at = new Date();
+  }
+  
+  return this;
+};
+
 // 授权访问方法
-aiRecommendationSchema.methods.grantAccess = function(granteeId, granteeType, validUntil, accessLevel = 'read') {
+aiRecommendationSchema.methods.grantAccess = function(granteeId, granteeType, validUntil = null, reason = null) {
   if (!this.access_grants) {
     this.access_grants = [];
   }
   
-  // 检查是否已存在授权
-  const existingGrant = this.access_grants.find(
-    g => g.granted_to.equals(granteeId) && g.granted_to_type === granteeType && !g.revoked
+  // 检查是否已有授权
+  const existingGrantIndex = this.access_grants.findIndex(
+    grant => grant.granted_to.toString() === granteeId.toString() && 
+             grant.granted_to_type === granteeType &&
+             !grant.revoked
   );
   
-  if (existingGrant) {
+  if (existingGrantIndex !== -1) {
     // 更新现有授权
-    existingGrant.valid_until = validUntil;
-    existingGrant.access_level = accessLevel;
+    this.access_grants[existingGrantIndex].valid_until = validUntil;
+    this.access_grants[existingGrantIndex].reason = reason || this.access_grants[existingGrantIndex].reason;
   } else {
     // 创建新授权
     this.access_grants.push({
       granted_to: granteeId,
       granted_to_type: granteeType,
-      granted_at: Date.now(),
+      granted_at: new Date(),
       valid_until: validUntil,
-      access_level: accessLevel
+      reason: reason
     });
   }
+  
+  return this;
 };
 
 // 撤销授权方法
 aiRecommendationSchema.methods.revokeAccess = function(granteeId, granteeType) {
   if (!this.access_grants) return false;
   
-  let found = false;
+  let hasRevoked = false;
+  
   this.access_grants.forEach(grant => {
-    if (grant.granted_to.equals(granteeId) && grant.granted_to_type === granteeType && !grant.revoked) {
+    if (grant.granted_to.toString() === granteeId.toString() && 
+        grant.granted_to_type === granteeType && 
+        !grant.revoked) {
       grant.revoked = true;
-      grant.revoked_at = Date.now();
-      found = true;
+      grant.revoked_at = new Date();
+      hasRevoked = true;
     }
   });
   
-  return found;
+  return hasRevoked;
 };
 
-// 记录访问方法
-aiRecommendationSchema.methods.logAccess = async function(userId, userType, ipAddress, action) {
-  if (!this.access_log) {
-    this.access_log = [];
+// 更新推荐状态
+aiRecommendationSchema.methods.updateStatus = function(newStatus, errorMessage = null) {
+  this.status = newStatus;
+  
+  if (newStatus === 'failed' && errorMessage) {
+    this.error_message = errorMessage;
   }
   
-  // 保持日志大小合理
-  if (this.access_log.length >= 20) {
-    this.access_log = this.access_log.slice(-19);
+  return this;
+};
+
+// 静态方法
+aiRecommendationSchema.statics.findByUserId = function(userId) {
+  return this.find({ user_id: userId }).sort({ createdAt: -1 });
+};
+
+aiRecommendationSchema.statics.findRecentByUserId = function(userId, days = 30) {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - days);
+  
+  return this.find({
+    user_id: userId,
+    createdAt: { $gte: cutoffDate }
+  }).sort({ createdAt: -1 });
+};
+
+aiRecommendationSchema.statics.findByType = function(userId, type) {
+  return this.find({
+    user_id: userId,
+    recommendation_type: type,
+    status: 'completed'
+  }).sort({ createdAt: -1 });
+};
+
+aiRecommendationSchema.statics.findByProfileId = function(profileId) {
+  return this.find({
+    nutrition_profile_id: profileId,
+    status: 'completed'
+  }).sort({ createdAt: -1 });
+};
+
+aiRecommendationSchema.statics.findHighRated = function(userId) {
+  return this.find({
+    user_id: userId,
+    'feedback.rating': { $gte: 4 },
+    status: 'completed'
+  }).sort({ 'feedback.rating': -1, createdAt: -1 });
+};
+
+aiRecommendationSchema.statics.findByDishId = function(dishId) {
+  return this.find({
+    'recommended_dishes.dish_id': dishId,
+    status: 'completed'
+  }).sort({ createdAt: -1 });
+};
+
+// Pre-save钩子
+aiRecommendationSchema.pre('save', function(next) {
+  // 如果是膳食计划推荐，自动计算每日总营养
+  if (this.recommended_meal_plan && 
+      this.recommended_meal_plan.daily_plans && 
+      this.recommended_meal_plan.daily_plans.length > 0) {
+    
+    this.recommended_meal_plan.daily_plans.forEach(day => {
+      let dailyCalories = 0;
+      let dailyProtein = 0;
+      let dailyCarbs = 0;
+      let dailyFat = 0;
+      
+      if (day.meals && day.meals.length > 0) {
+        day.meals.forEach(meal => {
+          if (meal.dishes && meal.dishes.length > 0) {
+            meal.dishes.forEach(dish => {
+              dailyCalories += dish.calories || 0;
+              dailyProtein += dish.protein || 0;
+              dailyCarbs += dish.carbs || 0;
+              dailyFat += dish.fat || 0;
+            });
+          }
+        });
+      }
+      
+      // 添加日总计
+      day.daily_totals = {
+        calories: dailyCalories,
+        protein: dailyProtein,
+        carbs: dailyCarbs,
+        fat: dailyFat
+      };
+    });
   }
   
-  // 添加新的访问记录
-  this.access_log.push({
-    timestamp: Date.now(),
-    accessed_by: userId,
-    accessed_by_type: userType,
-    ip_address: ipAddress,
-    action: action
-  });
-  
-  await this.save();
-};
-
-// 添加营养师审核
-aiRecommendationSchema.methods.addNutritionistReview = function(nutritionistId, approvalStatus, comments, modifications = []) {
-  this.nutritionist_review = {
-    reviewed_by: nutritionistId,
-    reviewed_at: Date.now(),
-    approval_status: approvalStatus,
-    modifications: modifications,
-    comments: comments
-  };
-};
-
-// 根据推荐创建订单
-aiRecommendationSchema.methods.createOrder = async function(merchantId, userSelectedDishes = []) {
-  try {
-    // 如果用户未选择具体菜品，使用推荐的所有菜品
-    const dishItems = userSelectedDishes.length > 0 
-      ? userSelectedDishes 
-      : this.recommended_dishes.map(dish => ({
-          dish_id: dish.dish_id,
-          name: dish.dish_name,
-          price: dish.price,
-          quantity: 1,
-          item_total: dish.price
-        }));
+  // 如果是单餐推荐，自动计算总营养
+  if (this.recommended_meal && 
+      this.recommended_meal.dishes && 
+      this.recommended_meal.dishes.length > 0) {
     
-    if (dishItems.length === 0) {
-      throw new Error('没有可用的菜品创建订单');
-    }
+    let mealCalories = 0;
+    let mealProtein = 0;
+    let mealCarbs = 0;
+    let mealFat = 0;
+    let mealPrice = 0;
     
-    // 获取商家信息
-    const Merchant = mongoose.model('Merchant');
-    const merchant = await Merchant.findById(merchantId);
-    if (!merchant) {
-      throw new Error('商家不存在');
-    }
-    
-    // 计算订单总价
-    const subtotal = dishItems.reduce((sum, item) => sum + item.item_total, 0);
-    
-    // 创建订单对象
-    const Order = mongoose.model('Order');
-    const newOrder = new Order({
-      user_id: this.user_id,
-      merchant_id: merchantId,
-      merchant_type: merchant.business_type,
-      items: dishItems,
-      nutrition_profile_id: this.nutrition_profile_id,
-      ai_recommendation_id: this._id,
-      order_type: 'delivery', // 默认设置，可根据用户选择调整
-      payment: {
-        method: 'credit_card', // 默认设置，可根据用户选择调整
-        status: 'pending'
-      },
-      price_details: {
-        subtotal: subtotal,
-        tax: subtotal * 0.06, // 假设6%的税率
-        service_fee: 0,
-        delivery_fee: 5, // 默认配送费
-        tip: 0,
-        discount: 0,
-        total: subtotal * 1.06 + 5 // 包含税费和配送费
-      },
-      privacy_level: this.privacy_level
+    this.recommended_meal.dishes.forEach(dish => {
+      mealCalories += dish.calories || 0;
+      mealProtein += dish.protein || 0;
+      mealCarbs += dish.carbs || 0;
+      mealFat += dish.fat || 0;
+      mealPrice += dish.price || 0;
     });
     
-    // 保存订单
-    const savedOrder = await newOrder.save();
+    // 更新总计
+    this.recommended_meal.combined_nutrition = {
+      calories: mealCalories,
+      protein: mealProtein,
+      carbs: mealCarbs,
+      fat: mealFat
+    };
     
-    // 将订单ID添加到推荐的相关订单中
-    if (!this.related_orders) {
-      this.related_orders = [];
+    this.recommended_meal.estimated_price = mealPrice;
+  }
+  
+  // 如果添加了订单关联，自动更新反馈状态
+  if (this.isModified('related_orders') && this.related_orders && this.related_orders.length > 0) {
+    if (!this.feedback) {
+      this.feedback = {};
     }
-    this.related_orders.push(savedOrder._id);
     
-    // 更新推荐的反馈状态
-    this.feedback = {
-      ...this.feedback,
-      follow_through: 'ordered',
-      followed_at: Date.now()
-    };
-    
-    await this.save();
-    
-    return savedOrder;
-  } catch (error) {
-    console.error('根据推荐创建订单时出错:', error);
-    throw error;
+    this.feedback.follow_through = 'ordered';
+    this.feedback.followed_at = new Date();
   }
-};
+  
+  next();
+});
 
-// 安全查询方法 - 考虑访问控制
-aiRecommendationSchema.statics.findWithPermissionCheck = async function(query = {}, options = {}, user) {
-  // 如果是用户查询自己的推荐，直接返回
-  if (user && query.user_id && user._id.equals(query.user_id)) {
-    return this.find(query, options);
-  }
-  
-  // 如果是营养师，检查是否有授权
-  if (user && user.role === 'nutritionist') {
-    const nutritionistId = user._id;
-    
-    // 扩展查询条件，添加权限检查
-    const permissionQuery = {
-      ...query,
-      $or: [
-        // 用户授权给这个营养师的推荐
-        { 'access_grants.granted_to': nutritionistId, 'access_grants.granted_to_type': 'Nutritionist', 'access_grants.revoked': false },
-        // 用户在隐私设置中分享给营养师的推荐
-        { privacy_level: 'share_with_nutritionist' },
-        // 这个营养师审核过的推荐
-        { 'nutritionist_review.reviewed_by': nutritionistId }
-      ]
-    };
-    
-    return this.find(permissionQuery, options);
-  }
-  
-  // 如果是商家，只能查看与自己相关的推荐
-  if (user && user.role === 'merchant') {
-    const merchantId = user._id;
-    
-    const permissionQuery = {
-      ...query,
-      $or: [
-        // 推荐中包含此商家的菜品
-        { 'recommended_dishes.merchant_id': merchantId },
-        // 用户授权给这个商家的推荐
-        { 'access_grants.granted_to': merchantId, 'access_grants.granted_to_type': 'Merchant', 'access_grants.revoked': false },
-        // 用户在隐私设置中分享给商家的推荐
-        { privacy_level: 'share_with_merchant' }
-      ]
-    };
-    
-    return this.find(permissionQuery, options);
-  }
-  
-  // 如果是管理员，直接返回结果
-  if (user && (user.role === 'admin' || user.role === 'super_admin')) {
-    return this.find(query, options);
-  }
-  
-  // 其他情况，返回空结果
-  return [];
-};
-
-const AiRecommendation = mongoose.model('AiRecommendation', aiRecommendationSchema);
+// 使用ModelFactory创建模型
+const AiRecommendation = ModelFactory.model('AiRecommendation', aiRecommendationSchema);
 
 module.exports = AiRecommendation; 

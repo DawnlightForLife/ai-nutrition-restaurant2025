@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
-const ModelFactory = require('./modelFactory');
 const bcrypt = require('bcryptjs');
 const shardAccessService = require('../services/shardAccessService');
+
+// 导入需要的模型做延迟加载
+let Order, HealthData, AiRecommendation, Consultation, Nutritionist;
 
 // 定义用户模型的结构
 const userSchema = new mongoose.Schema({
@@ -309,7 +311,86 @@ const userSchema = new mongoose.Schema({
       last_updated: Date
     }
   }
+}, {
+  timestamps: true,
+  versionKey: false,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
+
+// 添加索引以优化查询性能
+userSchema.index({ phone: 1 }, { unique: true });
+userSchema.index({ email: 1 }, { sparse: true, unique: true });
+userSchema.index({ role: 1 });
+userSchema.index({ wechat_openid: 1 }, { sparse: true, unique: true });
+userSchema.index({ alipay_userid: 1 }, { sparse: true, unique: true });
+userSchema.index({ account_status: 1 });
+userSchema.index({ 'region.province': 1, 'region.city': 1 });
+
+// 添加虚拟字段
+userSchema.virtual('full_name').get(function() {
+  return this.real_name || this.nickname || '';
+});
+
+userSchema.virtual('bmi').get(function() {
+  if (!this.height || !this.weight || this.height <= 0) return null;
+  const heightInMeters = this.height / 100;
+  return (this.weight / (heightInMeters * heightInMeters)).toFixed(1);
+});
+
+userSchema.virtual('age_group').get(function() {
+  if (!this.age) return null;
+  if (this.age < 18) return 'child';
+  if (this.age < 30) return 'young_adult';
+  if (this.age < 50) return 'middle_adult';
+  return 'senior';
+});
+
+// 添加密码哈希方法
+userSchema.pre('save', async function(next) {
+  // 如果密码被修改则重新哈希
+  if (this.isModified('password')) {
+    try {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
+    } catch (error) {
+      return next(error);
+    }
+  }
+  next();
+});
+
+// 添加实例方法
+userSchema.methods.comparePassword = async function(candidatePassword) {
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    throw error;
+  }
+};
+
+userSchema.methods.getBasicProfile = function() {
+  return {
+    id: this._id,
+    nickname: this.nickname,
+    avatar_url: this.avatar_url,
+    role: this.role,
+    active_role: this.active_role
+  };
+};
+
+// 添加静态方法
+userSchema.statics.findByPhone = function(phone) {
+  return this.findOne({ phone });
+};
+
+userSchema.statics.findByEmail = function(email) {
+  return this.findOne({ email });
+};
+
+userSchema.statics.findByWechatOpenId = function(wechatOpenId) {
+  return this.findOne({ wechat_openid: wechatOpenId });
+};
 
 // 创建索引
 userSchema.index({ email: 1 }, { unique: true, sparse: true }); // 唯一索引，防止重复注册，但允许为空
@@ -382,10 +463,9 @@ userSchema.statics.getBasicInfo = function(userId) {
 
 // 更新用户缓存数据方法
 userSchema.methods.updateOrderStats = async function() {
-  const Order = mongoose.model('Order');
-  
   try {
     // 获取所有完成的订单
+    if (!Order) Order = require('./orderModel');
     const orderAggregation = await Order.aggregate([
       { $match: { 
         user_id: this._id, 
@@ -440,10 +520,9 @@ userSchema.methods.updateOrderStats = async function() {
 
 // 更新健康数据概览
 userSchema.methods.updateHealthOverview = async function() {
-  const HealthData = mongoose.model('HealthData');
-  
   try {
     // 获取最新的健康数据
+    if (!HealthData) HealthData = require('./healthDataModel');
     const latestHealthData = await HealthData.findOne({ 
       user_id: this._id 
     }).sort({ created_at: -1 });
@@ -520,10 +599,9 @@ userSchema.methods.updateHealthOverview = async function() {
 
 // 更新推荐统计数据
 userSchema.methods.updateRecommendationStats = async function() {
-  const AiRecommendation = mongoose.model('AiRecommendation');
-  
   try {
     // 获取推荐统计数据
+    if (!AiRecommendation) AiRecommendation = require('./aiRecommendationModel');
     const recommendationAgg = await AiRecommendation.aggregate([
       { $match: { user_id: this._id } },
       { $group: {
@@ -566,10 +644,9 @@ userSchema.methods.updateRecommendationStats = async function() {
 
 // 更新营养师互动数据
 userSchema.methods.updateNutritionistInteraction = async function() {
-  const Consultation = mongoose.model('Consultation');
-  
   try {
     // 查找最新的咨询记录
+    if (!Consultation) Consultation = require('./consultationModel');
     const latestConsultation = await Consultation.findOne({
       user_id: this._id
     }).sort({ created_at: -1 })
@@ -602,7 +679,7 @@ userSchema.methods.updateNutritionistInteraction = async function() {
         activeNutritionistId = activeGrant.granted_to_id;
         
         // 获取营养师名称
-        const Nutritionist = mongoose.model('Nutritionist');
+        if (!Nutritionist) Nutritionist = require('./nutritionistModel');
         const nutritionist = await Nutritionist.findById(activeNutritionistId);
         if (nutritionist) {
           activeNutritionistName = nutritionist.real_name;
@@ -715,7 +792,42 @@ userSchema.statics.findAcrossShards = async function(query, options = {}) {
   }
 };
 
-// 使用ModelFactory创建支持读写分离的用户模型
-const User = ModelFactory.model('User', userSchema);
+// 使用Mongoose直接创建模型
+const User = mongoose.model('User', userSchema);
+
+// 查询用户的订单历史
+userSchema.methods.getOrderHistory = async function() {
+  if (!Order) Order = require('./orderModel');
+  return await Order.find({ user_id: this._id }).sort({ created_at: -1 });
+};
+
+// 获取用户的健康数据
+userSchema.methods.getHealthData = async function() {
+  if (!HealthData) HealthData = require('./healthDataModel');
+  return await HealthData.find({ user_id: this._id }).sort({ recorded_at: -1 });
+};
+
+// 获取用户的AI推荐历史
+userSchema.methods.getAiRecommendations = async function(limit = 10) {
+  if (!AiRecommendation) AiRecommendation = require('./aiRecommendationModel');
+  return await AiRecommendation.find({ user_id: this._id })
+    .sort({ created_at: -1 })
+    .limit(limit);
+};
+
+// 获取用户的咨询记录
+userSchema.methods.getConsultations = async function() {
+  if (!Consultation) Consultation = require('./consultationModel');
+  return await Consultation.find({ user_id: this._id }).sort({ scheduled_at: -1 });
+};
+
+// 获取用户咨询过的营养师
+userSchema.methods.getConsultedNutritionists = async function() {
+  if (!Consultation) Consultation = require('./consultationModel');
+  if (!Nutritionist) Nutritionist = require('./nutritionistModel');
+  const consultations = await Consultation.find({ user_id: this._id });
+  const nutritionistIds = [...new Set(consultations.map(c => c.nutritionist_id))];
+  return await Nutritionist.find({ _id: { $in: nutritionistIds } });
+};
 
 module.exports = User;

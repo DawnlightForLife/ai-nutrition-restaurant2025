@@ -3,193 +3,224 @@ const ModelFactory = require('./modelFactory');
 const { shardingService } = require('../services/shardingService');
 
 const userRoleSchema = new mongoose.Schema({
-  role_name: {
+  name: {
     type: String,
     required: true,
     unique: true,
-    enum: ['user', 'nutritionist', 'merchant', 'admin', 'super_admin', 'guest', 'content_manager', 'customer_service']
+    trim: true
   },
   description: {
     type: String,
     required: true
   },
   permissions: [{
-    type: String,
-    enum: [
-      // 用户资源操作权限
-      'view_user_basic', 'view_user_sensitive', 'view_user_critical',
-      'edit_user_basic', 'edit_user_sensitive', 'edit_user_critical',
-      
-      // 健康数据操作权限
-      'view_health_data', 'create_health_data', 'edit_health_data', 'delete_health_data',
-      
-      // 营养档案操作权限
-      'view_nutrition_profile', 'create_nutrition_profile', 'edit_nutrition_profile', 'delete_nutrition_profile',
-      
-      // 订单操作权限
-      'view_orders', 'create_order', 'edit_order', 'delete_order', 'cancel_order',
-      'process_order', 'complete_order',
-      
-      // 营养师相关权限
-      'apply_nutritionist', 'provide_nutrition_consultation', 'review_ai_recommendation',
-      
-      // 商家相关权限
-      'apply_merchant', 'manage_dishes', 'manage_inventory', 'view_sales_data',
-      'manage_store',
-      
-      // 管理员专用权限
-      'approve_verify_nutritionist', 'approve_verify_merchant', 'manage_users',
-      'manage_content', 'view_system_stats', 'config_system',
-      
-      // 社区权限
-      'create_post', 'edit_own_post', 'edit_any_post', 'delete_own_post', 'delete_any_post',
-      'comment_post', 'edit_own_comment', 'edit_any_comment', 'delete_own_comment', 'delete_any_comment',
-      
-      // 支付相关
-      'process_payment', 'process_refund', 'view_payment_stats',
-      
-      // 消息和通知
-      'send_notification', 'manage_notification_templates',
-      
-      // 系统API访问权限
-      'access_api_basic', 'access_api_advanced', 'access_api_admin'
-    ]
+    resource: {
+      type: String,
+      required: true,
+      enum: [
+        'users', 'profiles', 'health_data', 'orders', 
+        'merchants', 'nutritionists', 'dishes', 'recommendations',
+        'subscriptions', 'payments', 'reviews', 'consultations',
+        'forum_posts', 'notifications', 'reports', 'settings'
+      ]
+    },
+    actions: [{
+      type: String,
+      required: true,
+      enum: ['create', 'read', 'update', 'delete', 'manage']
+    }]
   }],
-  // 角色访问的数据敏感级别
-  data_access_levels: {
-    type: Number,
-    min: 1,
-    max: 3,
-    default: 3,
-    description: "1=可访问高敏感数据, 2=可访问中敏感数据, 3=仅可访问低敏感数据"
-  },
-  // 是否为系统内置角色
   is_system_role: {
     type: Boolean,
     default: false
   },
-  // 创建和更新时间
-  created_at: {
-    type: Date,
-    default: Date.now
+  is_active: {
+    type: Boolean,
+    default: true
   },
-  updated_at: {
-    type: Date,
-    default: Date.now
+  priority: {
+    type: Number,
+    default: 0
   },
-  // 角色创建者（非系统角色才有）
   created_by: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Admin'
   }
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
-// 创建索引
-userRoleSchema.index({ role_name: 1 }, { unique: true });
+// 添加索引
+userRoleSchema.index({ name: 1 }, { unique: true });
 userRoleSchema.index({ is_system_role: 1 });
-userRoleSchema.index({ data_access_levels: 1 });
-userRoleSchema.index({ created_at: -1 });
+userRoleSchema.index({ is_active: 1 });
+userRoleSchema.index({ priority: 1 });
 
-// 更新前自动更新时间
-userRoleSchema.pre('save', function(next) {
-  this.updated_at = Date.now();
-  next();
-});
-
-// 静态方法：检查权限
-userRoleSchema.statics.hasPermission = async function(roleName, permission) {
-  const role = await this.findOne({ role_name: roleName });
-  if (!role) return false;
-  return role.permissions.includes(permission);
+// 实例方法
+userRoleSchema.methods.hasPermission = function(resource, action) {
+  // 查找给定资源的权限
+  const resourcePermission = this.permissions.find(p => p.resource === resource);
+  if (!resourcePermission) return false;
+  
+  // 检查该资源是否有指定的操作权限
+  return resourcePermission.actions.includes(action) || resourcePermission.actions.includes('manage');
 };
 
-// 实例方法：检查是否拥有某权限
-userRoleSchema.methods.hasPermission = function(permission) {
-  return this.permissions.includes(permission);
+userRoleSchema.methods.addPermission = function(resource, actions) {
+  // 确保actions是数组
+  if (!Array.isArray(actions)) {
+    actions = [actions];
+  }
+  
+  // 查找该资源是否已有权限
+  const existingPermission = this.permissions.find(p => p.resource === resource);
+  
+  if (existingPermission) {
+    // 合并并去重新的操作权限
+    const uniqueActions = new Set([...existingPermission.actions, ...actions]);
+    existingPermission.actions = Array.from(uniqueActions);
+  } else {
+    // 添加新的资源权限
+    this.permissions.push({
+      resource,
+      actions
+    });
+  }
 };
 
-// 静态方法：创建基本系统角色
-userRoleSchema.statics.createDefaultRoles = async function() {
-  const roles = [
+userRoleSchema.methods.removePermission = function(resource, actions) {
+  // 查找该资源的权限
+  const resourceIndex = this.permissions.findIndex(p => p.resource === resource);
+  if (resourceIndex === -1) return;
+  
+  // 如果未指定actions，则删除整个资源权限
+  if (!actions) {
+    this.permissions.splice(resourceIndex, 1);
+    return;
+  }
+  
+  // 确保actions是数组
+  if (!Array.isArray(actions)) {
+    actions = [actions];
+  }
+  
+  // 过滤掉指定的操作权限
+  this.permissions[resourceIndex].actions = this.permissions[resourceIndex].actions
+    .filter(action => !actions.includes(action));
+    
+  // 如果没有操作权限了，则删除整个资源权限
+  if (this.permissions[resourceIndex].actions.length === 0) {
+    this.permissions.splice(resourceIndex, 1);
+  }
+};
+
+// 静态方法
+userRoleSchema.statics.findByName = function(name) {
+  return this.findOne({ name });
+};
+
+userRoleSchema.statics.findSystemRoles = function() {
+  return this.find({ is_system_role: true, is_active: true });
+};
+
+userRoleSchema.statics.findCustomRoles = function() {
+  return this.find({ is_system_role: false, is_active: true });
+};
+
+// 为常见角色创建初始化方法
+userRoleSchema.statics.initializeDefaultRoles = async function() {
+  const defaultRoles = [
     {
-      role_name: 'user',
-      description: '普通用户',
+      name: 'admin',
+      description: '系统管理员，拥有全部权限',
       permissions: [
-        'view_user_basic', 'edit_user_basic',
-        'view_health_data', 'create_health_data', 'edit_health_data',
-        'view_nutrition_profile', 'create_nutrition_profile', 'edit_nutrition_profile', 'delete_nutrition_profile',
-        'view_orders', 'create_order', 'cancel_order',
-        'apply_nutritionist', 'apply_merchant',
-        'create_post', 'edit_own_post', 'delete_own_post',
-        'comment_post', 'edit_own_comment', 'delete_own_comment'
+        {
+          resource: 'users',
+          actions: ['create', 'read', 'update', 'delete', 'manage']
+        },
+        {
+          resource: 'merchants',
+          actions: ['create', 'read', 'update', 'delete', 'manage']
+        },
+        // ... 其他所有资源权限
       ],
-      data_access_levels: 3,
-      is_system_role: true
+      is_system_role: true,
+      priority: 100
     },
     {
-      role_name: 'nutritionist',
-      description: '营养师',
+      name: 'user',
+      description: '普通用户，基本权限',
       permissions: [
-        'view_user_basic', 'view_health_data',
-        'view_nutrition_profile', 'provide_nutrition_consultation',
-        'review_ai_recommendation',
-        'create_post', 'edit_own_post', 'delete_own_post',
-        'comment_post', 'edit_own_comment', 'delete_own_comment'
+        {
+          resource: 'profiles',
+          actions: ['create', 'read', 'update', 'delete']
+        },
+        {
+          resource: 'health_data',
+          actions: ['create', 'read', 'update', 'delete']
+        },
+        {
+          resource: 'orders',
+          actions: ['create', 'read', 'update']
+        },
+        {
+          resource: 'forum_posts',
+          actions: ['create', 'read', 'update', 'delete']
+        }
       ],
-      data_access_levels: 2,
-      is_system_role: true
+      is_system_role: true,
+      priority: 10
     },
     {
-      role_name: 'merchant',
-      description: '商家',
+      name: 'nutritionist',
+      description: '营养师，专业服务权限',
       permissions: [
-        'view_user_basic',
-        'manage_dishes', 'manage_inventory', 'view_sales_data',
-        'manage_store', 'process_order', 'complete_order',
-        'create_post', 'edit_own_post', 'delete_own_post',
-        'comment_post', 'edit_own_comment', 'delete_own_comment'
+        {
+          resource: 'consultations',
+          actions: ['create', 'read', 'update']
+        },
+        {
+          resource: 'recommendations',
+          actions: ['create', 'read', 'update']
+        },
+        {
+          resource: 'health_data',
+          actions: ['read']
+        }
       ],
-      data_access_levels: 3,
-      is_system_role: true
+      is_system_role: true,
+      priority: 30
     },
     {
-      role_name: 'admin',
-      description: '系统管理员',
+      name: 'merchant',
+      description: '商家，商品和订单管理权限',
       permissions: [
-        'view_user_basic', 'view_user_sensitive',
-        'edit_user_basic', 'approve_verify_nutritionist', 'approve_verify_merchant',
-        'manage_users', 'manage_content', 'view_system_stats', 'process_refund',
-        'send_notification', 'manage_notification_templates',
-        'delete_any_post', 'delete_any_comment',
-        'access_api_basic', 'access_api_advanced'
+        {
+          resource: 'dishes',
+          actions: ['create', 'read', 'update', 'delete']
+        },
+        {
+          resource: 'orders',
+          actions: ['read', 'update']
+        },
+        {
+          resource: 'reviews',
+          actions: ['read', 'update']
+        }
       ],
-      data_access_levels: 2,
-      is_system_role: true
-    },
-    {
-      role_name: 'super_admin',
-      description: '超级管理员',
-      permissions: [
-        'view_user_basic', 'view_user_sensitive', 'view_user_critical',
-        'edit_user_basic', 'edit_user_sensitive', 'edit_user_critical',
-        'view_health_data', 'edit_health_data', 'delete_health_data',
-        'approve_verify_nutritionist', 'approve_verify_merchant',
-        'manage_users', 'manage_content', 'view_system_stats', 'config_system',
-        'process_payment', 'process_refund', 'view_payment_stats',
-        'send_notification', 'manage_notification_templates',
-        'edit_any_post', 'delete_any_post', 'edit_any_comment', 'delete_any_comment',
-        'access_api_basic', 'access_api_advanced', 'access_api_admin'
-      ],
-      data_access_levels: 1,
-      is_system_role: true
+      is_system_role: true,
+      priority: 20
     }
   ];
-
-  for (const role of roles) {
+  
+  // 批量插入或更新默认角色
+  for (const role of defaultRoles) {
     await this.findOneAndUpdate(
-      { role_name: role.role_name },
+      { name: role.name },
       role,
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, new: true }
     );
   }
 };
@@ -210,7 +241,7 @@ UserRole.getWithCache = async function(roleName) {
     }
     
     // 缓存未命中，从数据库获取
-    const role = await this.findOne({ role_name: roleName });
+    const role = await this.findOne({ name: roleName });
     
     if (role) {
       // 设置缓存，10分钟过期
@@ -220,7 +251,7 @@ UserRole.getWithCache = async function(roleName) {
     return role;
   } else {
     // 没有缓存服务，直接查询数据库
-    return this.findOne({ role_name: roleName });
+    return this.findOne({ name: roleName });
   }
 };
 

@@ -16,8 +16,13 @@ RUN mkdir -p uploads/medical-reports
 # 复制项目文件
 COPY . .
 
+# 复制启动脚本
+COPY backend/scripts/docker_startup.sh /usr/src/app/docker_startup.sh
+RUN chmod +x /usr/src/app/docker_startup.sh
+
 # 暴露端口
 EXPOSE 3000
 
-# 启动应用
+# 使用我们的启动脚本作为ENTRYPOINT
+ENTRYPOINT ["/usr/src/app/docker_startup.sh"]
 CMD ["node", "server.js"]

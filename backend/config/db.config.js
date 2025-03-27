@@ -1,31 +1,19 @@
 require('dotenv').config();
 
-module.exports = {
+const db = {
   // MongoDB连接URI
-  mongoURI: process.env.MONGO_URI || 'mongodb://localhost:27017/ai-nutrition-restaurant',
+  mongoURI: process.env.MONGO_URI || 'mongodb://localhost:27017/smart_nutrition_restaurant',
   
-  // 数据库配置选项
+  // MongoDB连接选项
   options: {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useCreateIndex: true,
-    useFindAndModify: false,
-    autoIndex: true,
-    // 连接超时时间
-    connectTimeoutMS: 10000,
-    // Socket超时时间
-    socketTimeoutMS: 45000,
-    // 最大连接池大小
-    poolSize: 50,
-    // 心跳包间隔时间
-    heartbeatFrequencyMS: 10000,
-    // 重试次数
-    retryWrites: true,
-    // 读写关注
-    w: 'majority',
-    readPreference: 'primary',
-    // 家族识别
-    family: 4 // IPv4
+    serverSelectionTimeoutMS: 30000, // 服务器选择超时时间
+    socketTimeoutMS: 30000, // Socket超时时间
+    connectTimeoutMS: 30000, // 连接超时时间
+    maxPoolSize: 10, // 连接池大小
+    minPoolSize: 5, // 最小连接池大小
+    retryWrites: true, // 启用重试写入
+    w: 'majority', // 写入确认级别
+    readPreference: 'secondaryPreferred' // 读取偏好
   },
   
   // 根据环境确定是否启用调试模式
@@ -76,4 +64,6 @@ module.exports = {
       sensitiveActions: ['user_delete', 'user_password_reset', 'health_data_access', 'admin_login']
     }
   }
-}; 
+};
+
+module.exports = db; 
