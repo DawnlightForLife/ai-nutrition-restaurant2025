@@ -200,50 +200,42 @@ class ModelFactory {
             try {
               modelInstance = await initializationPromise;
             } catch (error) {
-              console.error(`等待模型 ${name} 初始化时出错:`, error);
+              console.error(`等待模型 ${name} 初始化失败:`, error);
               throw error;
             }
           }
           
-          // 如果还没有初始化，也没有初始化Promise，开始初始化
-          if (!modelInstance && !initializationPromise) {
+          // 如果还没有初始化，开始初始化
+          if (!modelInstance) {
             initializationPromise = lazyModelInitializer();
             try {
               modelInstance = await initializationPromise;
             } catch (error) {
               console.error(`初始化模型 ${name} 失败:`, error);
-              initializationPromise = null;
               throw error;
             }
           }
           
-          // 现在模型应该已经初始化好了，根据操作类型调用原始方法
-          const writeMethods = [
-            'create', 'save', 'updateOne', 'updateMany', 
-            'findOneAndUpdate', 'findByIdAndUpdate',
-            'deleteOne', 'deleteMany', 'findOneAndDelete', 
-            'findByIdAndDelete', 'insertMany', 'bulkWrite',
-            'replaceOne', 'createIndexes', 'collection'
-          ];
-          
-          if (!modelInstance) {
-            throw new Error(`模型 ${name} 初始化失败，无法执行操作 ${prop}`);
-          }
-          
+          // 现在模型已经初始化，可以调用相应的方法
           if (modelInstance.type === 'split') {
-            // 为写操作使用主连接
+            const writeMethods = [
+              'create', 'save', 'updateOne', 'updateMany', 
+              'findOneAndUpdate', 'findByIdAndUpdate',
+              'deleteOne', 'deleteMany', 'findOneAndDelete', 
+              'findByIdAndDelete', 'insertMany', 'bulkWrite',
+              'replaceOne', 'createIndexes', 'collection'
+            ];
+            
             if (writeMethods.includes(prop)) {
               return modelInstance.primaryModel[prop].apply(modelInstance.primaryModel, args);
             }
             
-            // 读操作使用副本连接
             return modelInstance.replicaModel[prop].apply(modelInstance.replicaModel, args);
           } else if (modelInstance.type === 'single' && modelInstance.model) {
-            // 单一连接模式，所有操作使用同一个模型
             return modelInstance.model[prop].apply(modelInstance.model, args);
-          } else {
-            throw new Error(`模型 ${name} 结构异常，无法执行操作 ${prop}`);
           }
+          
+          throw new Error(`无法访问模型 ${name} 的属性 ${prop}`);
         };
       }
     });

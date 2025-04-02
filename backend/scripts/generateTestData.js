@@ -9,8 +9,8 @@ const bcrypt = require('bcryptjs');
 const { ObjectId } = require('mongodb');
 
 // MongoDB连接配置 - 使用环境变量中的连接字符串或Docker网络中的地址
-const DB_URI = process.env.MONGO_PRIMARY_URI || 'mongodb://172.19.0.3:27017/smart_nutrition_restaurant';
-const DB_NAME = 'smart_nutrition_restaurant';
+const DB_URI = process.env.MONGO_PRIMARY_URI || 'mongodb://172.19.0.3:27017/ai-nutrition-restaurant';
+const DB_NAME = 'ai-nutrition-restaurant';
 
 // 分片配置（与directMigration.js相同）
 const shardingConfig = {

@@ -1,10 +1,11 @@
 /**
  * 检查迁移状态
  */
+const mongoose = require('mongoose');
 const { MongoClient } = require('mongodb');
 
 async function checkMigrationStatus() {
-  const client = new MongoClient('mongodb://localhost:27017/smart_nutrition_restaurant');
+  const client = new MongoClient('mongodb://localhost:27017/ai-nutrition-restaurant');
   
   try {
     await client.connect();

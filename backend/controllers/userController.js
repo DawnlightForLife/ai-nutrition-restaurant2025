@@ -5,6 +5,9 @@ const cacheService = require('../services/cacheService');
 const AuditLog = require('../models/auditLogModel');
 const { shardingConfig, getShardName } = require('../utils/shardingConfig');
 const { getDb } = require('../utils/db');
+const dbManager = require('../config/database');
+const mongoose = require('mongoose');
+const userService = require('../services/userService');
 require('dotenv').config();
 
 // JWT密钥，优先使用环境变量
@@ -16,8 +19,8 @@ const loginUser = async (req, res) => {
     const { phone, password } = req.body;
     console.log('[LOGIN] 尝试登录，手机号:', phone);
     
-    // 使用Mongoose模型直接查询，不依赖于外部的db.js
-    const user = await User.findOne({ phone });
+    // 使用userService查询用户
+    const user = await userService.findUserByPhone(phone);
     
     if (!user) {
       console.log('[LOGIN] 登录失败：用户不存在, 手机号:', phone);
@@ -28,9 +31,11 @@ const loginUser = async (req, res) => {
     }
     
     // 验证密码
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    console.log('[DEBUG] 数据库中加密密码:', user.password);
+    const isValidPassword = await userService.verifyPassword(user, password);
+    
     if (!isValidPassword) {
-      console.log('[LOGIN] 登录失败：密码错误, 手机号:', phone);
+      console.log('[LOGIN] 登录失败：密码错误, 手机号:', user.phone);
       return res.status(401).json({
         success: false,
         message: '密码错误'
@@ -39,13 +44,13 @@ const loginUser = async (req, res) => {
     
     // 生成JWT token
     console.log('[LOGIN] 密码验证成功，正在生成令牌, 用户ID:', user._id);
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    const token = userService.generateToken({ 
+      userId: user._id, 
+      role: user.role 
+    });
     
-    console.log('[LOGIN] 令牌生成成功，长度:', token.length);
+    // 记录成功的登录尝试
+    console.log('[LOGIN] 登录成功, 用户ID:', user._id, ", 手机号:", user.phone);
     
     // 记录登录审计日志
     try {
@@ -78,22 +83,24 @@ const loginUser = async (req, res) => {
       // 不阻止登录流程继续
     }
     
-    // 返回用户信息和token
-    res.json({
+    // 响应给客户端
+    const userIdStr = user._id.toString();
+    return res.json({
       success: true,
+      message: '登录成功',
       token,
       user: {
-        id: user._id,
-        nickname: user.nickname,
-        phone: user.phone,
-        role: user.role,
-        dietaryPreferences: user.dietaryPreferences
+        id: userIdStr,
+        _id: userIdStr, // 保留 _id 以兼容旧代码
+        nickname: user.nickname || '',
+        phone: user.phone || '',
+        role: user.role || 'user',
+        avatar: user.avatar || ''
       }
     });
-    
   } catch (error) {
-    console.error('[LOGIN] 登录错误:', error);
-    res.status(500).json({
+    console.error('[LOGIN] 登录过程中出错:', error);
+    return res.status(500).json({
       success: false,
       message: '服务器错误'
     });
@@ -126,7 +133,10 @@ const wechatLogin = async (req, res) => {
     }
     
     // 生成JWT令牌
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = userService.generateToken({
+      userId: user._id,
+      role: user.role
+    });
     
     return res.json({
       success: true,
@@ -151,8 +161,12 @@ const registerUser = async (req, res) => {
   try {
     const { phone, password, nickname } = req.body;
     
-    // 使用Mongoose模型检查用户是否已存在
-    const existingUser = await User.findOne({ phone });
+    // 添加密码调试日志
+    console.log('[REGISTER] 注册尝试，手机号:', phone);
+    console.log('[REGISTER] 原始密码长度:', password.length);
+    
+    // 使用userService检查用户是否已存在
+    const existingUser = await userService.findUserByPhone(phone);
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -160,26 +174,14 @@ const registerUser = async (req, res) => {
       });
     }
     
-    // 加密密码
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // 创建新用户
-    const user = new User({
-      phone,
-      password: hashedPassword,
-      nickname,
-      role: 'user'
-    });
-    
-    // 保存用户
-    await user.save();
+    // 使用userService创建用户
+    const user = await userService.createUser({ phone, password, nickname });
     
     // 生成JWT token
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    const token = userService.generateToken({
+      userId: user._id,
+      role: user.role
+    });
     
     // 记录审计日志
     try {
@@ -212,14 +214,19 @@ const registerUser = async (req, res) => {
       // 继续注册流程
     }
     
+    // 确保有 id 字段
+    const userIdStr = user._id.toString();
+    
     res.status(201).json({
       success: true,
       token,
       user: {
-        id: user._id,
-        nickname: user.nickname,
-        phone: user.phone,
-        role: user.role
+        id: userIdStr,
+        _id: userIdStr, // 保留 _id 以兼容旧代码
+        nickname: user.nickname || '',
+        phone: user.phone || '',
+        role: user.role || 'user',
+        avatar: user.avatar || ''
       }
     });
     
@@ -232,14 +239,21 @@ const registerUser = async (req, res) => {
   }
 };
 
-// 获取用户资料
-const getUserProfile = async (req, res) => {
+// 获取用户信息的处理器 - 用于API
+const getUserInfo = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const db = await getDb();
+    // 从令牌中获取用户ID
+    const userId = req.user.id || req.user.userId;
     
-    // 获取用户所在的分片
-    const user = await db.collection('users').findOne({ _id: userId });
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: '令牌中未包含有效的用户ID'
+      });
+    }
+    
+    // 使用userService查找用户
+    const user = await userService.findUserAcrossShards({ _id: userId });
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -247,22 +261,57 @@ const getUserProfile = async (req, res) => {
       });
     }
     
-    // 获取用户的健康数据
-    const healthData = await db.collection('healthData').findOne({ userId });
+    // 获取健康数据
+    let healthData = user.healthData || {};
     
-    res.json({
+    // 如果用户文档中没有健康数据，尝试查询健康数据集合
+    if (!healthData || Object.keys(healthData).length === 0) {
+      try {
+        // 基于用户所在分片构建健康数据分片名
+        const userShard = userService.getUserShardName(user.phone);
+        const healthDataShard = userShard.replace('user_shard_', 'healthdata_user_');
+        
+        // 查询健康数据
+        const db = await dbManager.getPrimaryConnection();
+        const healthDataDoc = await db.collection(healthDataShard).findOne({ userId: user._id.toString() });
+        
+        if (healthDataDoc) {
+          healthData = healthDataDoc;
+        }
+      } catch (err) {
+        console.error('查询健康数据失败:', err);
+        // 继续使用用户文档中的健康数据
+      }
+    }
+    
+    // 确保有 id 字段，即使已经有 _id
+    const userIdStr = user._id.toString();
+    
+    // 标准化响应，确保所有字段都有默认值
+    res.status(200).json({
       success: true,
       user: {
-        id: user._id,
-        nickname: user.nickname,
-        phone: user.phone,
-        role: user.role,
-        healthData: healthData || {}
+        id: userIdStr,
+        _id: userIdStr, // 保留 _id 以兼容旧代码
+        nickname: user.nickname || '',
+        phone: user.phone || '',
+        age: user.age || 0,
+        gender: user.gender || '',
+        height: user.height || 0,
+        weight: user.weight || 0,
+        activityLevel: user.activityLevel || 'moderate',
+        region: user.region || '',
+        dietaryPreferences: user.dietaryPreferences || {},
+        healthData: healthData || {},
+        role: user.role || 'user',
+        avatar: user.avatar || '',
+        created_at: user.createdAt?.toISOString() || new Date().toISOString(),
+        createdAt: user.createdAt || new Date(),
+        updatedAt: user.updatedAt || new Date()
       }
     });
-    
   } catch (error) {
-    console.error('获取用户资料错误:', error);
+    console.error('获取用户信息失败:', error);
     res.status(500).json({
       success: false,
       message: '服务器错误'
@@ -275,22 +324,9 @@ const updateUserInfo = async (req, res) => {
   try {
     const userId = req.user.userId;
     const { nickname, phone } = req.body;
-    const db = await getDb();
     
-    // 获取用户所在的分片
-    const shardName = getShardName('user', { phone });
-    
-    // 更新用户信息
-    await db.collection(shardName).updateOne(
-      { _id: userId },
-      { 
-        $set: { 
-          nickname,
-          phone,
-          updatedAt: new Date()
-        } 
-      }
-    );
+    // 使用userService更新用户信息
+    await userService.updateUser(userId, { nickname, phone });
     
     res.json({
       success: true,
@@ -311,22 +347,11 @@ const updateHealthInfo = async (req, res) => {
   try {
     const userId = req.user.userId;
     const healthInfo = req.body;
-    const db = await getDb();
     
-    // 获取健康数据分片名称
-    const shardName = getShardName('healthData', { userId });
-    
-    // 更新健康信息
-    await db.collection(shardName).updateOne(
-      { userId },
-      { 
-        $set: { 
-          ...healthInfo,
-          updatedAt: new Date()
-        }
-      },
-      { upsert: true }
-    );
+    // 使用userService更新用户健康信息
+    await userService.updateUser(userId, { 
+      healthData: healthInfo 
+    });
     
     res.json({
       success: true,
@@ -347,30 +372,12 @@ const updateRegionAndPreferences = async (req, res) => {
   try {
     const userId = req.user.userId;
     const { region, dietaryPreferences } = req.body;
-    const db = await getDb();
     
-    // 获取用户所在的分片
-    const user = await db.collection('users').findOne({ _id: userId });
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: '用户不存在'
-      });
-    }
-    
-    const shardName = getShardName('user', { phone: user.phone });
-    
-    // 更新用户信息
-    await db.collection(shardName).updateOne(
-      { _id: userId },
-      { 
-        $set: { 
-          region,
-          dietaryPreferences,
-          updatedAt: new Date()
-        } 
-      }
-    );
+    // 使用userService更新用户信息
+    await userService.updateUser(userId, { 
+      region, 
+      dietaryPreferences 
+    });
     
     res.json({
       success: true,
@@ -396,37 +403,14 @@ const uploadMedicalReport = async (req, res) => {
       return res.status(400).json({ success: false, message: '未接收到文件' });
     }
     
-    const db = await getDb();
-    
-    // 使用分片策略查找用户
-    const shardKey = userId;
-    const strategy = shardingConfig.strategies.User;
-    const shardCollectionName = getShardName('users', shardKey, strategy);
-    
-    // 从分片中查找用户
-    const user = await db.collection(shardCollectionName).findOne({ _id: userId });
-    if (!user) {
-      return res.status(404).json({ success: false, message: '用户不存在' });
-    }
-    
-    // 更新医疗报告信息
-    const updateData = {
-      'healthData.medicalReportUrl': reportUrl,
-      'healthData.hasRecentMedicalReport': true,
-      updatedAt: new Date()
-    };
-    
-    // 更新分片中的数据
-    await db.collection(shardCollectionName).updateOne(
-      { _id: userId },
-      { $set: updateData }
-    );
-    
-    // 同时更新原始集合
-    await db.collection('users').updateOne(
-      { _id: userId },
-      { $set: updateData }
-    );
+    // 使用userService更新用户信息
+    await userService.updateUser(userId, {
+      healthData: {
+        ...((await userService.findUserAcrossShards({ _id: userId }))?.healthData || {}),
+        medicalReportUrl: reportUrl,
+        hasRecentMedicalReport: true
+      }
+    });
     
     res.json({
       success: true,
@@ -439,41 +423,6 @@ const uploadMedicalReport = async (req, res) => {
   }
 };
 
-// 获取用户信息的处理器
-const getUserInfo = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    
-    // 使用分片感知的方法查找用户
-    const user = await User.findByIdFromShards(userId);
-    if (!user) {
-      return res.status(404).json({ message: '用户不存在' });
-    }
-    
-    res.status(200).json({
-      user: {
-        id: user._id,
-        nickname: user.nickname,
-        phone: user.phone,
-        age: user.age,
-        gender: user.gender,
-        height: user.height,
-        weight: user.weight,
-        activityLevel: user.activityLevel,
-        region: user.region,
-        dietaryPreferences: user.dietaryPreferences,
-        healthData: user.healthData,
-        role: user.role,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt
-      }
-    });
-  } catch (error) {
-    console.error('获取用户信息失败:', error);
-    res.status(500).json({ message: '服务器错误' });
-  }
-};
-
 module.exports = {
   loginUser,
   registerUser,
@@ -481,7 +430,6 @@ module.exports = {
   updateHealthInfo,
   updateRegionAndPreferences,
   uploadMedicalReport,
-  getUserProfile,
-  updateUserInfo,
-  getUserInfo
+  getUserInfo,
+  updateUserInfo
 };

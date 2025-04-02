@@ -35,16 +35,23 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+// 添加健康检查ping接口
+app.get('/api/ping', (req, res) => {
+  res.status(200).json({
+    message: 'pong',
+    timestamp: new Date(),
+    uptime: process.uptime(),
+    db_connected: mongoose.connection.readyState === 1
+  });
+});
+
 // 确保数据库连接就绪后再绑定路由和启动服务器
 const startServer = async () => {
   try {
     console.log('等待数据库连接完成...');
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/smart_nutrition_restaurant', {
-      serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 30000,
-      connectTimeoutMS: 30000,
-      maxPoolSize: 10,
-      minPoolSize: 5,
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/ai-nutrition-restaurant', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     });
     console.log('Mongoose默认连接已打开');
     console.log('数据库连接已就绪');

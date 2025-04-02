@@ -8,8 +8,8 @@ const fs = require('fs');
 const path = require('path');
 
 // MongoDB连接配置
-const DB_URI = 'mongodb://localhost:27017/smart_nutrition_restaurant';
-const DB_NAME = 'smart_nutrition_restaurant';
+const DB_URI = 'mongodb://localhost:27017/ai-nutrition-restaurant';
+const DB_NAME = 'ai-nutrition-restaurant';
 
 // 分片配置
 const shardingConfig = {

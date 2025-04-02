@@ -19,7 +19,7 @@ services:
         condition: service_healthy
     environment:
       - PORT=3000
-      - MONGO_URI=mongodb://mongo:27017/smart_nutrition_restaurant
+      - MONGO_URI=mongodb://mongo:27017/ai-nutrition-restaurant
     networks:
       - app-network
 

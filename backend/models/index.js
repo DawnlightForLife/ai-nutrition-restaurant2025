@@ -25,6 +25,8 @@ const Store = require('./storeModel');
 const StoreDish = require('./storeDishModel');
 const UserFavorite = require('./userFavoriteModel');
 const DbMetrics = require('./dbMetricsModel');
+const Notification = require('./notificationModel');
+const OAuthAccount = require('./oauthAccountModel');
 
 // 连接数据库 - 使用新的数据库管理器
 const connectDB = async () => {
@@ -154,9 +156,22 @@ module.exports = {
   StoreDish,
   UserFavorite,
   DbMetrics,
+  Notification,
+  OAuthAccount,
   
   // 便捷的数据库操作方法
   createIndexes: async () => {
+    // 检查是否已经创建过索引
+    const indexCollection = await mongoose.connection.db.collection('system.indexes');
+    const existingIndexes = await indexCollection.find().toArray();
+    
+    if (existingIndexes.length > 0) {
+      console.log('数据库索引已存在,跳过创建');
+      return;
+    }
+    
+    console.log('开始创建数据库索引...');
+    
     // 创建所有集合的索引（在部署时可以调用）
     await Promise.all([
       User.createIndexes(),
@@ -179,7 +194,9 @@ module.exports = {
       Store.createIndexes(),
       StoreDish.createIndexes(),
       UserFavorite.createIndexes(),
-      DbMetrics.createIndexes()
+      DbMetrics.createIndexes(),
+      Notification.createIndexes(),
+      OAuthAccount.createIndexes()
     ]);
     console.log('所有数据库索引创建完成');
   },
@@ -211,8 +228,10 @@ module.exports = {
       Store.deleteMany({}),
       StoreDish.deleteMany({}),
       UserFavorite.deleteMany({}),
-      DbMetrics.deleteMany({})
+      DbMetrics.deleteMany({}),
+      Notification.deleteMany({}),
+      OAuthAccount.deleteMany({})
     ]);
-    console.log('测试数据库已清空');
+    console.log('数据库清理完成');
   }
 }; 

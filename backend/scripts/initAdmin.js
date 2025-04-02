@@ -3,7 +3,7 @@ const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 
 // 连接数据库
-mongoose.connect('mongodb://mongo:27017/smart_nutrition_restaurant', {
+mongoose.connect('mongodb://mongo:27017/ai-nutrition-restaurant', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => {

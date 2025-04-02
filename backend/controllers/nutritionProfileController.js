@@ -122,23 +122,40 @@ const createProfile = async (req, res) => {
 // 获取用户的所有营养档案
 const getUserProfiles = async (req, res) => {
   try {
-    const { ownerId } = req.query;
+    // 尝试从请求参数、请求体或者认证令牌中获取用户ID
+    const { ownerId, userId } = req.query;
     
-    if (!ownerId) {
-      return res.status(400).json({ success: false, message: '用户ID不能为空' });
+    // 从JWT获取用户ID
+    const jwtUserId = req.user ? req.user.userId : null;
+    
+    // 确定最终使用的用户ID
+    const finalUserId = ownerId || userId || jwtUserId;
+    
+    console.log(`获取营养档案列表 - 参数: ownerId=${ownerId}, userId=${userId}, JWT用户=${jwtUserId}, 最终使用=${finalUserId}`);
+    
+    if (!finalUserId) {
+      console.warn('获取营养档案列表失败: 未提供用户ID');
+      return res.status(400).json({ 
+        success: false, 
+        message: '用户ID不能为空', 
+        help: '请在查询参数中提供ownerId或userId，或使用有效的认证令牌' 
+      });
     }
     
     // 验证ID格式是否有效
-    if (!mongoose.Types.ObjectId.isValid(ownerId)) {
+    if (!mongoose.Types.ObjectId.isValid(finalUserId)) {
+      console.warn(`获取营养档案列表失败: 无效的用户ID格式 "${finalUserId}"`);
       return res.status(400).json({ success: false, message: '无效的用户ID格式' });
     }
 
     // 使用缓存服务
-    const cacheKey = `user_profiles:${ownerId}`;
+    const cacheKey = `user_profiles:${finalUserId}`;
     const profiles = await cacheService.get(cacheKey, async () => {
-      return await nutritionProfileService.getProfilesByUserId(ownerId);
+      return await nutritionProfileService.getProfilesByUserId(finalUserId);
     }, { ttl: 300 }); // 缓存5分钟
 
+    console.log(`获取到 ${profiles.length} 个营养档案，用户ID: ${finalUserId}`);
+    
     res.json({
       success: true,
       count: profiles.length,

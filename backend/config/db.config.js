@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const db = {
   // MongoDB连接URI
-  mongoURI: process.env.MONGO_URI || 'mongodb://localhost:27017/smart_nutrition_restaurant',
+  mongoURI: process.env.MONGO_URI || 'mongodb://localhost:27017/ai-nutrition-restaurant',
   
   // MongoDB连接选项
   options: {
@@ -63,7 +63,18 @@ const db = {
       retentionPeriod: 365, // 1年（天数）
       sensitiveActions: ['user_delete', 'user_password_reset', 'health_data_access', 'admin_login']
     }
-  }
+  },
+  
+  // 读写分离配置
+  replicaSet: {
+    primary: process.env.MONGO_PRIMARY_URI || 'mongodb://localhost:27017/ai-nutrition-restaurant',
+    replicas: [
+      process.env.MONGO_REPLICA_1_URI || 'mongodb://localhost:27017/ai-nutrition-restaurant'
+    ]
+  },
+  
+  // 是否启用分片
+  enableSharding: process.env.ENABLE_SHARDING === 'true'
 };
 
 module.exports = db; 

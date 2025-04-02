@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const { 
   loginUser, 
   registerUser, 
-  getUserProfile, 
+  getUserInfo, 
   updateUserInfo,
   updateHealthInfo,
   updateRegionAndPreferences
@@ -21,7 +21,10 @@ router.post('/login', loginUser);
 router.post('/register', registerUser);
 
 // 获取用户资料
-router.get('/profile', authenticateToken, getUserProfile);
+router.get('/profile', authenticateToken, getUserInfo);
+
+// 获取用户详细信息 - 可以保留这个路径作为别名
+router.get('/me', authenticateToken, getUserInfo);
 
 // 更新用户信息
 router.put('/profile', authenticateToken, updateUserInfo);
