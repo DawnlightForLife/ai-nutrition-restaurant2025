@@ -4,7 +4,7 @@ const ModelFactory = require('../modelFactory');
 
 // 导入需要的模型
 const Order = require('../orderModel');
-const Dish = require('./dishModel');
+const Dish = require('./ProductDishModel');
 const AiRecommendation = require('./aiRecommendationModel');
 
 // 商家销售统计预聚合模型
