@@ -1,24 +1,20 @@
 import 'package:flutter/material.dart';
 
-/// 错误消息组件
+/// 成功消息组件
 ///
-/// 用于展示操作失败或错误的反馈信息
-class ErrorMessage extends StatelessWidget {
+/// 用于展示操作成功后的反馈信息
+class SuccessMessage extends StatelessWidget {
   final String message;
   final IconData? icon;
   final Duration duration;
   final VoidCallback? onDismiss;
-  final VoidCallback? onRetry;
-  final String? retryText;
 
-  const ErrorMessage({
+  const SuccessMessage({
     Key? key,
     required this.message,
-    this.icon = Icons.error_outline,
-    this.duration = const Duration(seconds: 5),
+    this.icon = Icons.check_circle,
+    this.duration = const Duration(seconds: 3),
     this.onDismiss,
-    this.onRetry,
-    this.retryText,
   }) : super(key: key);
 
   @override

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// 网络图片缓存组件
+/// 网络图片缓存包装组件
 ///
-/// 加载网络图片时提供缓存、加载状态和错误处理
-class CachedNetworkImageWidget extends StatelessWidget {
+/// 封装网络图片加载、缓存和错误处理逻辑
+class CachedNetworkImageWrapper extends StatelessWidget {
   final String imageUrl;
   final double? width;
   final double? height;
@@ -12,11 +12,9 @@ class CachedNetworkImageWidget extends StatelessWidget {
   final Widget? errorWidget;
   final BorderRadius? borderRadius;
   final Duration fadeInDuration;
-  final Duration placeholderFadeInDuration;
   final bool showLoadingIndicator;
-  final Color? backgroundColor;
 
-  const CachedNetworkImageWidget({
+  const CachedNetworkImageWrapper({
     Key? key,
     required this.imageUrl,
     this.width,
@@ -26,9 +24,7 @@ class CachedNetworkImageWidget extends StatelessWidget {
     this.errorWidget,
     this.borderRadius,
     this.fadeInDuration = const Duration(milliseconds: 300),
-    this.placeholderFadeInDuration = const Duration(milliseconds: 300),
     this.showLoadingIndicator = true,
-    this.backgroundColor,
   }) : super(key: key);
 
   @override
@@ -36,4 +32,4 @@ class CachedNetworkImageWidget extends StatelessWidget {
     // TODO: 待填充组件逻辑
     return Container();
   }
-}
+} 

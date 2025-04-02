@@ -212,4 +212,320 @@
 
 ## 结论
 
-遵循本文档规范开发UI组件，有助于保持代码库的一致性、提高组件复用率、降低维护成本。随着项目的发展，本规范将持续更新以适应新的需求和最佳实践。 
+遵循本文档规范开发UI组件，有助于保持代码库的一致性、提高组件复用率、降低维护成本。随着项目的发展，本规范将持续更新以适应新的需求和最佳实践。
+
+# 组件使用指南
+
+本文档为AI营养餐厅Flutter应用组件使用指南，旨在统一组件使用方式，提高开发效率和保持UI一致性。
+
+## 组件使用原则
+
+1. **使用统一组件库**：优先使用项目内定义的组件，而非直接使用Flutter基础组件
+2. **参数传递完整**：使用组件时应提供所有必要参数，可选参数根据需要传递
+3. **遵循命名规范**：组件实例变量命名应遵循项目命名规范
+4. **不修改组件内部**：如需修改组件行为，通过参数配置，而非直接修改组件源码
+5. **组件复用**：相似功能应复用现有组件，而非创建新组件
+
+## 基础组件
+
+### 按钮 (AppButton)
+
+```dart
+AppButton(
+  text: '登录',
+  onPressed: () => login(),
+  type: ButtonType.primary,
+  size: ButtonSize.medium,
+  isLoading: isLoading,
+)
+```
+
+### 输入框 (CustomInput)
+
+```dart
+CustomInput(
+  controller: _emailController,
+  labelText: '邮箱',
+  hintText: '请输入邮箱地址',
+  keyboardType: TextInputType.emailAddress,
+  validator: (value) => Validators.email(value),
+  prefixIcon: Icons.email,
+)
+```
+
+### 卡片 (AppCard)
+
+```dart
+AppCard(
+  title: '营养摄入统计',
+  child: NutritionStatsView(),
+  padding: EdgeInsets.all(16.0),
+  elevation: 2.0,
+)
+```
+
+### 标签栏 (AppTabBar)
+
+```dart
+AppTabBar(
+  tabs: ['今日', '本周', '本月'],
+  onTabChanged: (index) => switchPeriod(index),
+  selectedIndex: currentPeriodIndex,
+)
+```
+
+### 成功消息 (SuccessMessage)
+
+```dart
+SuccessMessage(
+  message: '订单提交成功',
+  duration: Duration(seconds: 3),
+  onDismiss: () => Navigator.pop(context),
+)
+```
+
+### 错误消息 (ErrorMessage)
+
+```dart
+ErrorMessage(
+  message: '网络连接失败',
+  icon: Icons.signal_wifi_off,
+  actionText: '重试',
+  onAction: () => retry(),
+)
+```
+
+### 下拉选择器 (CustomDropdown)
+
+```dart
+CustomDropdown<String>(
+  value: selectedMeal,
+  items: ['早餐', '午餐', '晚餐', '加餐'],
+  onChanged: (value) => setMeal(value),
+  labelText: '选择餐次',
+)
+```
+
+## 对话框组件
+
+### 确认对话框 (ConfirmDialog)
+
+```dart
+ConfirmDialog.show(
+  context: context,
+  title: '确认删除',
+  message: '确定要删除这个饮食记录吗？此操作不可撤销。',
+  confirmText: '删除',
+  cancelText: '取消',
+  onConfirm: () => deleteRecord(),
+);
+```
+
+### 表单对话框 (FormDialog)
+
+```dart
+FormDialog.show(
+  context: context,
+  title: '添加备注',
+  formFields: [
+    TextFormField(
+      controller: _noteController,
+      decoration: InputDecoration(labelText: '备注内容'),
+      maxLines: 3,
+    ),
+  ],
+  onSubmit: () => saveNote(_noteController.text),
+);
+```
+
+## 状态组件
+
+### 加载指示器 (LoadingIndicator)
+
+```dart
+// 在组件内使用
+LoadingIndicator(
+  size: 40.0,
+  color: Theme.of(context).primaryColor,
+  message: '数据加载中...',
+)
+
+// 全屏加载
+LoadingIndicator.fullScreenIndicator(
+  context: context,
+  message: '正在处理您的请求...',
+);
+```
+
+### 空状态 (EmptyState)
+
+```dart
+EmptyState(
+  message: '暂无饮食记录',
+  subMessage: '开始记录您的第一餐吧',
+  icon: Icons.restaurant,
+  actionButton: AppButton(
+    text: '添加记录',
+    onPressed: () => addNewRecord(),
+    type: ButtonType.primary,
+  ),
+)
+```
+
+### 骨架加载项 (SkeletonItem)
+
+```dart
+SkeletonItem(
+  width: double.infinity,
+  height: 80.0,
+  borderRadius: BorderRadius.circular(8.0),
+)
+```
+
+### 骨架列表 (SkeletonList)
+
+```dart
+SkeletonList(
+  itemCount: 5,
+  itemHeight: 80.0,
+  padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+  itemBuilder: (context, index) => MealItemSkeleton(),
+)
+```
+
+## 媒体组件
+
+### 网络图片缓存组件 (CachedNetworkImageWidget)
+
+```dart
+CachedNetworkImageWidget(
+  imageUrl: 'https://example.com/images/meal.jpg',
+  width: 120.0,
+  height: 120.0,
+  fit: BoxFit.cover,
+  borderRadius: BorderRadius.circular(8.0),
+  placeholder: Container(
+    color: Colors.grey[200],
+    child: Icon(Icons.image, color: Colors.grey),
+  ),
+  errorWidget: Icon(Icons.broken_image, color: Colors.red),
+)
+```
+
+### 图片选择器组件 (ImagePickerWidget)
+
+```dart
+ImagePickerWidget(
+  onImagesSelected: (paths) {
+    setState(() {
+      selectedImagePaths = paths;
+    });
+  },
+  maxImages: 3,
+  allowMultiple: true,
+  allowCamera: true,
+  allowGallery: true,
+  enableCrop: true,
+  initialImages: existingImages,
+)
+```
+
+### 视频播放器组件 (VideoPlayerWidget)
+
+```dart
+VideoPlayerWidget(
+  videoUrl: 'https://example.com/videos/cooking_tutorial.mp4',
+  isNetworkVideo: true,
+  autoPlay: false,
+  showControls: true,
+  width: double.infinity,
+  height: 240.0,
+  onVideoEnd: () => showNextVideo(),
+)
+```
+
+## 用户组件
+
+### 用户头像组件 (AvatarWidget)
+
+```dart
+AvatarWidget(
+  imageUrl: user.avatarUrl,
+  size: 50.0,
+  isOnline: user.isActive,
+  showOnlineStatus: true,
+  borderColor: Theme.of(context).primaryColor,
+  borderWidth: 2.0,
+  initials: 'JD', // 当没有头像时显示的文字
+  onTap: () => navigateToProfile(user.id),
+)
+```
+
+### 用户资料卡片组件 (UserProfileCard)
+
+```dart
+UserProfileCard(
+  username: user.name,
+  avatarUrl: user.avatarUrl,
+  bio: user.bio,
+  location: user.location,
+  followersCount: user.followersCount,
+  followingCount: user.followingCount,
+  isVerified: user.isVerified,
+  isFollowing: isFollowing,
+  tags: user.interests,
+  onFollowTap: () => toggleFollow(user.id),
+  onMessageTap: () => sendMessage(user.id),
+  showStats: true,
+)
+```
+
+### 用户设置区域组件 (UserSettingsSection)
+
+```dart
+UserSettingsSection(
+  title: '账户设置',
+  icon: Icons.account_circle,
+  children: [
+    SettingsItem(
+      title: '个人资料',
+      subtitle: '编辑您的个人信息',
+      icon: Icons.person,
+      onTap: () => navigateToProfileEdit(),
+    ),
+    SettingsItem(
+      title: '密码管理',
+      subtitle: '更改密码和安全设置',
+      icon: Icons.lock,
+      onTap: () => navigateToPasswordSettings(),
+    ),
+    SettingsItem(
+      title: '隐私设置',
+      subtitle: '管理数据共享和权限',
+      icon: Icons.privacy_tip,
+      onTap: () => navigateToPrivacySettings(),
+    ),
+  ],
+  collapsible: true,
+  expanded: true,
+)
+```
+
+## 最佳实践
+
+1. **组织相关**：相关组件应放在一起，如表单相关组件应放在同一组件集合中
+2. **错误处理**：所有用户输入组件应包含适当的错误处理和反馈机制
+3. **响应式设计**：组件应考虑不同屏幕尺寸的适配
+4. **主题一致性**：组件应使用应用主题中定义的颜色和样式
+5. **无障碍性**：关键组件应考虑无障碍支持，如提供足够的对比度和适当的标签
+
+## 组件维护与更新
+
+如需修改现有组件或添加新组件，请按照以下流程：
+
+1. 提交组件变更申请
+2. 经团队审核通过后进行修改
+3. 更新组件文档
+4. 发布组件更新通知
+
+**注意**：由于Flutter架构已冻结，组件的核心结构不应改变，仅允许进行非破坏性的增强和错误修复。 

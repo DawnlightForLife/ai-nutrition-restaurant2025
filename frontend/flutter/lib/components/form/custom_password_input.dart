@@ -1,43 +1,42 @@
 import 'package:flutter/material.dart';
 
-/// 自定义输入框组件
+/// 自定义密码输入框组件
 ///
-/// 标准化的输入框组件，支持标签、错误提示和各种输入类型
-class CustomInput extends StatelessWidget {
+/// 专用于密码输入，支持切换显示/隐藏密码
+class CustomPasswordInput extends StatefulWidget {
   final String? label;
   final String? hint;
   final String? errorText;
   final TextEditingController? controller;
-  final TextInputType keyboardType;
   final bool autofocus;
-  final int? maxLines;
-  final int? maxLength;
   final FormFieldValidator<String>? validator;
   final void Function(String)? onChanged;
   final VoidCallback? onEditingComplete;
   final FocusNode? focusNode;
-  final Widget? prefix;
-  final Widget? suffix;
   final bool enabled;
+  final EdgeInsetsGeometry? contentPadding;
 
-  const CustomInput({
+  const CustomPasswordInput({
     Key? key,
     this.label,
     this.hint,
     this.errorText,
     this.controller,
-    this.keyboardType = TextInputType.text,
     this.autofocus = false,
-    this.maxLines = 1,
-    this.maxLength,
     this.validator,
     this.onChanged,
     this.onEditingComplete,
     this.focusNode,
-    this.prefix,
-    this.suffix,
     this.enabled = true,
+    this.contentPadding,
   }) : super(key: key);
+
+  @override
+  State<CustomPasswordInput> createState() => _CustomPasswordInputState();
+}
+
+class _CustomPasswordInputState extends State<CustomPasswordInput> {
+  bool _obscureText = true;
 
   @override
   Widget build(BuildContext context) {

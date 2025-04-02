@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 /// 确认对话框组件
 ///
-/// 简洁的确认对话框，用于用户确认操作
-class ConfirmDialog extends StatelessWidget {
+/// 用于需要用户确认的操作，支持自定义标题、内容和按钮文本
+class ConfirmationDialog extends StatelessWidget {
   final String title;
   final String message;
   final String confirmText;
@@ -13,7 +13,7 @@ class ConfirmDialog extends StatelessWidget {
   final bool isDangerous;
   final Widget? icon;
 
-  const ConfirmDialog({
+  const ConfirmationDialog({
     Key? key,
     required this.title,
     required this.message,
@@ -46,4 +46,4 @@ class ConfirmDialog extends StatelessWidget {
     // TODO: 待填充组件逻辑
     return Container();
   }
-}
+} 
