@@ -1,34 +1,47 @@
 import 'package:flutter/material.dart';
 
-/// 自定义密码输入框组件
+/// 自定义密码输入组件
 ///
-/// 专用于密码输入，支持切换显示/隐藏密码
+/// 提供带可见性切换的密码输入功能
 class CustomPasswordInput extends StatefulWidget {
-  final String? label;
-  final String? hint;
+  /// 控制器
+  final TextEditingController controller;
+  
+  /// 标签文本
+  final String? labelText;
+  
+  /// 提示文本
+  final String? hintText;
+  
+  /// 错误文本
   final String? errorText;
-  final TextEditingController? controller;
-  final bool autofocus;
-  final FormFieldValidator<String>? validator;
+  
+  /// 验证器函数
+  final String? Function(String?)? validator;
+  
+  /// 输入完成回调
+  final void Function()? onEditingComplete;
+  
+  /// 值变化回调
   final void Function(String)? onChanged;
-  final VoidCallback? onEditingComplete;
-  final FocusNode? focusNode;
+  
+  /// 自动获取焦点
+  final bool autofocus;
+  
+  /// 是否启用
   final bool enabled;
-  final EdgeInsetsGeometry? contentPadding;
 
   const CustomPasswordInput({
     Key? key,
-    this.label,
-    this.hint,
+    required this.controller,
+    this.labelText,
+    this.hintText,
     this.errorText,
-    this.controller,
-    this.autofocus = false,
     this.validator,
-    this.onChanged,
     this.onEditingComplete,
-    this.focusNode,
+    this.onChanged,
+    this.autofocus = false,
     this.enabled = true,
-    this.contentPadding,
   }) : super(key: key);
 
   @override
@@ -40,7 +53,32 @@ class _CustomPasswordInputState extends State<CustomPasswordInput> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: 待填充组件逻辑
-    return Container();
+    return TextFormField(
+      controller: widget.controller,
+      obscureText: _obscureText,
+      decoration: InputDecoration(
+        labelText: widget.labelText,
+        hintText: widget.hintText,
+        errorText: widget.errorText,
+        prefixIcon: const Icon(Icons.lock_outline),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscureText ? Icons.visibility_off : Icons.visibility,
+          ),
+          onPressed: () {
+            setState(() {
+              _obscureText = !_obscureText;
+            });
+          },
+        ),
+      ),
+      validator: widget.validator,
+      onEditingComplete: widget.onEditingComplete,
+      onChanged: widget.onChanged,
+      autofocus: widget.autofocus,
+      enabled: widget.enabled,
+      keyboardType: TextInputType.visiblePassword,
+      textInputAction: TextInputAction.next,
+    );
   }
 }
