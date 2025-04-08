@@ -4,8 +4,8 @@ const { shardingService } = require('../../services/shardingService');
 
 // 导入所需的模型
 const User = require('../core/userModel');
-const Nutritionist = require('../nutritionistModel');
-const NutritionProfile = require('../nutritionProfileModel');
+const Nutritionist = require('../nutrition/nutritionistModel');
+const NutritionProfile = require('../health/nutritionProfileModel');
 
 const consultationSchema = new mongoose.Schema({
   user_id: {

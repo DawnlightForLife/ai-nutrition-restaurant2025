@@ -360,7 +360,7 @@ function decryptSensitiveData(data) {
 }
 
 // 使用ModelFactory创建模型
-const OAuthAccount = ModelFactory.createModel('OAuthAccount', oauthAccountSchema);
+const OAuthAccount = ModelFactory.model('OAuthAccount', oauthAccountSchema);
 
 // 导出模型
 module.exports = OAuthAccount; 

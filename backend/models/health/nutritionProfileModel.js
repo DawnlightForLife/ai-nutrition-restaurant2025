@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-const ModelFactory = require('./modelFactory');
-const { shardingService } = require('../services/shardingService');
+const modelFactory = require('../modelFactory');
+const { shardingService } = require('../../services/shardingService');
 
 // 定义营养档案模型的结构
 const nutritionProfileSchema = new mongoose.Schema({
@@ -11,129 +11,183 @@ const nutritionProfileSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  // 档案名称
-  name: {
+  userId: {
     type: String,
     required: true,
-    trim: true,
-    sensitivity_level: 3 // 低度敏感数据
+    index: true,
   },
-  // 基本信息
+  // 档案基本信息
+  profileName: {
+    type: String,
+    required: true,
+    trim: true
+  },
   gender: {
     type: String,
     enum: ['male', 'female', 'other'],
-    default: 'other',
-    sensitivity_level: 2 // 中度敏感数据
+    default: 'other'
   },
-  age: {
-    type: Number,
-    min: 0,
-    max: 120,
-    sensitivity_level: 2 // 中度敏感数据
+  ageGroup: {
+    type: String,
+    enum: ['under_18', '18_30', '31_45', '46_60', 'above_60'],
+    required: true
   },
   height: {
     type: Number, // 单位：厘米
     min: 50,
-    max: 250,
-    sensitivity_level: 2 // 中度敏感数据
+    max: 250
   },
   weight: {
     type: Number, // 单位：公斤
     min: 0,
-    max: 300,
-    sensitivity_level: 2 // 中度敏感数据
+    max: 300
   },
-  // 活动水平
-  activity_level: {
+  region: {
+    province: String,
+    city: String,
+    district: String
+  },
+  occupation: {
     type: String,
-    enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'],
-    default: 'moderate',
-    sensitivity_level: 3 // 低度敏感数据
+    enum: ['student', 'office_worker', 'physical_worker', 'retired', 'other']
   },
   // 健康状况
-  health_conditions: [{
-    type: String,
-    sensitivity_level: 1 // 高度敏感数据
-  }],
-  // 饮食偏好
-  dietary_preferences: {
-    cuisine_preference: {
+  healthStatus: {
+    chronicDiseases: [{
       type: String,
-      enum: ['north', 'south', 'east', 'west', 'sichuan', 'cantonese', 'hunan', 'other'],
-      default: 'other',
-      sensitivity_level: 3 // 低度敏感数据
+      enum: ['hypertension', 'diabetes', 'gout', 'heart_disease', 'none']
+    }],
+    specialConditions: [{
+      type: String,
+      enum: ['pregnancy', 'lactation', 'menopause', 'none']
+    }]
+  },
+  // 饮食偏好
+  dietaryPreferences: {
+    isVegetarian: {
+      type: Boolean,
+      default: false
+    },
+    tastePreference: [{
+      type: String,
+      enum: ['light', 'spicy', 'sour', 'sweet', 'salty']
+    }],
+    taboos: [{
+      type: String
+    }],
+    cuisine: {
+      type: String,
+      enum: ['chinese', 'western', 'japanese', 'korean', 'other'],
+      default: 'chinese'
     },
     allergies: [{
-      type: String,
-      sensitivity_level: 1 // 高度敏感数据
-    }],
-    avoided_ingredients: [{
-      type: String,
-      sensitivity_level: 3 // 低度敏感数据
-    }],
-    spicy_preference: {
-      type: String,
-      enum: ['none', 'mild', 'medium', 'hot', 'extra_hot'],
-      default: 'medium',
-      sensitivity_level: 3 // 低度敏感数据
+      type: String
+    }]
+  },
+  // 生活方式
+  lifestyle: {
+    smoking: {
+      type: Boolean,
+      default: false
     },
-    diet_type: {
+    drinking: {
+      type: Boolean,
+      default: false
+    },
+    sleepDuration: {
+      type: Number,
+      min: 0,
+      max: 24
+    },
+    exerciseFrequency: {
       type: String,
-      enum: ['omnivore', 'vegetarian', 'vegan', 'pescatarian', 'paleo', 'keto', 'gluten_free', 'dairy_free', 'other'],
-      default: 'omnivore',
-      sensitivity_level: 3 // 低度敏感数据
+      enum: ['none', 'occasional', 'regular', 'frequent', 'daily']
     }
   },
   // 营养目标
-  goals: {
+  nutritionGoals: [{
     type: String,
-    enum: ['weight_loss', 'weight_gain', 'maintenance', 'muscle_gain', 'health_improvement', 'other'],
-    default: 'health_improvement',
-    sensitivity_level: 3 // 低度敏感数据
+    enum: [
+      'weight_loss',
+      'weight_gain',
+      'muscle_gain',
+      'blood_sugar_control',
+      'blood_pressure_control',
+      'immunity_boost',
+      'energy_boost',
+      'general_health'
+    ]
+  }],
+  // 活动水平 (保留原字段以兼容现有数据)
+  activity_level: {
+    type: String,
+    enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'],
+    default: 'moderate'
   },
-  // 目标热量和宏量素
+  // 健康指标
+  health_metrics: {
+    bmi: {
+      type: Number,
+      min: 0,
+      max: 50
+    },
+    blood_pressure: {
+      systolic: {
+        type: Number,
+        min: 0,
+        max: 300
+      },
+      diastolic: {
+        type: Number,
+        min: 0,
+        max: 200
+      },
+      measured_at: {
+        type: Date
+      }
+    },
+    blood_glucose: {
+      value: {
+        type: Number,
+        min: 0,
+        max: 500
+      },
+      measured_at: {
+        type: Date
+      }
+    }
+  },
+  // 目标热量和宏量素 (保留原字段以兼容现有数据)
   nutrition_targets: {
     calories: {
       type: Number,
-      min: 0,
-      sensitivity_level: 3 // 低度敏感数据
+      min: 0
     },
     protein_percentage: {
       type: Number,
       min: 0,
-      max: 100,
-      sensitivity_level: 3 // 低度敏感数据
+      max: 100
     },
     carbs_percentage: {
       type: Number,
       min: 0,
-      max: 100,
-      sensitivity_level: 3 // 低度敏感数据
+      max: 100
     },
     fat_percentage: {
       type: Number,
       min: 0,
-      max: 100,
-      sensitivity_level: 3 // 低度敏感数据
+      max: 100
     }
   },
   // 备注
   notes: {
     type: String,
     default: '',
-    sensitivity_level: 2 // 中度敏感数据
   },
-  // 是否为家庭成员档案
-  is_family_member: {
+  // 是否为主档案
+  isPrimary: {
     type: Boolean,
-    default: false,
-    sensitivity_level: 3 // 低度敏感数据
-  },
-  // 家庭成员关系（如果适用）
-  family_relationship: {
-    type: String,
-    default: '',
-    sensitivity_level: 2 // 中度敏感数据
+    default: false
   },
   // 档案隐私设置
   privacy_settings: {
@@ -221,7 +275,6 @@ const nutritionProfileSchema = new mongoose.Schema({
     },
     note: {
       type: String,
-      sensitivity_level: 2 // 中度敏感数据
     },
     created_at: {
       type: Date,
@@ -232,49 +285,6 @@ const nutritionProfileSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
-  // 健康指标
-  health_metrics: {
-    bmi: {
-      type: Number,
-      min: 0,
-      max: 50,
-      sensitivity_level: 2 // 中度敏感数据
-    },
-    blood_pressure: {
-      systolic: {
-        type: Number,
-        min: 0,
-        max: 300,
-        sensitivity_level: 2 // 中度敏感数据
-      },
-      diastolic: {
-        type: Number,
-        min: 0,
-        max: 200,
-        sensitivity_level: 2 // 中度敏感数据
-      },
-      measured_at: {
-        type: Date
-      }
-    },
-    blood_glucose: {
-      value: {
-        type: Number,
-        min: 0,
-        max: 500,
-        sensitivity_level: 1 // 高度敏感数据
-      },
-      measured_at: {
-        type: Date
-      }
-    }
-  },
-  // 是否为主档案
-  is_primary: {
-    type: Boolean,
-    default: false,
-    sensitivity_level: 3 // 低度敏感数据
-  },
   // 创建和更新时间
   created_at: {
     type: Date,
@@ -283,9 +293,28 @@ const nutritionProfileSchema = new mongoose.Schema({
   updated_at: {
     type: Date,
     default: Date.now
+  },
+  // 元数据
+  metadata: {
+    created_by: String, // 创建者: user, nutritionist, system
+    last_updated_by: String, // 最后更新者
+    version: {
+      type: Number,
+      default: 1
+    },
+    revision_history: [{
+      timestamp: Date,
+      changed_by: String,
+      changes: Object
+    }]
+  },
+  // 敏感度映射作为文档元数据，而不是Schema字段
+  data_sensitivity: {
+    type: Map,
+    of: Number // 1-高敏感，2-中敏感，3-低敏感
   }
 }, {
-    timestamps: true,
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     versionKey: false,
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
@@ -293,10 +322,12 @@ const nutritionProfileSchema = new mongoose.Schema({
 
 // 增强索引以优化查询性能
 nutritionProfileSchema.index({ user_id: 1 });
-nutritionProfileSchema.index({ 'health_conditions': 1 });
-nutritionProfileSchema.index({ 'dietary_preferences.diet_type': 1 });
-nutritionProfileSchema.index({ 'goals': 1 });
-nutritionProfileSchema.index({ is_family_member: 1, user_id: 1 });
+nutritionProfileSchema.index({ userId: 1 });
+nutritionProfileSchema.index({ 'healthStatus.chronicDiseases': 1 });
+nutritionProfileSchema.index({ 'dietaryPreferences.cuisine': 1 });
+nutritionProfileSchema.index({ 'lifestyle.exerciseFrequency': 1 });
+nutritionProfileSchema.index({ nutritionGoals: 1 });
+nutritionProfileSchema.index({ isPrimary: 1, user_id: 1 });
 nutritionProfileSchema.index({ 'access_grants.granted_to': 1, 'access_grants.granted_to_type': 1 });
 nutritionProfileSchema.index({ 'access_grants.valid_until': 1 });
 nutritionProfileSchema.index({ createdAt: -1 });
@@ -322,7 +353,28 @@ nutritionProfileSchema.virtual('bmi_category').get(function() {
 });
 
 nutritionProfileSchema.virtual('estimated_daily_calories').get(function() {
-  if (!this.gender || !this.weight || !this.height || !this.age || !this.activity_level) {
+  // 基于年龄组估算年龄
+  let estimatedAge = 30; // 默认中间值
+  
+  switch(this.ageGroup) {
+    case 'under_18':
+      estimatedAge = 16;
+      break;
+    case '18_30':
+      estimatedAge = 25;
+      break;
+    case '31_45':
+      estimatedAge = 38;
+      break;
+    case '46_60':
+      estimatedAge = 53;
+      break;
+    case 'above_60':
+      estimatedAge = 65;
+      break;
+  }
+  
+  if (!this.gender || !this.weight || !this.height || !estimatedAge || !this.activity_level) {
     return this.nutrition_targets?.calories || null;
   }
   
@@ -330,10 +382,10 @@ nutritionProfileSchema.virtual('estimated_daily_calories').get(function() {
   let bmr = 0;
   if (this.gender === 'male') {
     // 男性: BMR = 88.362 + (13.397 × 体重kg) + (4.799 × 身高cm) - (5.677 × 年龄)
-    bmr = 88.362 + (13.397 * this.weight) + (4.799 * this.height) - (5.677 * this.age);
+    bmr = 88.362 + (13.397 * this.weight) + (4.799 * this.height) - (5.677 * estimatedAge);
   } else {
     // 女性: BMR = 447.593 + (9.247 × 体重kg) + (3.098 × 身高cm) - (4.330 × 年龄)
-    bmr = 447.593 + (9.247 * this.weight) + (3.098 * this.height) - (4.330 * this.age);
+    bmr = 447.593 + (9.247 * this.weight) + (3.098 * this.height) - (4.330 * estimatedAge);
   }
   
   // 根据活动水平调整
@@ -351,32 +403,38 @@ nutritionProfileSchema.virtual('estimated_daily_calories').get(function() {
   // 根据目标调整卡路里
   let targetCalories = tdee;
   
-  switch(this.goals) {
-    case 'weight_loss':
-      targetCalories = Math.round(tdee * 0.8); // 减少20%卡路里
-      break;
-    case 'weight_gain':
-    case 'muscle_gain':
-      targetCalories = Math.round(tdee * 1.1); // 增加10%卡路里
-      break;
-    case 'maintenance':
-    case 'health_improvement':
-    default:
-      targetCalories = tdee; // 维持相同卡路里
+  if (this.nutritionGoals && this.nutritionGoals.length > 0) {
+    const primaryGoal = this.nutritionGoals[0];
+    
+    switch(primaryGoal) {
+      case 'weight_loss':
+        targetCalories = Math.round(tdee * 0.8); // 减少20%卡路里
+        break;
+      case 'weight_gain':
+      case 'muscle_gain':
+        targetCalories = Math.round(tdee * 1.1); // 增加10%卡路里
+        break;
+      default:
+        targetCalories = tdee; // 维持相同卡路里
+    }
   }
   
   return targetCalories;
 });
 
-nutritionProfileSchema.virtual('age_group').get(function() {
-  if (!this.age) return null;
+// 转换为年龄区间显示
+nutritionProfileSchema.virtual('ageGroup_display').get(function() {
+  if (!this.ageGroup) return null;
   
-  if (this.age < 12) return 'child';
-  if (this.age < 18) return 'teenager';
-  if (this.age < 30) return 'young_adult';
-  if (this.age < 50) return 'adult';
-  if (this.age < 70) return 'senior';
-  return 'elderly';
+  const ageGroupMap = {
+    'under_18': '18岁以下',
+    '18_30': '18-30岁',
+    '31_45': '31-45岁',
+    '46_60': '46-60岁',
+    'above_60': '60岁以上'
+  };
+  
+  return ageGroupMap[this.ageGroup] || this.ageGroup;
 });
 
 nutritionProfileSchema.virtual('user', {
@@ -397,11 +455,6 @@ nutritionProfileSchema.virtual('active_grants').get(function() {
 
 // 计算营养目标的实例方法
 nutritionProfileSchema.methods.calculateNutritionTargets = function() {
-  // 确保有基本数据
-  if (!this.gender || !this.weight || !this.height || !this.age) {
-    return null;
-  }
-  
   // 获取日常卡路里需求
   const dailyCalories = this.estimated_daily_calories;
   
@@ -410,117 +463,66 @@ nutritionProfileSchema.methods.calculateNutritionTargets = function() {
   // 根据目标设定宏量素比例
   let proteinPercentage, carbsPercentage, fatPercentage;
   
-  switch(this.goals) {
+  const primaryGoal = this.nutritionGoals && this.nutritionGoals.length > 0 ? 
+                     this.nutritionGoals[0] : 'general_health';
+  
+  switch(primaryGoal) {
     case 'weight_loss':
       proteinPercentage = 30; // 高蛋白有助于保持饱腹感和肌肉
       carbsPercentage = 40;
       fatPercentage = 30;
       break;
+    case 'weight_gain':
+      proteinPercentage = 25;
+      carbsPercentage = 50;
+      fatPercentage = 25;
+      break;
     case 'muscle_gain':
-      proteinPercentage = 35; // 肌肉生长需要更多蛋白质
+      proteinPercentage = 35; // 高蛋白促进肌肉生长
       carbsPercentage = 45;
       fatPercentage = 20;
       break;
-    case 'weight_gain':
-      proteinPercentage = 20;
-      carbsPercentage = 50;
-      fatPercentage = 30;
+    case 'blood_sugar_control':
+      proteinPercentage = 30;
+      carbsPercentage = 35; // 降低碳水以控制血糖
+      fatPercentage = 35;
       break;
-    case 'health_improvement':
-    case 'maintenance':
     default:
       proteinPercentage = 25;
       carbsPercentage = 50;
       fatPercentage = 25;
   }
   
-  // 针对特殊饮食习惯进行调整
-  if (this.dietary_preferences && this.dietary_preferences.diet_type) {
-    switch(this.dietary_preferences.diet_type) {
-      case 'keto':
-        // 生酮饮食：高脂肪，中蛋白，极低碳水
-        proteinPercentage = 25;
-        carbsPercentage = 5;
-        fatPercentage = 70;
-        break;
-      case 'paleo':
-        // 古饮食：中高蛋白，中脂肪，低碳水
-        proteinPercentage = 30;
-        carbsPercentage = 30;
-        fatPercentage = 40;
-        break;
-      case 'vegan':
-      case 'vegetarian':
-        // 素食：适当提高碳水，降低蛋白质
-        if (proteinPercentage > 20) {
-          const diff = proteinPercentage - 20;
-          proteinPercentage = 20;
-          carbsPercentage += diff;
-        }
-        break;
-    }
-  }
-  
-  // 针对健康状况进行调整
-  if (this.health_conditions && this.health_conditions.length > 0) {
-    if (this.health_conditions.includes('diabetes')) {
-      // 糖尿病：降低碳水，增加蛋白质和健康脂肪
-      carbsPercentage = Math.max(30, carbsPercentage - 15);
-      proteinPercentage += 5;
-      fatPercentage += 10;
-    }
-    
-    if (this.health_conditions.includes('kidney_disease')) {
-      // 肾病：降低蛋白质
-      proteinPercentage = Math.min(proteinPercentage, 15);
-      carbsPercentage += (25 - proteinPercentage);
-    }
-    
-    if (this.health_conditions.includes('heart_disease')) {
-      // 心脏疾病：降低饱和脂肪
-      fatPercentage = Math.min(fatPercentage, 25);
-      carbsPercentage += (30 - fatPercentage);
-    }
-  }
-  
-  // 确保百分比总和为100%
-  const total = proteinPercentage + carbsPercentage + fatPercentage;
-  if (total !== 100) {
-    const factor = 100 / total;
-    proteinPercentage = Math.round(proteinPercentage * factor);
-    carbsPercentage = Math.round(carbsPercentage * factor);
-    fatPercentage = Math.round(fatPercentage * factor);
-    
-    // 确保舍入后总和仍为100
-    const newTotal = proteinPercentage + carbsPercentage + fatPercentage;
-    if (newTotal !== 100) {
-      carbsPercentage += (100 - newTotal);
-    }
-  }
-  
-  // 计算各宏量素的克数
-  const proteinCalories = dailyCalories * (proteinPercentage / 100);
-  const carbsCalories = dailyCalories * (carbsPercentage / 100);
-  const fatCalories = dailyCalories * (fatPercentage / 100);
-  
+  // 计算每日各宏量素的克数
   // 蛋白质和碳水每克4卡路里，脂肪每克9卡路里
-  const proteinGrams = Math.round(proteinCalories / 4);
-  const carbsGrams = Math.round(carbsCalories / 4);
-  const fatGrams = Math.round(fatCalories / 9);
+  const dailyProtein = Math.round((dailyCalories * (proteinPercentage / 100)) / 4);
+  const dailyCarbs = Math.round((dailyCalories * (carbsPercentage / 100)) / 4);
+  const dailyFat = Math.round((dailyCalories * (fatPercentage / 100)) / 9);
   
-  // 设置和保存营养目标
-  this.nutrition_targets = {
+  return {
     calories: dailyCalories,
+    protein: dailyProtein,
+    carbs: dailyCarbs,
+    fat: dailyFat,
     protein_percentage: proteinPercentage,
     carbs_percentage: carbsPercentage,
-    fat_percentage: fatPercentage,
-    protein_grams: proteinGrams,
-    carbs_grams: carbsGrams,
-    fat_grams: fatGrams
+    fat_percentage: fatPercentage
   };
-  
-  return this.nutrition_targets;
 };
+
+// 预保存中间件
+nutritionProfileSchema.pre('save', function(next) {
+  this.updated_at = new Date();
+  
+  // 更新健康指标
+  if (this.height && this.weight) {
+    const heightInMeters = this.height / 100;
+    this.health_metrics = this.health_metrics || {};
+    this.health_metrics.bmi = Math.round((this.weight / (heightInMeters * heightInMeters)) * 10) / 10;
+  }
+  
+  next();
+});
 
 // 授权访问方法
 nutritionProfileSchema.methods.grantAccess = function(granteeId, granteeType, validUntil = null, reason = null) {
@@ -580,10 +582,10 @@ nutritionProfileSchema.methods.checkFoodCompatibility = function(food) {
   let compatible = true;
   
   // 检查过敏原
-  if (this.dietary_preferences && this.dietary_preferences.allergies && 
-      food.allergens && this.dietary_preferences.allergies.length > 0) {
+  if (this.dietaryPreferences && this.dietaryPreferences.allergies && 
+      food.allergens && this.dietaryPreferences.allergies.length > 0) {
     
-    const allergicTo = this.dietary_preferences.allergies.filter(allergy => 
+    const allergicTo = this.dietaryPreferences.allergies.filter(allergy => 
       food.allergens.includes(allergy)
     );
     
@@ -593,11 +595,11 @@ nutritionProfileSchema.methods.checkFoodCompatibility = function(food) {
     }
   }
   
-  // 检查避免的成分
-  if (this.dietary_preferences && this.dietary_preferences.avoided_ingredients && 
-      food.ingredients && this.dietary_preferences.avoided_ingredients.length > 0) {
+  // 检查忌口食物
+  if (this.dietaryPreferences && this.dietaryPreferences.taboos && 
+      food.ingredients && this.dietaryPreferences.taboos.length > 0) {
     
-    const avoidedIngredients = this.dietary_preferences.avoided_ingredients.filter(ingredient => 
+    const avoidedIngredients = this.dietaryPreferences.taboos.filter(ingredient => 
       food.ingredients.some(foodIngredient => 
         foodIngredient.toLowerCase().includes(ingredient.toLowerCase())
       )
@@ -605,67 +607,46 @@ nutritionProfileSchema.methods.checkFoodCompatibility = function(food) {
     
     if (avoidedIngredients.length > 0) {
       compatible = false;
-      reasons.push(`含有避免的成分: ${avoidedIngredients.join(', ')}`);
+      reasons.push(`含有忌口食物: ${avoidedIngredients.join(', ')}`);
     }
   }
   
-  // 检查饮食类型兼容性
-  if (this.dietary_preferences && this.dietary_preferences.diet_type && 
-      food.suitable_diets && food.suitable_diets.length > 0) {
-    
-    const dietType = this.dietary_preferences.diet_type;
-    
-    // 特殊饮食要求检查
-    if ((dietType === 'vegetarian' && !food.suitable_diets.includes('vegetarian')) ||
-        (dietType === 'vegan' && !food.suitable_diets.includes('vegan')) ||
-        (dietType === 'gluten_free' && !food.suitable_diets.includes('gluten_free')) ||
-        (dietType === 'dairy_free' && !food.suitable_diets.includes('dairy_free')) ||
-        (dietType === 'keto' && !food.suitable_diets.includes('keto')) ||
-        (dietType === 'paleo' && !food.suitable_diets.includes('paleo'))) {
-      
-      compatible = false;
-      reasons.push(`不适合${dietType}饮食`);
-    }
+  // 检查素食
+  if (this.dietaryPreferences && this.dietaryPreferences.isVegetarian && 
+      food.is_vegetarian === false) {
+    compatible = false;
+    reasons.push('不适合素食者');
   }
   
-  // 检查辣度偏好
-  if (this.dietary_preferences && this.dietary_preferences.spicy_preference && 
-      food.spicy_level) {
+  // 检查口味偏好
+  if (this.dietaryPreferences && this.dietaryPreferences.tastePreference && 
+      this.dietaryPreferences.tastePreference.length > 0 && food.taste) {
     
-    const spicyPreference = this.dietary_preferences.spicy_preference;
-    const spicyLevels = {
-      'none': 0,
-      'mild': 1,
-      'medium': 2,
-      'hot': 3,
-      'extra_hot': 4
-    };
+    const hasMatchingTaste = this.dietaryPreferences.tastePreference.some(taste => 
+      food.taste.includes(taste)
+    );
     
-    const preferredLevel = spicyLevels[spicyPreference] || 0;
-    const foodLevel = spicyLevels[food.spicy_level] || 0;
-    
-    if (preferredLevel < foodLevel) {
-      compatible = false;
-      reasons.push(`辣度超过偏好 (食物辣度: ${food.spicy_level}, 偏好: ${spicyPreference})`);
+    if (!hasMatchingTaste) {
+      reasons.push('口味可能与偏好不匹配');
     }
   }
   
   // 健康状况相关检查
-  if (this.health_conditions && this.health_conditions.length > 0) {
+  if (this.healthStatus && this.healthStatus.chronicDiseases && this.healthStatus.chronicDiseases.length > 0) {
     // 糖尿病检查高碳水
-    if (this.health_conditions.includes('diabetes') && 
+    if (this.healthStatus.chronicDiseases.includes('diabetes') && 
         food.nutrition_facts && food.nutrition_facts.carbohydrates > 30) {
       reasons.push('碳水含量高，糖尿病患者应注意控制摄入量');
     }
     
     // 高血压检查高钠
-    if (this.health_conditions.includes('hypertension') && 
+    if (this.healthStatus.chronicDiseases.includes('hypertension') && 
         food.nutrition_facts && food.nutrition_facts.sodium > 500) {
       reasons.push('钠含量高，高血压患者应注意控制摄入量');
     }
     
     // 心脏疾病检查高饱和脂肪
-    if (this.health_conditions.includes('heart_disease') && 
+    if (this.healthStatus.chronicDiseases.includes('heart_disease') && 
         food.nutrition_facts && food.nutrition_facts.saturated_fat > 5) {
       reasons.push('饱和脂肪含量高，心脏病患者应注意控制摄入量');
     }
@@ -717,10 +698,6 @@ nutritionProfileSchema.statics.findByUserId = function(userId) {
   return this.find({ user_id: userId }).sort({ createdAt: -1 });
 };
 
-nutritionProfileSchema.statics.findFamilyProfiles = function(userId) {
-  return this.find({ user_id: userId, is_family_member: true });
-};
-
 nutritionProfileSchema.statics.findByGrantedAccess = function(granteeId, granteeType) {
   const now = new Date();
   
@@ -735,32 +712,57 @@ nutritionProfileSchema.statics.findByGrantedAccess = function(granteeId, grantee
   });
 };
 
-// 前置钩子 - 自动计算BMI
-nutritionProfileSchema.pre('save', function(next) {
-  // 如果身高和体重有变化，自动更新BMI
-  if (this.isModified('height') || this.isModified('weight')) {
-    if (this.height && this.weight) {
-      if (!this.health_metrics) this.health_metrics = {};
-      
-      const heightInMeters = this.height / 100;
-      this.health_metrics.bmi = Math.round((this.weight / (heightInMeters * heightInMeters)) * 10) / 10;
+// 模型转换为RESTful API响应的格式化函数
+nutritionProfileSchema.methods.toAPI = function(excludeSensitive = false) {
+  const obj = this.toObject();
+  
+  // 计算附加信息
+  obj.bmi = this.bmi;
+  obj.bmi_category = this.bmi_category;
+  obj.estimated_daily_calories = this.estimated_daily_calories;
+  obj.nutrition_targets = this.calculateNutritionTargets();
+  
+  // 移除敏感字段
+  if (excludeSensitive) {
+    for (const [key, value] of Object.entries(obj)) {
+      if (value && typeof value === 'object' && value.sensitivity_level === 1) {
+        delete obj[key];
+      }
     }
   }
   
-  // 如果基础信息或健康目标变化，重新计算营养目标
-  if (this.isNew || this.isModified('gender') || this.isModified('age') || 
-      this.isModified('height') || this.isModified('weight') || 
-      this.isModified('activity_level') || this.isModified('goals') ||
-      (this.isModified('dietary_preferences') && this.dietary_preferences?.diet_type) ||
-      this.isModified('health_conditions')) {
-    
-    this.calculateNutritionTargets();
-  }
-  
-  next();
-});
+  return obj;
+};
 
-// 使用ModelFactory.model创建模型
-const NutritionProfile = ModelFactory.model('NutritionProfile', nutritionProfileSchema);
+// 为数据字段添加敏感度信息（作为静态属性而非schema字段）
+nutritionProfileSchema.statics.sensitivityMap = {
+  'profilename': 3, // 低度敏感
+  'gender': 2, // 中度敏感
+  'ageGroup': 2, // 中度敏感
+  'height': 2, // 中度敏感
+  'weight': 2, // 中度敏感
+  'region': 2, // 中度敏感
+  'occupation': 3, // 低度敏感
+  'healthStatus.chronicDiseases': 1, // 高度敏感
+  'healthStatus.specialConditions': 1, // 高度敏感
+  'dietaryPreferences.isVegetarian': 3, // 低度敏感
+  'dietaryPreferences.tastePreference': 3, // 低度敏感
+  'dietaryPreferences.taboos': 3, // 低度敏感
+  'dietaryPreferences.cuisine': 3, // 低度敏感
+  'dietaryPreferences.allergies': 1, // 高度敏感
+  'lifestyle.smoking': 3, // 低度敏感
+  'lifestyle.drinking': 3, // 低度敏感
+  'lifestyle.sleepDuration': 3, // 低度敏感
+  'lifestyle.exerciseFrequency': 3, // 低度敏感
+  'nutritionGoals': 3, // 低度敏感
+  'activity_level': 3, // 低度敏感
+  'health_metrics.bmi': 2, // 中度敏感
+  'health_metrics.blood_pressure.systolic': 2, // 中度敏感
+  'health_metrics.blood_pressure.diastolic': 2, // 中度敏感
+  'health_metrics.blood_glucose.value': 1 // 高度敏感
+};
+
+// 创建模型
+const NutritionProfile = modelFactory.model('NutritionProfile', nutritionProfileSchema);
 
 module.exports = NutritionProfile; 

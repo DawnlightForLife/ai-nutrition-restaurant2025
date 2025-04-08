@@ -3,7 +3,7 @@ const ModelFactory = require('../modelFactory');
 const { shardingService } = require('../../services/shardingService');
 
 // 导入需要的模型
-const Dish = require('./dishModel');
+const Dish = require('./ProductDishModel');
 
 const storeDishSchema = new mongoose.Schema({
   store_id: {

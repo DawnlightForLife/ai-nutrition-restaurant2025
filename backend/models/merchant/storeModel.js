@@ -4,7 +4,7 @@ const { shardingService } = require('../../services/shardingService');
 
 // 导入需要的模型
 const StoreDish = require('./storeDishModel');
-const Dish = require('./dishModel');
+const Dish = require('./ProductDishModel');
 
 const storeSchema = new mongoose.Schema({
   merchant_id: {

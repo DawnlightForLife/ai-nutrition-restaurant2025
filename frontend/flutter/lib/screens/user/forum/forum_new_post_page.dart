@@ -4,21 +4,35 @@ import '../../../providers/forum/forum_provider.dart';
 import '../../../models/forum/post.dart';
 
 /// 发布新帖子页面
+///
+/// 提供用户创建新帖子的表单界面，包含标题、内容和标签选择功能
+/// 使用Provider状态管理实现数据提交和状态更新
 class ForumNewPostPage extends StatefulWidget {
+  /// 路由名称，用于导航
   static const String routeName = '/forum/new-post';
 
+  /// 构造函数
   const ForumNewPostPage({Key? key}) : super(key: key);
 
   @override
   State<ForumNewPostPage> createState() => _ForumNewPostPageState();
 }
 
+/// 发布新帖子页面状态类
 class _ForumNewPostPageState extends State<ForumNewPostPage> {
+  /// 表单Key，用于表单验证
   final _formKey = GlobalKey<FormState>();
+  
+  /// 标题输入控制器
   final _titleController = TextEditingController();
+  
+  /// 内容输入控制器
   final _contentController = TextEditingController();
+  
+  /// 已选择的标签列表
   final List<String> _selectedTags = [];
   
+  /// 可选择的标签列表
   final List<String> _availableTags = [
     '健康饮食',
     '营养知识',
@@ -29,23 +43,30 @@ class _ForumNewPostPageState extends State<ForumNewPostPage> {
     '餐厅评价',
   ];
 
+  /// 是否正在提交表单的标志
   bool _isSubmitting = false;
 
   @override
   void dispose() {
+    // 释放控制器资源
     _titleController.dispose();
     _contentController.dispose();
     super.dispose();
   }
 
-  // 提交表单
+  /// 提交表单
+  ///
+  /// 验证并提交新帖子数据，处理成功和失败的反馈
   Future<void> _submitForm() async {
+    // 验证表单字段
     if (_formKey.currentState!.validate()) {
+      // 设置提交状态，显示加载指示器
       setState(() {
         _isSubmitting = true;
       });
 
       try {
+        // 获取ForumProvider并调用创建帖子方法
         final provider = Provider.of<ForumProvider>(context, listen: false);
         final post = await provider.createPost(
           title: _titleController.text.trim(),
@@ -53,9 +74,12 @@ class _ForumNewPostPageState extends State<ForumNewPostPage> {
           tags: _selectedTags,
         );
 
+        // 处理创建结果
         if (post != null) {
+          // 防止组件已卸载时调用setState
           if (!mounted) return;
           
+          // 显示成功提示
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('帖子发布成功！'),
@@ -63,10 +87,13 @@ class _ForumNewPostPageState extends State<ForumNewPostPage> {
             ),
           );
           
+          // 返回上一页，并传递成功标志
           Navigator.pop(context, true);
         } else {
+          // 防止组件已卸载时调用setState
           if (!mounted) return;
           
+          // 显示错误提示
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(provider.errorMessage),
@@ -74,13 +101,16 @@ class _ForumNewPostPageState extends State<ForumNewPostPage> {
             ),
           );
           
+          // 恢复状态，允许重新提交
           setState(() {
             _isSubmitting = false;
           });
         }
       } catch (e) {
+        // 防止组件已卸载时调用setState
         if (!mounted) return;
         
+        // 显示异常提示
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('发布失败: ${e.toString()}'),
@@ -88,6 +118,7 @@ class _ForumNewPostPageState extends State<ForumNewPostPage> {
           ),
         );
         
+        // 恢复状态，允许重新提交
         setState(() {
           _isSubmitting = false;
         });
@@ -95,7 +126,10 @@ class _ForumNewPostPageState extends State<ForumNewPostPage> {
     }
   }
 
-  // 处理标签选择
+  /// 处理标签选择
+  ///
+  /// 切换标签的选中状态，如果已选中则移除，否则添加
+  /// @param tag 要切换的标签名称
   void _toggleTag(String tag) {
     setState(() {
       if (_selectedTags.contains(tag)) {
@@ -113,6 +147,7 @@ class _ForumNewPostPageState extends State<ForumNewPostPage> {
         title: const Text('发布帖子'),
         elevation: 0.5,
         actions: [
+          // 顶部导航栏的发布按钮
           TextButton(
             onPressed: _isSubmitting ? null : _submitForm,
             style: TextButton.styleFrom(
@@ -136,7 +171,7 @@ class _ForumNewPostPageState extends State<ForumNewPostPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // 标题输入
+            // 标题输入字段
             TextFormField(
               controller: _titleController,
               decoration: const InputDecoration(
@@ -145,8 +180,9 @@ class _ForumNewPostPageState extends State<ForumNewPostPage> {
                 border: OutlineInputBorder(),
                 floatingLabelBehavior: FloatingLabelBehavior.always,
               ),
-              maxLength: 50,
+              maxLength: 50, // 限制最大长度
               validator: (value) {
+                // 验证标题长度
                 if (value == null || value.trim().length < 5) {
                   return '标题至少需要5个字符';
                 }
@@ -155,7 +191,7 @@ class _ForumNewPostPageState extends State<ForumNewPostPage> {
             ),
             const SizedBox(height: 16),
 
-            // 内容输入
+            // 内容输入字段，多行文本框
             TextFormField(
               controller: _contentController,
               decoration: const InputDecoration(
@@ -165,10 +201,11 @@ class _ForumNewPostPageState extends State<ForumNewPostPage> {
                 alignLabelWithHint: true,
                 floatingLabelBehavior: FloatingLabelBehavior.always,
               ),
-              maxLength: 5000,
-              maxLines: 15,
-              minLines: 10,
+              maxLength: 5000, // 限制最大长度
+              maxLines: 15, // 最大行数
+              minLines: 10, // 最小行数
               validator: (value) {
+                // 验证内容长度
                 if (value == null || value.trim().length < 20) {
                   return '内容至少需要20个字符';
                 }
@@ -177,7 +214,7 @@ class _ForumNewPostPageState extends State<ForumNewPostPage> {
             ),
             const SizedBox(height: 16),
 
-            // 标签选择
+            // 标签选择区域
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -189,10 +226,12 @@ class _ForumNewPostPageState extends State<ForumNewPostPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
+                // 标签选择芯片组
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: _availableTags.map((tag) {
+                    // 检查标签是否已选中
                     final isSelected = _selectedTags.contains(tag);
                     return ChoiceChip(
                       label: Text(tag),
@@ -207,6 +246,7 @@ class _ForumNewPostPageState extends State<ForumNewPostPage> {
                     );
                   }).toList(),
                 ),
+                // 显示已选标签数量
                 if (_selectedTags.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text(
@@ -221,7 +261,7 @@ class _ForumNewPostPageState extends State<ForumNewPostPage> {
             ),
             const SizedBox(height: 32),
 
-            // 提交按钮
+            // 底部提交按钮
             ElevatedButton(
               onPressed: _isSubmitting ? null : _submitForm,
               style: ElevatedButton.styleFrom(

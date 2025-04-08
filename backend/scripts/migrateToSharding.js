@@ -17,13 +17,13 @@ console.log(`- ENABLE_SHARDING: ${process.env.ENABLE_SHARDING}`);
 
 // 要迁移的集合
 const COLLECTIONS_TO_MIGRATE = [
-  { name: 'AuditLog', model: require('../models/auditLogModel') },
-  { name: 'HealthData', model: require('../models/healthDataModel') },
-  { name: 'Order', model: require('../models/orderModel') },
-  { name: 'User', model: require('../models/userModel') },
-  { name: 'Merchant', model: require('../models/merchantModel') },
-  { name: 'AiRecommendation', model: require('../models/aiRecommendationModel') },
-  { name: 'ForumPost', model: require('../models/forumPostModel') },
+  { name: 'AuditLog', model: require('../models/core/auditLogModel') },
+  { name: 'HealthData', model: require('../models/health/healthDataModel') },
+  { name: 'Order', model: require('../models/order/orderModel') },
+  { name: 'User', model: require('../models/core/userModel') },
+  { name: 'Merchant', model: require('../models/merchant/merchantModel') },
+  { name: 'AiRecommendation', model: require('../models/nutrition/aiRecommendationModel') },
+  { name: 'ForumPost', model: require('../models/forum/forumPostModel') },
   { name: 'DbMetrics', model: require('../models/modelFactory').model('DbMetrics') }
 ];
 

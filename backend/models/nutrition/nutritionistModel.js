@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const ModelFactory = require('./modelFactory');
+const ModelFactory = require('../modelFactory');
 
 const nutritionistSchema = new mongoose.Schema({
   // 关联到用户

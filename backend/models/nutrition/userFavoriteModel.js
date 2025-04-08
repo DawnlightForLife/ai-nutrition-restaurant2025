@@ -3,10 +3,10 @@ const ModelFactory = require('../modelFactory');
 const { shardingService } = require('../../services/shardingService');
 
 // 导入可能会用到的模型
-const Dish = require('./dishModel');
-const ForumPost = require('./forumPostModel');
+const Dish = require('../merchant/ProductDishModel');
+const ForumPost = require('../forum/forumPostModel');
 const User = require('../core/userModel');
-const Store = require('./storeModel');
+const Store = require('../merchant/storeModel');
 
 const userFavoriteSchema = new mongoose.Schema({
   user_id: {

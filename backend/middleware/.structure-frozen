@@ -1,0 +1,33 @@
+{
+  "timestamp": "2025-04-08T14:10:00.000Z",
+  "message": "此中间件目录结构已冻结，请勿随意修改目录结构和文件名称。添加新功能请遵循现有结构。",
+  "structure": {
+    "auth": [
+      "authMiddleware.js",
+      "permissionMiddleware.js",
+      "roleMiddleware.js"
+    ],
+    "security": [
+      "securityMiddleware.js",
+      "advancedSecurityMiddleware.js",
+      "rateLimitMiddleware.js",
+      "advancedRateLimitMiddleware.js"
+    ],
+    "performance": [
+      "performanceMiddleware.js",
+      "advancedPerformanceMiddleware.js",
+      "cacheOptimizationMiddleware.js",
+      "dbOptimizationMiddleware.js"
+    ],
+    "validation": [
+      "requestValidationMiddleware.js",
+      "validationMiddleware.js",
+      "schemaValidationMiddleware.js"
+    ],
+    "core": [
+      "loggingMiddleware.js",
+      "cacheMiddleware.js",
+      "errorHandlingMiddleware.js"
+    ]
+  }
+} 

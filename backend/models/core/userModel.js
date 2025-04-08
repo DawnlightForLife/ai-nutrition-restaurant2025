@@ -723,6 +723,13 @@ userSchema.methods.refreshAllCachedData = async function() {
 };
 
 // 使用分片访问服务查找用户
+/**
+ * 使用用户ID从对应分片中查找用户
+ * 根据用户ID计算分片位置，优先在分片中查询，查询失败则降级到默认集合
+ * 
+ * @param {string|ObjectId} id - 用户ID
+ * @returns {Promise<Object|null>} 用户文档或null
+ */
 userSchema.statics.findByIdFromShards = async function(id) {
   if (!id) return null;
   
@@ -746,6 +753,15 @@ userSchema.statics.findByIdFromShards = async function(id) {
 };
 
 // 添加从分片中按字段查询用户的方法
+/**
+ * 从分片中查找单个用户
+ * 根据查询条件，决定从哪个分片集合查询用户数据
+ * 支持基于手机号和用户ID的分片路由
+ * 当分片查询失败时，自动降级到默认集合
+ * 
+ * @param {Object} query - 查询条件对象，支持phone和_id
+ * @returns {Promise<Object|null>} 查询到的用户数据或null
+ */
 userSchema.statics.findOneFromShards = async function(query) {
   if (!query) return null;
   
@@ -758,6 +774,7 @@ userSchema.statics.findOneFromShards = async function(query) {
     // 如果有手机号，使用手机号确定分片
     let shardName = 'users'; // 默认集合名
     if (query.phone) {
+      // 基于手机号计算分片
       shardName = getShardName('user', { phone: query.phone });
     } else if (query._id) {
       // 如果有ID，使用ID确定分片
@@ -781,6 +798,13 @@ userSchema.statics.findOneFromShards = async function(query) {
 };
 
 // 保存用户到分片
+/**
+ * 保存用户到分片
+ * 将当前用户文档保存到对应的分片集合中
+ * 无论分片操作是否成功，都会同时保存到默认集合以保持兼容性
+ * 
+ * @returns {Promise<Document>} 保存后的用户文档
+ */
 userSchema.methods.saveToShard = async function() {
   try {
     // 获取文档的原始对象
@@ -792,6 +816,9 @@ userSchema.methods.saveToShard = async function() {
     // 保存到分片
     const success = await shardAccessService.saveToShard(userDoc, shardName);
     
+    // 记录分片操作结果
+    console.log(`[分片] 用户 ${this._id} 保存到分片 ${shardName} ${success ? '成功' : '失败'}`);
+    
     // 无论是否成功保存到分片，都保存到原始集合以保持兼容性
     return await this.save();
   } catch (err) {
@@ -802,6 +829,16 @@ userSchema.methods.saveToShard = async function() {
 };
 
 // 查询所有分片中的用户
+/**
+ * 跨分片查询用户
+ * 在所有用户分片中执行相同的查询，并合并结果
+ * 支持排序、分页等选项
+ * 当跨分片查询失败时，降级到默认集合查询
+ * 
+ * @param {Object} query - 查询条件
+ * @param {Object} options - 查询选项，包括sort、skip、limit等
+ * @returns {Promise<Array>} 查询结果数组
+ */
 userSchema.statics.findAcrossShards = async function(query, options = {}) {
   try {
     // 获取所有可能的用户分片名称
@@ -810,11 +847,12 @@ userSchema.statics.findAcrossShards = async function(query, options = {}) {
     const USER_SHARDS = 3;
     const USER_SHARD_PREFIX = 'user_shard_';
     
+    // 构建所有分片名称列表
     for (let i = 0; i < USER_SHARDS; i++) {
       shardNames.push(`${USER_SHARD_PREFIX}${i}`);
     }
     
-    // 查询多个分片
+    // 查询多个分片并合并结果
     return await shardAccessService.findAcrossShards(shardNames, query, options);
   } catch (err) {
     console.error(`跨分片查询用户错误: ${err.message}`);

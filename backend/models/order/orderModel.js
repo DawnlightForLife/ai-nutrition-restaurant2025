@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const ModelFactory = require('./modelFactory');
+const ModelFactory = require('../modelFactory');
 
 const orderItemSchema = new mongoose.Schema({
   dish_id: {

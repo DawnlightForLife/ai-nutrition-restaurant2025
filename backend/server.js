@@ -57,7 +57,7 @@ const startServer = async () => {
     console.log('数据库连接已就绪');
 
     // 创建默认用户
-    const User = require('./models/userModel');
+    const User = require('./models/core/userModel');
     const bcrypt = require('bcryptjs');
     
     // 检查是否已有用户

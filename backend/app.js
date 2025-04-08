@@ -6,8 +6,10 @@ const nutritionProfileRoutes = require('./routes/nutritionProfileRoutes');
 const dishRoutes = require('./routes/dishRoutes');
 const storeRoutes = require('./routes/storeRoutes');
 const recommendationRoutes = require('./routes/recommendationRoutes');
-const authMiddleware = require('./middleware/authMiddleware');
-const { performanceMonitor, resourceMonitor } = require('./middleware/performanceMiddleware');
+const authRoutes = require('./routes/authRoutes');
+const healthDataRoutes = require('./routes/healthDataRoutes');
+const authMiddleware = require('./middleware/auth/authMiddleware');
+const { performanceMonitor, resourceMonitor } = require('./middleware/performance/performanceMiddleware');
 const {
     queryMonitor,
     queryOptimizer,
@@ -16,14 +18,14 @@ const {
     queryMonitorInstance,
     queryCacheInstance,
     batchOptimizerInstance
-} = require('./middleware/dbOptimizationMiddleware');
+} = require('./middleware/performance/dbOptimizationMiddleware');
 const {
     createDynamicLimiter,
     roleBasedLimiter,
     pathBasedLimiter,
     ipBasedLimiter,
     combinedLimiter
-} = require('./middleware/advancedRateLimitMiddleware');
+} = require('./middleware/security/advancedRateLimitMiddleware');
 const {
     securityHeaders,
     xssProtection,
@@ -31,13 +33,13 @@ const {
     parameterPollution,
     filterSensitiveData,
     validateOrigin
-} = require('./middleware/securityMiddleware');
+} = require('./middleware/security/securityMiddleware');
 const {
     advancedPerformanceMonitor,
     performanceReport,
     resetMetrics,
     metrics
-} = require('./middleware/advancedPerformanceMiddleware');
+} = require('./middleware/performance/advancedPerformanceMiddleware');
 const {
     logger,
     requestLogger,
@@ -50,14 +52,14 @@ const {
     securityLogMiddleware,
     databaseLogMiddleware,
     errorLogMiddleware
-} = require('./middleware/loggingMiddleware');
+} = require('./middleware/core/loggingMiddleware');
 const {
     requestSignatureVerification,
     requestFrequencyLimit,
     sqlInjectionProtection,
     enhancedXSSProtection,
     sensitiveDataEncryption
-} = require('./middleware/advancedSecurityMiddleware');
+} = require('./middleware/security/advancedSecurityMiddleware');
 const {
     AppError,
     ErrorTypes,
@@ -65,13 +67,13 @@ const {
     notFoundHandler,
     asyncHandler,
     isErrorType
-} = require('./middleware/errorHandlingMiddleware');
+} = require('./middleware/core/errorHandlingMiddleware');
 const {
     cacheMiddleware,
     clearCacheMiddleware,
     cacheStatsMiddleware,
     cacheManager
-} = require('./middleware/cacheOptimizationMiddleware');
+} = require('./middleware/performance/cacheOptimizationMiddleware');
 const {
     validateRequest,
     validateBody,
@@ -81,7 +83,7 @@ const {
     validateFileUpload,
     commonRules,
     customRules
-} = require('./middleware/requestValidationMiddleware');
+} = require('./middleware/validation/requestValidationMiddleware');
 
 const app = express();
 const API_PREFIX = '/api';
@@ -310,6 +312,18 @@ connectDB().catch(err => {
 // API路由注册 - 按照资源依赖顺序排列
 const routes = [
     { 
+        path: '/auth', 
+        router: authRoutes,
+        middleware: [
+            securityHeaders,
+            xssProtection,
+            mongoSanitization,
+            parameterPollution,
+            filterSensitiveData,
+            validateOrigin
+        ]
+    },
+    { 
         path: '/dishes', 
         router: dishRoutes, 
         middleware: [
@@ -441,6 +455,30 @@ const routes = [
             }),
             clearCacheMiddleware(['recommendation:*']),
         ]
+    },
+    { 
+        path: '/health-data', 
+        router: healthDataRoutes,
+        middleware: [
+            authMiddleware,
+            queryOptimizer({
+                maxLimit: 20,
+                defaultLimit: 10,
+                allowedFields: ['user_id', 'createdAt'],
+                defaultSort: { createdAt: -1 },
+                maxDepth: 2
+            }),
+            validateQuery({
+                user_id: commonRules.string.optional()
+            }),
+            cacheMiddleware({
+                ttl: 60, // 1分钟缓存
+                prefix: 'healthData:',
+                staleWhileRevalidate: true,
+                compression: true
+            }),
+            clearCacheMiddleware(['healthData:*']),
+        ]
     }
 ];
 
@@ -519,57 +557,32 @@ app.use((err, req, res, next) => {
     });
 });
 
-// 服务器启动
+// 启动服务器
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => {
-    logger.info(`Server is running on port ${PORT}`);
-    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+const server = http.createServer(app);
+
+// 应用初始化与启动
+(async () => {
+  try {
+    // 连接数据库
+    await connectDB();
+    console.log('MongoDB连接成功');
     
-    // 记录初始性能指标
-    const initialMetrics = metrics.getReport();
-    logger.info('Initial performance metrics:', initialMetrics);
-});
-
-// 优雅关闭
-const gracefulShutdown = async (signal) => {
-    logger.info(`${signal} received. Starting graceful shutdown...`);
+    // 初始化缓存服务
+    await redis.ping();
+    console.log('缓存服务初始化成功');
     
-    try {
-        // 记录关闭时的性能指标
-        const finalMetrics = metrics.getReport();
-        logger.info('Final performance metrics:', finalMetrics);
-        
-        // 停止接收新的请求
-        server.close(() => {
-            logger.info('HTTP server closed');
-            
-            // 关闭数据库连接
-            connectDB().then(() => {
-                logger.info('Database connection closed');
-                process.exit(0);
-            }).catch(err => {
-                throw new AppError(
-                    'Error closing database connection',
-                    500,
-                    ErrorTypes.DATABASE_ERROR,
-                    err
-                );
-            });
-        });
-
-        // 如果10秒内没有完成关闭，强制退出
-        setTimeout(() => {
-            throw new AppError(
-                'Could not close connections in time',
-                500,
-                ErrorTypes.INTERNAL_ERROR
-            );
-        }, 10000);
-    } catch (error) {
-        logger.error('Error during graceful shutdown:', error);
-        process.exit(1);
-    }
-};
-
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT')); 
+    // 初始化分片同步任务
+    const userService = require('./services/userService');
+    userService.setupShardMigrationTask();
+    console.log('分片同步任务已启动');
+    
+    // 启动服务器
+    server.listen(PORT, () => {
+      console.log(`服务器运行在端口: ${PORT}`);
+    });
+  } catch (error) {
+    console.error('服务启动错误:', error);
+    process.exit(1);
+  }
+})(); 

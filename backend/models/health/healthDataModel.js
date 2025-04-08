@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
-const ModelFactory = require('../modelFactory');
+const modelFactory = require('../modelFactory');
 
 // 用于加密敏感健康数据的密钥和IV
 const ENCRYPTION_KEY = process.env.HEALTH_DATA_ENCRYPTION_KEY || 'default_key_please_change_in_production';
@@ -44,147 +44,143 @@ const healthDataSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  userId: {
+    type: String
+  },
   nutrition_profile_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'NutritionProfile'
+  },
+  nutritionProfileId: {
+    type: String
+  },
+  // 基本档案信息
+  profile_info: {
+    profilename: {
+      type: String
+    },
+    gender: {
+      type: String,
+      enum: ['male', 'female', 'other']
+    },
+    age_group: {
+      type: String,
+      enum: ['under_18', '18_30', '31_45', '46_60', 'above_60']
+    },
+    region: {
+      province: String,
+      city: String,
+      district: String
+    },
+    occupation: {
+      type: String,
+      enum: ['student', 'office_worker', 'physical_worker', 'retired', 'other']
+    }
   },
   // 基本健康数据
   basic_metrics: {
     height: {
       type: Number,
       min: 50,
-      max: 250,
-      sensitivity_level: 2 // 中度敏感数据
+      max: 250
     },
     weight: {
       type: Number,
       min: 20,
-      max: 300,
-      sensitivity_level: 2 // 中度敏感数据
+      max: 300
     },
     bmi: {
       type: Number,
       min: 10,
-      max: 50,
-      sensitivity_level: 2 // 中度敏感数据
+      max: 50
     },
     blood_pressure: {
       systolic: {
         type: Number,
         min: 50,
-        max: 250,
-        sensitivity_level: 1 // 高度敏感数据
+        max: 250
       },
       diastolic: {
         type: Number,
         min: 30,
-        max: 150,
-        sensitivity_level: 1 // 高度敏感数据
+        max: 150
       }
     },
     heart_rate: {
       type: Number,
       min: 40,
-      max: 220,
-      sensitivity_level: 1 // 高度敏感数据
+      max: 220
     }
   },
-  // 血液指标（加密存储）
+  // 健康状况
+  health_status: {
+    chronic_diseases: [{
+      type: String,
+      enum: ['hypertension', 'diabetes', 'gout', 'heart_disease', 'none']
+    }],
+    special_conditions: [{
+      type: String,
+      enum: ['pregnancy', 'lactation', 'menopause', 'none']
+    }]
+  },
+  // 饮食偏好
+  dietary_preferences: {
+    is_vegetarian: {
+      type: Boolean,
+      default: false
+    },
+    taste_preference: [{
+      type: String,
+      enum: ['light', 'spicy', 'sour', 'sweet', 'salty']
+    }],
+    taboos: [{
+      type: String
+    }],
+    cuisine: {
+      type: String,
+      enum: ['chinese', 'western', 'japanese', 'korean', 'other'],
+      default: 'chinese'
+    },
+    allergies: [{
+      type: String
+    }]
+  },
+  // 生活方式
+  lifestyle: {
+    smoking: {
+      type: Boolean,
+      default: false
+    },
+    drinking: {
+      type: Boolean,
+      default: false
+    },
+    sleep_duration: {
+      type: Number,
+      min: 0,
+      max: 24
+    },
+    exercise_frequency: {
+      type: String,
+      enum: ['none', 'occasional', 'regular', 'frequent', 'daily']
+    }
+  },
+  // 营养目标
+  nutrition_goals: [{
+    type: String
+  }],
+  // 血液指标
   blood_metrics: {
     cholesterol: {
-      total: {
-        type: String, // 加密存储
-        get: function() {
-          const value = this.get('blood_metrics.cholesterol._total');
-          return value ? parseFloat(decrypt(value)) : null;
-        },
-        set: function(value) {
-          this.set('blood_metrics.cholesterol._total', value ? encrypt(value.toString()) : null);
-          return value;
-        },
-        sensitivity_level: 1 // 高度敏感数据
-      },
-      _total: { type: String, select: false }, // 加密后的实际存储字段
-      hdl: {
-        type: String, // 加密存储
-        get: function() {
-          const value = this.get('blood_metrics.cholesterol._hdl');
-          return value ? parseFloat(decrypt(value)) : null;
-        },
-        set: function(value) {
-          this.set('blood_metrics.cholesterol._hdl', value ? encrypt(value.toString()) : null);
-          return value;
-        },
-        sensitivity_level: 1 // 高度敏感数据
-      },
-      _hdl: { type: String, select: false }, // 加密后的实际存储字段
-      ldl: {
-        type: String, // 加密存储
-        get: function() {
-          const value = this.get('blood_metrics.cholesterol._ldl');
-          return value ? parseFloat(decrypt(value)) : null;
-        },
-        set: function(value) {
-          this.set('blood_metrics.cholesterol._ldl', value ? encrypt(value.toString()) : null);
-          return value;
-        },
-        sensitivity_level: 1 // 高度敏感数据
-      },
-      _ldl: { type: String, select: false }, // 加密后的实际存储字段
-      triglycerides: {
-        type: String, // 加密存储
-        get: function() {
-          const value = this.get('blood_metrics.cholesterol._triglycerides');
-          return value ? parseFloat(decrypt(value)) : null;
-        },
-        set: function(value) {
-          this.set('blood_metrics.cholesterol._triglycerides', value ? encrypt(value.toString()) : null);
-          return value;
-        },
-        sensitivity_level: 1 // 高度敏感数据
-      },
-      _triglycerides: { type: String, select: false } // 加密后的实际存储字段
+      total: String,
+      hdl: String,
+      ldl: String,
+      triglycerides: String
     },
     glucose: {
-      fasting: {
-        type: String, // 加密存储
-        get: function() {
-          const value = this.get('blood_metrics.glucose._fasting');
-          return value ? parseFloat(decrypt(value)) : null;
-        },
-        set: function(value) {
-          this.set('blood_metrics.glucose._fasting', value ? encrypt(value.toString()) : null);
-          return value;
-        },
-        sensitivity_level: 1 // 高度敏感数据
-      },
-      _fasting: { type: String, select: false }, // 加密后的实际存储字段
-      after_meal: {
-        type: String, // 加密存储
-        get: function() {
-          const value = this.get('blood_metrics.glucose._after_meal');
-          return value ? parseFloat(decrypt(value)) : null;
-        },
-        set: function(value) {
-          this.set('blood_metrics.glucose._after_meal', value ? encrypt(value.toString()) : null);
-          return value;
-        },
-        sensitivity_level: 1 // 高度敏感数据
-      },
-      _after_meal: { type: String, select: false }, // 加密后的实际存储字段
-      hba1c: {
-        type: String, // 加密存储
-        get: function() {
-          const value = this.get('blood_metrics.glucose._hba1c');
-          return value ? parseFloat(decrypt(value)) : null;
-        },
-        set: function(value) {
-          this.set('blood_metrics.glucose._hba1c', value ? encrypt(value.toString()) : null);
-          return value;
-        },
-        sensitivity_level: 1 // 高度敏感数据
-      },
-      _hba1c: { type: String, select: false } // 加密后的实际存储字段
+      fasting: String,
+      after_meal: String,
+      hba1c: String
     },
     liver: {
       alt: Number,
@@ -208,167 +204,96 @@ const healthDataSchema = new mongoose.Schema({
       platelets: Number
     }
   },
-  // 原始体检报告图像与OCR
+  // 医疗报告
   medical_report: {
-    ocr_image_url: {
-      type: String,
-      sensitivity_level: 1 // 高度敏感数据
-    },
+    ocr_image_url: String,
     ocr_processing_status: {
       type: String,
       enum: ['pending', 'processing', 'completed', 'failed'],
-      default: 'pending',
-      sensitivity_level: 3 // 低度敏感数据
+      default: 'pending'
     },
-    ocr_raw_text: {
-      type: String,
-      sensitivity_level: 1 // 高度敏感数据
-    },
-    report_date: {
-      type: Date,
-      sensitivity_level: 2 // 中度敏感数据
-    },
-    hospital_name: {
-      type: String,
-      sensitivity_level: 2 // 中度敏感数据
-    },
-    // 诊断信息（加密存储）
-    diagnosis: {
-      type: String,
-      get: function() {
-        const value = this.get('medical_report._diagnosis');
-        return value ? decrypt(value) : null;
-      },
-      set: function(value) {
-        this.set('medical_report._diagnosis', value ? encrypt(value) : null);
-        return value;
-      },
-      sensitivity_level: 1 // 高度敏感数据
-    },
-    _diagnosis: { type: String, select: false } // 加密后的实际存储字段
+    ocr_raw_text: String,
+    report_date: Date,
+    hospital_name: String,
+    diagnosis: String
   },
-  // 数据隐私等级（整体数据敏感级别）
-  data_privacy_level: {
-    type: String,
-    enum: ['private', 'share_with_nutritionist', 'share_with_merchant', 'public'],
-    default: 'private',
-    sensitivity_level: 2 // 中度敏感数据
+  // 健康建议
+  health_advice: {
+    nutrition_suggestions: [String],
+    lifestyle_changes: [String],
+    exercise_plan: String,
+    diet_restrictions: [String],
+    recommended_supplements: [String],
+    monitoring_plan: String
   },
-  // AI分析标志
-  ai_analyzed: {
-    type: Boolean,
-    default: false,
-    sensitivity_level: 3 // 低度敏感数据
-  },
-  ai_analysis_results: {
-    type: String,
-    sensitivity_level: 2 // 中度敏感数据
-  },
-  ai_analysis_date: {
-    type: Date,
-    sensitivity_level: 3 // 低度敏感数据
-  },
-  // 记录来源
-  data_source: {
-    type: String,
-    enum: ['user_input', 'ocr', 'wearable_device', 'third_party_app', 'healthcare_provider'],
-    default: 'user_input',
-    sensitivity_level: 3 // 低度敏感数据
-  },
-  // 授权记录
-  access_grants: [{
-    granted_to: {
-      type: mongoose.Schema.Types.ObjectId,
-      refPath: 'access_grants.granted_to_type'
-    },
-    granted_to_type: {
-      type: String,
-      enum: ['Nutritionist', 'Merchant', 'HealthProvider']
-    },
-    granted_at: {
+  // 分析历史
+  analysis_history: [{
+    analyzed_at: {
       type: Date,
       default: Date.now
     },
-    valid_until: {
-      type: Date
-    },
-    access_level: {
+    analyzer_type: {
       type: String,
-      enum: ['full', 'basic', 'summary'],
-      default: 'basic'
+      enum: ['ai', 'human']
     },
-    reason: {
-      type: String
+    analyzer_id: String,
+    results: String,
+    recommendations: String
+  }],
+  // 隐私级别
+  privacy_level: {
+    type: String,
+    enum: ['high', 'medium', 'low'],
+    default: 'high'
+  },
+  // 同步状态
+  synced_to_profile: {
+    type: Boolean,
+    default: false
+  },
+  // 同步历史
+  sync_history: [{
+    synced_at: {
+      type: Date,
+      default: Date.now
     },
-    revoked: {
+    profile_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'NutritionProfile'
+    },
+    sync_type: {
+      type: String,
+      enum: ['manual', 'automatic', 'migration', 'legacy']
+    },
+    sync_status: {
+      type: String,
+      enum: ['success', 'failed']
+    },
+    sync_details: String
+  }],
+  // 数据来源
+  data_source: {
+    source_type: {
+      type: String,
+      enum: ['manual', 'import', 'device'],
+      default: 'manual'
+    },
+    device_info: String,
+    app_version: String,
+    import_file: String
+  },
+  // 验证信息
+  validation: {
+    is_validated: {
       type: Boolean,
       default: false
     },
-    revoked_at: {
-      type: Date
-    }
-  }],
-  // 备注
-  notes: {
-    type: String,
-    sensitivity_level: 2 // 中度敏感数据
-  },
-  // 数据版本控制
-  version: {
-    type: Number,
-    default: 1
-  },
-  revision_history: [{
-    version: Number,
-    modified_at: Date,
-    modified_by: {
-      type: mongoose.Schema.Types.ObjectId,
-      refPath: 'revision_history.modified_by_type'
-    },
-    modified_by_type: {
+    validated_by: {
       type: String,
-      enum: ['User', 'Nutritionist', 'Admin', 'System']
+      enum: ['system', 'professional', 'user', '']
     },
-    changes: [String]
-  }],
-  // 安全和审计
-  last_accessed: {
-    timestamp: Date,
-    accessed_by: {
-      type: mongoose.Schema.Types.ObjectId,
-      refPath: 'last_accessed.accessed_by_type'
-    },
-    accessed_by_type: {
-      type: String,
-      enum: ['User', 'Nutritionist', 'Merchant', 'Admin', 'System']
-    }
-  },
-  access_log: [{
-    timestamp: {
-      type: Date,
-      default: Date.now
-    },
-    accessed_by: {
-      type: mongoose.Schema.Types.ObjectId,
-      refPath: 'access_log.accessed_by_type'
-    },
-    accessed_by_type: {
-      type: String,
-      enum: ['User', 'Nutritionist', 'Merchant', 'Admin', 'System']
-    },
-    ip_address: String,
-    access_type: {
-      type: String,
-      enum: ['read', 'write', 'export', 'share']
-    }
-  }],
-  // 数据生命周期管理
-  retention_period: {
-    type: Number, // 保留天数
-    default: 3650 // 默认10年
-  },
-  scheduled_deletion_date: {
-    type: Date
+    validation_date: Date,
+    validation_method: String
   },
   created_at: {
     type: Date,
@@ -378,244 +303,304 @@ const healthDataSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, { 
+  versionKey: false,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true } 
 });
 
-// 创建索引用于快速查找用户数据
-healthDataSchema.index({ user_id: 1, created_at: -1 });
-healthDataSchema.index({ nutrition_profile_id: 1, created_at: -1 });
-healthDataSchema.index({ data_privacy_level: 1 });
-healthDataSchema.index({ 'access_grants.granted_to': 1, 'access_grants.granted_to_type': 1 });
-healthDataSchema.index({ data_source: 1 });
-// 添加TTL索引，使过期的健康数据自动清理
-healthDataSchema.index({ scheduled_deletion_date: 1 }, { expireAfterSeconds: 0 });
-// 添加部分索引，优化查询性能
-healthDataSchema.index(
-  { user_id: 1, data_privacy_level: 1 },
-  { partialFilterExpression: { data_privacy_level: { $ne: 'private' } } }
-);
-// 为时间序列健康数据优化查询
-healthDataSchema.index({ user_id: 1, 'measurements.date': -1 });
-// 添加复合索引，优化常见查询场景
-healthDataSchema.index({ user_id: 1, data_source: 1, created_at: -1 });
+// 数据敏感度映射（作为静态属性，不是schema的一部分）
+healthDataSchema.statics.sensitivityMap = {
+  'profile_info.profilename': 3, // 低度敏感
+  'profile_info.gender': 2, // 中度敏感
+  'profile_info.age_group': 2, // 中度敏感
+  'profile_info.region': 3, // 低度敏感
+  'profile_info.occupation': 3, // 低度敏感
+  'basic_metrics.height': 2, // 中度敏感
+  'basic_metrics.weight': 2, // 中度敏感
+  'basic_metrics.bmi': 2, // 中度敏感
+  'basic_metrics.blood_pressure': 1, // 高度敏感
+  'basic_metrics.heart_rate': 1, // 高度敏感
+  'health_status.chronic_diseases': 1, // 高度敏感
+  'health_status.special_conditions': 1, // 高度敏感
+  'dietary_preferences.is_vegetarian': 3, // 低度敏感
+  'dietary_preferences.taste_preference': 3, // 低度敏感
+  'dietary_preferences.taboos': 2, // 中度敏感
+  'dietary_preferences.cuisine': 3, // 低度敏感
+  'dietary_preferences.allergies': 1, // 高度敏感
+  'lifestyle.smoking': 2, // 中度敏感
+  'lifestyle.drinking': 2, // 中度敏感
+  'lifestyle.sleep_duration': 3, // 低度敏感
+  'lifestyle.exercise_frequency': 3, // 低度敏感
+  'nutrition_goals': 3, // 低度敏感
+  'blood_metrics': 1, // 高度敏感
+  'medical_report': 1, // 高度敏感
+};
 
-// 更新前自动更新时间和修订历史
-healthDataSchema.pre('save', function(next) {
-  const now = Date.now();
-  this.updated_at = now;
-  
-  // 如果是修改操作(非新文档)
-  if (!this.isNew) {
-    // 增加版本号
-    this.version = (this.version || 0) + 1;
+// 创建模型实例的同步到营养档案方法
+healthDataSchema.methods.syncToNutritionProfile = async function() {
+  try {
+    const NutritionProfile = mongoose.model('NutritionProfile');
     
-    // 记录修订历史
-    const changedFields = this.modifiedPaths().filter(
-      path => !path.startsWith('updated_at') && !path.startsWith('version') && 
-              !path.startsWith('last_accessed') && !path.startsWith('access_log')
-    );
+    if (!this.nutrition_profile_id) {
+      throw new Error('没有关联的营养档案ID');
+    }
     
-    if (changedFields.length > 0) {
-      if (!this.revision_history) {
-        this.revision_history = [];
+    // 查找关联的营养档案
+    const profile = await NutritionProfile.findById(this.nutrition_profile_id);
+    if (!profile) {
+      throw new Error('未找到营养档案');
+    }
+    
+    // 更新营养档案的相关字段
+    if (this.profile_info.gender) {
+      profile.gender = this.profile_info.gender;
+    }
+    
+    if (this.basic_metrics.height) {
+      profile.height = this.basic_metrics.height;
+    }
+    
+    if (this.basic_metrics.weight) {
+      profile.weight = this.basic_metrics.weight;
+    }
+    
+    if (this.profile_info.region) {
+      profile.region = this.profile_info.region;
+    }
+    
+    if (this.profile_info.occupation) {
+      profile.occupation = this.profile_info.occupation;
+    }
+    
+    // 更新健康状况
+    if (this.health_status) {
+      profile.healthStatus = {
+        chronicDiseases: this.health_status.chronic_diseases,
+        specialConditions: this.health_status.special_conditions
+      };
+    }
+    
+    // 更新饮食偏好
+    if (this.dietary_preferences) {
+      profile.dietaryPreferences = {
+        isVegetarian: this.dietary_preferences.is_vegetarian,
+        tastePreference: this.dietary_preferences.taste_preference,
+        taboos: this.dietary_preferences.taboos,
+        cuisine: this.dietary_preferences.cuisine,
+        allergies: this.dietary_preferences.allergies
+      };
+    }
+    
+    // 更新生活方式
+    if (this.lifestyle) {
+      profile.lifestyle = {
+        smoking: this.lifestyle.smoking,
+        drinking: this.lifestyle.drinking,
+        sleepDuration: this.lifestyle.sleep_duration,
+        exerciseFrequency: this.lifestyle.exercise_frequency
+      };
+    }
+    
+    // 更新健康指标
+    if (this.basic_metrics) {
+      if (!profile.health_metrics) {
+        profile.health_metrics = {};
       }
       
-      this.revision_history.push({
-        version: this.version,
-        modified_at: now,
-        modified_by: this._current_user_id || this.user_id,
-        modified_by_type: this._current_user_type || 'User',
-        changes: changedFields
-      });
+      if (this.basic_metrics.bmi) {
+        profile.health_metrics.bmi = this.basic_metrics.bmi;
+      }
+      
+      if (this.basic_metrics.blood_pressure) {
+        profile.health_metrics.blood_pressure = {
+          systolic: this.basic_metrics.blood_pressure.systolic,
+          diastolic: this.basic_metrics.blood_pressure.diastolic,
+          measured_at: new Date()
+        };
+      }
+      
+      if (this.blood_metrics && this.blood_metrics.glucose && this.blood_metrics.glucose.fasting) {
+        profile.health_metrics.blood_glucose = {
+          value: parseFloat(this.blood_metrics.glucose.fasting),
+          measured_at: new Date()
+        };
+      }
     }
-  }
-  
-  // 如果设置了保留期限，计算自动删除日期
-  if (this.retention_period && this.retention_period > 0) {
-    const deleteDate = new Date();
-    deleteDate.setDate(deleteDate.getDate() + this.retention_period);
-    this.scheduled_deletion_date = deleteDate;
-  }
-  
-  next();
-});
-
-// 设置数据访问的中间件方法
-healthDataSchema.methods.logAccess = async function(userId, userType, ipAddress, accessType = 'read') {
-  const now = Date.now();
-  
-  // 更新最后访问记录
-  this.last_accessed = {
-    timestamp: now,
-    accessed_by: userId,
-    accessed_by_type: userType
-  };
-  
-  // 添加到访问日志
-  if (!this.access_log) {
-    this.access_log = [];
-  }
-  
-  // 只保留最近的20条记录
-  if (this.access_log.length >= 20) {
-    this.access_log = this.access_log.slice(-19);
-  }
-  
-  this.access_log.push({
-    timestamp: now,
-    accessed_by: userId,
-    accessed_by_type: userType,
-    ip_address: ipAddress,
-    access_type: accessType
-  });
-  
-  await this.save();
-};
-
-// 安全获取数据的静态方法
-healthDataSchema.statics.secureFind = async function(query, options, user, ipAddress) {
-  if (!user) return [];
-  
-  // 构建基本查询
-  let secureQuery = { ...query };
-  
-  // 用户查询自己的数据
-  if (user._id && user._id.equals(query.user_id)) {
-    // 用户可以查看自己的所有数据
-  } 
-  // 营养师查询用户数据
-  else if (user.role === 'nutritionist') {
-    // 添加营养师的访问条件
-    secureQuery = {
-      ...secureQuery,
-      $or: [
-        // 用户显式授权给此营养师
-        { 'access_grants.granted_to': user._id, 'access_grants.granted_to_type': 'Nutritionist', 'access_grants.revoked': false },
-        // 用户设置为共享给营养师的数据
-        { data_privacy_level: 'share_with_nutritionist' }
-      ]
-    };
-  }
-  // 其他用户无权访问
-  else if (!['admin', 'super_admin'].includes(user.role)) {
-    return [];
-  }
-  
-  // 执行查询
-  const results = await this.find(secureQuery, options).exec();
-  
-  // 记录访问日志
-  for (const record of results) {
-    await record.logAccess(user._id, user.role, ipAddress, 'read');
-  }
-  
-  return results;
-};
-
-// 授权访问方法
-healthDataSchema.methods.grantAccess = function(granteeId, granteeType, validUntil, accessLevel = 'basic', reason) {
-  if (!this.access_grants) {
-    this.access_grants = [];
-  }
-  
-  // 检查是否已存在授权
-  const existingGrant = this.access_grants.find(
-    g => g.granted_to.equals(granteeId) && g.granted_to_type === granteeType && !g.revoked
-  );
-  
-  if (existingGrant) {
-    // 更新现有授权
-    existingGrant.valid_until = validUntil;
-    existingGrant.access_level = accessLevel;
-    existingGrant.reason = reason || existingGrant.reason;
-  } else {
-    // 创建新授权
-    this.access_grants.push({
-      granted_to: granteeId,
-      granted_to_type: granteeType,
-      granted_at: Date.now(),
-      valid_until: validUntil,
-      access_level: accessLevel,
-      reason: reason
+    
+    // 更新营养目标
+    if (this.nutrition_goals && this.nutrition_goals.length > 0) {
+      profile.nutritionGoals = this.nutrition_goals;
+    }
+    
+    // 记录关联
+    if (!profile.related_health_data) {
+      profile.related_health_data = [];
+    }
+    
+    if (!profile.related_health_data.includes(this._id)) {
+      profile.related_health_data.push(this._id);
+    }
+    
+    // 保存更新后的档案
+    await profile.save();
+    
+    // 添加同步历史记录
+    this.sync_history = this.sync_history || [];
+    this.sync_history.push({
+      synced_at: new Date(),
+      profile_id: profile._id,
+      sync_type: 'automatic',
+      sync_status: 'success',
+      sync_details: '已同步健康数据到营养档案'
     });
+    
+    // 标记为已同步
+    this.synced_to_profile = true;
+    await this.save();
+    
+    console.log(`健康数据已成功同步到营养档案(ID: ${this.nutrition_profile_id})`);
+    return true;
+  } catch (error) {
+    console.error('同步健康数据到营养档案时出错:', error);
+    
+    // 记录失败的同步尝试
+    this.sync_history = this.sync_history || [];
+    this.sync_history.push({
+      synced_at: new Date(),
+      profile_id: this.nutrition_profile_id,
+      sync_type: 'automatic',
+      sync_status: 'failed',
+      sync_details: `同步失败: ${error.message}`
+    });
+    
+    await this.save();
+    return false;
   }
 };
 
-// 撤销授权方法
-healthDataSchema.methods.revokeAccess = function(granteeId, granteeType) {
-  if (!this.access_grants) return false;
-  
-  let found = false;
-  this.access_grants.forEach(grant => {
-    if (grant.granted_to.equals(granteeId) && grant.granted_to_type === granteeType && !grant.revoked) {
-      grant.revoked = true;
-      grant.revoked_at = Date.now();
-      found = true;
-    }
-  });
-  
-  return found;
-};
-
-// 根据访问者角色过滤敏感字段
-healthDataSchema.methods.filterSensitiveData = function(userRole, accessLevel) {
-  const data = this.toObject();
-  
-  // 管理员可以访问所有数据
-  if (userRole === 'admin' || userRole === 'super_admin') {
-    return data;
-  }
-  
-  // 确定可访问的敏感级别
-  let allowedLevel = 3; // 默认只能访问低敏感度数据
-  
-  // 营养师可以访问中度敏感数据
-  if (userRole === 'nutritionist') {
-    allowedLevel = 2;
+// 生成健康建议方法
+healthDataSchema.methods.analyzeAndGenerateAdvice = async function() {
+  try {
+    // 分析健康指标并生成健康建议
+    const suggestions = [];
+    const lifestyleChanges = [];
     
-    // 如果特别授权可以访问全部数据
-    if (accessLevel === 'full') {
-      allowedLevel = 1;
-    }
-  }
-  
-  // 递归函数用于过滤敏感字段
-  function filterSensitiveFields(obj) {
-    if (!obj || typeof obj !== 'object') return obj;
-    
-    const result = Array.isArray(obj) ? [] : {};
-    
-    for (const key in obj) {
-      // 跳过内部加密字段
-      if (key.startsWith('_') && key !== '_id') continue;
-      
-      // 检查字段是否有敏感标记
-      const sensitivity = obj[key] && obj[key].sensitivity_level;
-      
-      // 如果没有敏感标记或者用户有权限，则包含此字段
-      if (sensitivity === undefined || sensitivity >= allowedLevel) {
-        if (Array.isArray(obj[key]) || (obj[key] && typeof obj[key] === 'object')) {
-          result[key] = filterSensitiveFields(obj[key]);
-        } else {
-          result[key] = obj[key];
-        }
-      }
-      // 如果是敏感字段但用户无权访问，则设置为null或移除
-      else {
-        if (Array.isArray(result)) {
-          result.push(null);
-        } else {
-          result[key] = "[敏感数据已隐藏]";
-        }
+    // 基于BMI的建议
+    if (this.basic_metrics && this.basic_metrics.bmi) {
+      const bmi = this.basic_metrics.bmi;
+      if (bmi < 18.5) {
+        suggestions.push('增加蛋白质摄入，如鸡胸肉、鱼、豆类等');
+        suggestions.push('适当增加健康脂肪，如坚果、橄榄油等');
+        lifestyleChanges.push('增加阻力训练，帮助肌肉生长');
+      } else if (bmi >= 25 && bmi < 30) {
+        suggestions.push('控制碳水化合物摄入，减少精制糖和白面');
+        suggestions.push('增加蔬菜水果摄入');
+        lifestyleChanges.push('每周至少进行150分钟中等强度有氧运动');
+      } else if (bmi >= 30) {
+        suggestions.push('建议咨询营养师制定个性化的减重饮食计划');
+        suggestions.push('严格控制热量摄入，每天减少500-1000卡路里');
+        lifestyleChanges.push('增加日常活动量，考虑每天步行10000步');
+        lifestyleChanges.push('每周进行3-5次有氧运动，每次30-60分钟');
       }
     }
     
-    return result;
+    // 基于血压的建议
+    if (this.basic_metrics && this.basic_metrics.blood_pressure) {
+      const systolic = this.basic_metrics.blood_pressure.systolic;
+      const diastolic = this.basic_metrics.blood_pressure.diastolic;
+      
+      if (systolic >= 140 || diastolic >= 90) {
+        suggestions.push('减少钠盐摄入，每日不超过5克');
+        suggestions.push('采用DASH饮食法，增加钾、镁、钙的摄入');
+        suggestions.push('增加全谷物、蔬菜和水果的摄入');
+        lifestyleChanges.push('避免过度饮酒，戒烟');
+        lifestyleChanges.push('管理压力，尝试冥想或瑜伽');
+      }
+    }
+    
+    // 基于慢性疾病的建议
+    if (this.health_status && this.health_status.chronic_diseases) {
+      if (this.health_status.chronic_diseases.includes('diabetes')) {
+        suggestions.push('选择低升糖指数的食物，如全谷物、豆类');
+        suggestions.push('控制碳水化合物的摄入量和分配');
+        suggestions.push('增加高纤维食物摄入');
+        lifestyleChanges.push('每餐后进行短时间步行');
+      }
+      
+      if (this.health_status.chronic_diseases.includes('hypertension')) {
+        suggestions.push('增加富含钾的食物，如香蕉、土豆和菠菜');
+        suggestions.push('限制咖啡因摄入');
+      }
+      
+      if (this.health_status.chronic_diseases.includes('gout')) {
+        suggestions.push('避免高嘌呤食物，如动物内脏、海鲜和啤酒');
+        suggestions.push('限制红肉摄入');
+        suggestions.push('多喝水，每天保持2000-3000毫升水分摄入');
+      }
+    }
+    
+    // 生成运动计划
+    let exercisePlan = '';
+    if (this.lifestyle && this.lifestyle.exercise_frequency) {
+      switch (this.lifestyle.exercise_frequency) {
+        case 'none':
+          exercisePlan = '开始进行每天10-15分钟的轻度活动，如步行；逐渐增加到30分钟';
+          break;
+        case 'occasional':
+          exercisePlan = '每周进行3-4次30分钟的中等强度活动，如快走、骑自行车或游泳';
+          break;
+        case 'regular':
+          exercisePlan = '维持每周3-4次有氧运动，添加每周2天的力量训练';
+          break;
+        case 'frequent':
+        case 'daily':
+          exercisePlan = '保持当前的活动水平，但确保运动的多样性，包括有氧、力量和柔韧性训练';
+          break;
+      }
+    }
+    
+    // 生成健康监测计划
+    let monitoringPlan = '';
+    if (this.health_status && this.health_status.chronic_diseases && 
+        this.health_status.chronic_diseases.some(d => d !== 'none')) {
+      monitoringPlan = '每月测量一次基本健康指标，如体重、血压；每3-6个月进行一次完整的健康检查';
+    } else {
+      monitoringPlan = '每3个月监测一次体重和BMI；每6个月测量一次血压；每年进行一次全面体检';
+    }
+    
+    // 更新健康建议
+    const healthAdvice = {
+      nutrition_suggestions: suggestions,
+      lifestyle_changes: lifestyleChanges,
+      exercise_plan: exercisePlan,
+      diet_restrictions: [],
+      recommended_supplements: [],
+      monitoring_plan: monitoringPlan
+    };
+    
+    // 添加分析历史记录
+    this.analysis_history = this.analysis_history || [];
+    this.analysis_history.push({
+      analyzed_at: new Date(),
+      analyzer_type: 'ai',
+      analyzer_id: 'system',
+      results: '基于健康数据的自动分析',
+      recommendations: suggestions.join('; ')
+    });
+    
+    // 更新健康建议字段
+    this.health_advice = healthAdvice;
+    await this.save();
+    
+    return healthAdvice;
+  } catch (error) {
+    console.error('生成健康建议时出错:', error);
+    return null;
   }
-  
-  return filterSensitiveFields(data);
 };
 
-// 使用ModelFactory创建模型
-const HealthData = ModelFactory.model('HealthData', healthDataSchema);
+// 创建模型
+const HealthData = modelFactory.model('HealthData', healthDataSchema, 'health_data');
 
 module.exports = HealthData;

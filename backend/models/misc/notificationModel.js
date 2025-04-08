@@ -198,7 +198,7 @@ notificationSchema.set('shardKey', {
 });
 
 // 使用ModelFactory创建模型
-const Notification = ModelFactory.createModel('Notification', notificationSchema);
+const Notification = ModelFactory.model('Notification', notificationSchema);
 
 // 导出模型
 module.exports = Notification; 

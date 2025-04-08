@@ -4,29 +4,29 @@ const dbManager = require('../config/database');
 const ModelFactory = require('./modelFactory');
 
 // 导入所有模型
-const User = require('./userModel');
-const UserRole = require('./userRoleModel');
-const Admin = require('./adminModel');
-const NutritionProfile = require('./nutritionProfileModel');
-const HealthData = require('./healthDataModel');
-const Nutritionist = require('./nutritionistModel');
-const Merchant = require('./merchantModel');
-const Dish = require('./dishModel');
-const Order = require('./orderModel');
-const AiRecommendation = require('./aiRecommendationModel');
-const Subscription = require('./subscriptionModel');
-const AuditLog = require('./auditLogModel');
-const DataAccessControl = require('./dataAccessControlModel');
-const ForumPost = require('./forumPostModel');
-const ForumComment = require('./forumCommentModel');
-const Consultation = require('./consultationModel');
-const MerchantStats = require('./merchantStatsModel');
-const Store = require('./storeModel');
-const StoreDish = require('./storeDishModel');
-const UserFavorite = require('./userFavoriteModel');
-const DbMetrics = require('./dbMetricsModel');
-const Notification = require('./notificationModel');
-const OAuthAccount = require('./oauthAccountModel');
+const User = require('./core/userModel');
+const UserRole = require('./core/userRoleModel');
+const Admin = require('./core/adminModel');
+const NutritionProfile = require('./health/nutritionProfileModel');
+const HealthData = require('./health/healthDataModel');
+const Nutritionist = require('./nutrition/nutritionistModel');
+const Merchant = require('./merchant/merchantModel');
+const Dish = require('./merchant/ProductDishModel');
+const Order = require('./order/orderModel');
+const AiRecommendation = require('./nutrition/aiRecommendationModel');
+const Subscription = require('./order/subscriptionModel');
+const AuditLog = require('./core/auditLogModel');
+const DataAccessControl = require('./core/dataAccessControlModel');
+const ForumPost = require('./forum/forumPostModel');
+const ForumComment = require('./forum/forumCommentModel');
+const Consultation = require('./order/consultationModel');
+const MerchantStats = require('./merchant/merchantStatsModel');
+const Store = require('./merchant/storeModel');
+const StoreDish = require('./merchant/storeDishModel');
+const UserFavorite = require('./nutrition/userFavoriteModel');
+const DbMetrics = require('./core/dbMetricsModel');
+const Notification = require('./misc/notificationModel');
+const OAuthAccount = require('./core/oauthAccountModel');
 
 // 连接数据库 - 使用新的数据库管理器
 const connectDB = async () => {
@@ -48,16 +48,7 @@ const setupMonitoring = async () => {
   // 慢查询阈值（单位：毫秒）
   const SLOW_QUERY_THRESHOLD = 500;
   
-  // 慢查询记录和性能指标集合 - 使用ModelFactory
-  const DbMetrics = ModelFactory.model('DbMetrics', new mongoose.Schema({
-    operation: String,
-    collection: String,
-    query: Object,
-    duration: Number,
-    timestamp: { type: Date, default: Date.now },
-    slow_query: Boolean
-  }));
-  
+  // 使用已导入的DbMetrics模型而不是重新创建
   try {
     // 获取主连接
     const primaryConn = await dbManager.getPrimaryConnection();
@@ -111,18 +102,36 @@ const setupMonitoring = async () => {
 // 设置数据库连接的事件监听器
 const setupConnectionListeners = async () => {
   try {
-    // 获取主连接
+    // 获取主连接和副本连接
     const primaryConn = await dbManager.getPrimaryConnection();
+    const replicaConn = await dbManager.getReplicaConnection();
     
-    // 监听数据库错误事件
+    // 监听主连接错误事件
     primaryConn.on('error', (err) => {
       console.error('MongoDB 主连接错误:', err);
     });
     
-    // 监听数据库断开连接事件
+    // 监听主连接断开连接事件
     primaryConn.on('disconnected', () => {
       console.warn('MongoDB 主连接断开，尝试重新连接...');
-      connectDB().catch(err => console.error('重新连接失败:', err));
+      dbManager.reconnectPrimary().catch(err => console.error('主连接重新连接失败:', err));
+    });
+    
+    // 监听副本连接错误事件
+    replicaConn.on('error', (err) => {
+      console.error('MongoDB 副本连接错误:', err);
+    });
+    
+    // 监听副本连接断开连接事件
+    replicaConn.on('disconnected', () => {
+      console.warn('MongoDB 副本连接断开，尝试重新连接...');
+      dbManager.reconnectReplica().catch(err => console.error('副本连接重新连接失败:', err));
+    });
+    
+    // 添加全局连接恢复后的模型重新初始化逻辑
+    primaryConn.once('reconnected', async () => {
+      console.log('MongoDB 主连接已恢复，重新初始化模型...');
+      await ModelFactory.reinitializeAllModels();
     });
     
     console.log('数据库连接监听器设置完成');
@@ -161,44 +170,47 @@ module.exports = {
   
   // 便捷的数据库操作方法
   createIndexes: async () => {
-    // 检查是否已经创建过索引
-    const indexCollection = await mongoose.connection.db.collection('system.indexes');
-    const existingIndexes = await indexCollection.find().toArray();
-    
-    if (existingIndexes.length > 0) {
-      console.log('数据库索引已存在,跳过创建');
-      return;
+    try {
+      console.log('开始创建数据库索引...');
+      
+      // 获取主连接
+      const primaryConn = await dbManager.getPrimaryConnection();
+      
+      // 检查是否已经创建过索引
+      const collections = await primaryConn.db.listCollections().toArray();
+      const collectionNames = collections.map(c => c.name);
+      
+      // 创建所有集合的索引（在部署时可以调用）
+      await Promise.all([
+        User.createIndexes(),
+        UserRole.createIndexes(),
+        Admin.createIndexes(),
+        NutritionProfile.createIndexes(),
+        HealthData.createIndexes(),
+        Nutritionist.createIndexes(),
+        Merchant.createIndexes(),
+        Dish.createIndexes(),
+        Order.createIndexes(),
+        AiRecommendation.createIndexes(),
+        Subscription.createIndexes(),
+        AuditLog.createIndexes(),
+        DataAccessControl.createIndexes(),
+        ForumPost.createIndexes(),
+        ForumComment.createIndexes(),
+        Consultation.createIndexes(),
+        MerchantStats.createIndexes(),
+        Store.createIndexes(),
+        StoreDish.createIndexes(),
+        UserFavorite.createIndexes(),
+        DbMetrics.createIndexes(),
+        Notification.createIndexes(),
+        OAuthAccount.createIndexes()
+      ]);
+      console.log('所有数据库索引创建完成');
+    } catch (error) {
+      console.error('创建索引失败:', error);
+      throw error;
     }
-    
-    console.log('开始创建数据库索引...');
-    
-    // 创建所有集合的索引（在部署时可以调用）
-    await Promise.all([
-      User.createIndexes(),
-      UserRole.createIndexes(),
-      Admin.createIndexes(),
-      NutritionProfile.createIndexes(),
-      HealthData.createIndexes(),
-      Nutritionist.createIndexes(),
-      Merchant.createIndexes(),
-      Dish.createIndexes(),
-      Order.createIndexes(),
-      AiRecommendation.createIndexes(),
-      Subscription.createIndexes(),
-      AuditLog.createIndexes(),
-      DataAccessControl.createIndexes(),
-      ForumPost.createIndexes(),
-      ForumComment.createIndexes(),
-      Consultation.createIndexes(),
-      MerchantStats.createIndexes(),
-      Store.createIndexes(),
-      StoreDish.createIndexes(),
-      UserFavorite.createIndexes(),
-      DbMetrics.createIndexes(),
-      Notification.createIndexes(),
-      OAuthAccount.createIndexes()
-    ]);
-    console.log('所有数据库索引创建完成');
   },
   
   // 数据库清理方法（测试环境使用）
