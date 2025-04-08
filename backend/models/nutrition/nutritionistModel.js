@@ -193,5 +193,5 @@ nutritionistSchema.pre('save', function(next) {
 });
 
 // 创建模型并导出
-const Nutritionist = ModelFactory.model('Nutritionist', nutritionistSchema);
+const Nutritionist = ModelFactory.createModel('Nutritionist', nutritionistSchema);
 module.exports = Nutritionist; 

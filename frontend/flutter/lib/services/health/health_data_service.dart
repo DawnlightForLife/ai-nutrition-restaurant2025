@@ -8,13 +8,13 @@ import '../../models/health/nutrition_profile_model.dart';
 import '../../models/api_response.dart';
 import '../../models/result.dart';
 import '../../utils/error_handler.dart';
-import '../api_service.dart';
+import '../core/api_service.dart';
+import '../../common/constants/api_constants.dart';
 
 /// 健康数据服务
 /// 提供与健康数据相关的API调用方法
 class HealthDataService {
   final ApiService _apiService;
-  final String _baseUrl = '/health-data';
   
   HealthDataService(this._apiService);
   
@@ -23,7 +23,7 @@ class HealthDataService {
     try {
       debugPrint('获取健康数据: $healthDataId');
       
-      final response = await _apiService.get('$_baseUrl/$healthDataId');
+      final response = await _apiService.get('${ApiConstants.healthData}/$healthDataId');
       final apiResponse = ApiResponse.fromJson(response);
       
       if (!apiResponse.success) {
@@ -41,7 +41,7 @@ class HealthDataService {
   /// 获取用户所有健康数据
   Future<Result<List<HealthData>>> getUserHealthData({String? userId}) async {
     try {
-      final url = userId != null ? '$_baseUrl/user/$userId' : '$_baseUrl/user';
+      final url = userId != null ? '${ApiConstants.healthData}/user/$userId' : '${ApiConstants.healthData}/user';
       
       debugPrint('获取用户健康数据列表: $url');
       
@@ -70,7 +70,7 @@ class HealthDataService {
       debugPrint('创建健康数据: ${healthData.toJson()}');
       
       final response = await _apiService.post(
-        _baseUrl,
+        ApiConstants.healthData,
         data: healthData.toJson(),
       );
       
@@ -94,7 +94,7 @@ class HealthDataService {
       debugPrint('更新健康数据: $id, ${healthData.toJson()}');
       
       final response = await _apiService.put(
-        '$_baseUrl/$id',
+        '${ApiConstants.healthData}/$id',
         data: healthData.toJson(),
       );
       
@@ -117,7 +117,7 @@ class HealthDataService {
     try {
       debugPrint('删除健康数据: $id');
       
-      final response = await _apiService.delete('$_baseUrl/$id');
+      final response = await _apiService.delete('${ApiConstants.healthData}/$id');
       final apiResponse = ApiResponse.fromJson(response);
       
       if (!apiResponse.success) {
@@ -137,7 +137,7 @@ class HealthDataService {
       debugPrint('将健康数据同步到营养档案: $healthDataId, $nutritionProfileId');
       
       final response = await _apiService.post(
-        '$_baseUrl/$healthDataId/sync/$nutritionProfileId',
+        '${ApiConstants.healthData}/$healthDataId/sync/$nutritionProfileId',
       );
       
       final apiResponse = ApiResponse.fromJson(response);
@@ -159,7 +159,7 @@ class HealthDataService {
       debugPrint('从健康数据创建营养档案: $healthDataId');
       
       final response = await _apiService.post(
-        '$_baseUrl/$healthDataId/create-profile',
+        '${ApiConstants.healthData}/$healthDataId/create-profile',
       );
       
       final apiResponse = ApiResponse.fromJson(response);
@@ -181,7 +181,7 @@ class HealthDataService {
     try {
       debugPrint('分析健康数据: $healthDataId');
       
-      final response = await _apiService.get('$_baseUrl/$healthDataId/analyze');
+      final response = await _apiService.get('${ApiConstants.healthData}/$healthDataId/analyze');
       final apiResponse = ApiResponse.fromJson(response);
       
       if (!apiResponse.success) {

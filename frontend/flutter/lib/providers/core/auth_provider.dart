@@ -362,25 +362,27 @@ class AuthProvider with ChangeNotifier {
       
       // 如果提供了authService，验证token有效性
       if (authService != null) {
-        final isValid = await authService.validateToken();
+        final isValid = await authService.validateToken(_token ?? "");
         
         if (!isValid) {
           try {
             // 尝试刷新token
             debugPrint('Token无效，尝试刷新...');
-            final newToken = await authService.refreshToken(_token);
-            
-            if (newToken != null) {
-              // 刷新成功，更新token
-              debugPrint('Token刷新成功，新token长度: ${newToken.length}');
-              _token = newToken;
-              await _saveToPrefs();
-            } else {
-              // token刷新失败，清除登录状态
-              debugPrint('Token刷新失败，清除登录状态');
-              await logout();
-              _setLoading(false);
-              return false;
+            if (_token != null) {
+              final newToken = await authService.refreshToken(_token!);
+              
+              if (newToken != null) {
+                // 刷新成功，更新token
+                debugPrint('Token刷新成功，新token长度: ${newToken.length}');
+                _token = newToken;
+                await _saveToPrefs();
+              } else {
+                // token刷新失败，清除登录状态
+                debugPrint('Token刷新失败，清除登录状态');
+                await logout();
+                _setLoading(false);
+                return false;
+              }
             }
           } catch (e) {
             // 刷新token出错，使用当前token继续

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const shardAccessService = require('../../services/shardAccessService');
+const shardAccessService = require('../../services/core/shardAccessService');
 
 // 导入需要的模型做延迟加载
 let Order, HealthData, AiRecommendation, Consultation, Nutritionist;

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
-const { shardingService } = require('../../services/shardingService');
+const { shardingService } = require('../../services/core/shardingService');
 
 // 导入所需的模型
 const User = require('../core/userModel');
@@ -625,7 +625,7 @@ consultationSchema.pre('save', function(next) {
 });
 
 // 使用ModelFactory创建支持读写分离的模型
-const Consultation = ModelFactory.model('Consultation', consultationSchema);
+const Consultation = ModelFactory.createModel('Consultation', consultationSchema);
 
 // 添加分片支持
 Consultation.getShardKey = function(doc) {

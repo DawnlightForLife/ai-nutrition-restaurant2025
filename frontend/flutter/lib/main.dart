@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 import 'providers/core/auth_provider.dart';
 import 'providers/forum/forum_provider.dart';
 import 'providers/health/health_profile_provider.dart';
-import 'services/api_service.dart';
+import 'services/core/api_service.dart';
 import 'services/core/auth_service.dart';
 import 'services/forum/forum_service.dart';
 import 'repositories/forum/forum_repository.dart';
@@ -41,22 +41,22 @@ String getApiBaseUrl() {
   // 为不同平台提供不同的API地址
   if (kIsWeb) {
     // Web环境使用相对路径
-    return '';  // 移除/api前缀，后端会自动处理
+    return '/api';  // 添加/api前缀
   } else {
     // AndroidStudio模拟器环境
     if (defaultTargetPlatform == TargetPlatform.android) {
       // 后端容器将内部3000端口映射到主机的8080端口
       // Android模拟器中10.0.2.2是访问主机的特殊IP
       debugPrint('🔄 使用Android模拟器专用地址: 10.0.2.2:8080');
-      return 'http://10.0.2.2:8080';  // 移除/api前缀，后端会自动处理
+      return 'http://10.0.2.2:8080/api';  // 添加/api前缀
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
       // iOS模拟器通过localhost访问宿主机
       debugPrint('🔄 使用iOS模拟器地址: localhost:8080');
-      return 'http://localhost:8080';  // 移除/api前缀，后端会自动处理
+      return 'http://localhost:8080/api';  // 添加/api前缀
     } else {
       // 其他平台（桌面等）
       debugPrint('🔄 使用默认地址: localhost:8080');
-      return 'http://localhost:8080';  // 移除/api前缀，后端会自动处理
+      return 'http://localhost:8080/api';  // 添加/api前缀
     }
   }
 }

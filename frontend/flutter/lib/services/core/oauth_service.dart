@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import '../../services/api_service.dart';
+import 'api_service.dart';
 import '../../utils/global_error_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart' as prefs;
 

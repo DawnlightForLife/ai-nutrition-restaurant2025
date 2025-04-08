@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../../models/forum/post.dart';
 import '../../models/forum/comment.dart';
-import '../api_service.dart';
+import '../core/api_service.dart';
+import '../../common/constants/api_constants.dart';
 
 /// 论坛服务类
 ///
@@ -52,7 +53,7 @@ class ForumService {
 
     // 发送GET请求获取帖子列表
     final response = await _apiService.get(
-      '/api/forum/posts',
+      ApiConstants.forumPost,
       queryParams: queryParams,
       token: token,
     );
@@ -83,7 +84,7 @@ class ForumService {
   }) async {
     // 发送GET请求获取帖子详情
     final response = await _apiService.get(
-      '/api/forum/posts/$postId',
+      '${ApiConstants.forumPost}/$postId',
       token: token,
     );
 
@@ -108,7 +109,7 @@ class ForumService {
   }) async {
     // 发送POST请求创建帖子
     final response = await _apiService.post(
-      '/api/forum/posts',
+      ApiConstants.forumPost,
       data: {
         'title': title,
         'content': content,
@@ -147,7 +148,7 @@ class ForumService {
 
     // 发送PUT请求更新帖子
     final response = await _apiService.put(
-      '/api/forum/posts/$postId',
+      '${ApiConstants.forumPost}/$postId',
       data: data,
       token: token,
     );
@@ -169,7 +170,7 @@ class ForumService {
   }) async {
     // 发送DELETE请求删除帖子
     await _apiService.delete(
-      '/api/forum/posts/$postId',
+      '${ApiConstants.forumPost}/$postId',
       token: token,
     );
 
@@ -190,7 +191,7 @@ class ForumService {
   }) async {
     // 发送GET请求获取评论列表
     final response = await _apiService.get(
-      '/api/forum/posts/$postId/comments',
+      '${ApiConstants.forumPost}/$postId/comments',
       token: token,
     );
 
@@ -205,39 +206,31 @@ class ForumService {
   ///
   /// @param postId 帖子ID
   /// @param content 评论内容
-  /// @param parentId 父评论ID（用于回复功能，可选）
   /// @param token 用户令牌，必须提供（需要登录）
-  /// @return 创建的评论对象
+  /// @return 创建成功的评论对象
   Future<Comment> addComment({
     required String postId,
     required String content,
-    String? parentId,
     required String token,
+    String? parentId,
   }) async {
-    // 构建评论数据
-    final Map<String, dynamic> data = {
-      'content': content,
-    };
-
-    // 如果是回复其他评论，添加父评论ID
-    if (parentId != null) {
-      data['parentId'] = parentId;
-    }
-
     // 发送POST请求添加评论
     final response = await _apiService.post(
-      '/api/forum/posts/$postId/comments',
-      data: data,
+      '${ApiConstants.forumPost}/$postId/comments',
+      data: {
+        'content': content,
+        'parent_comment_id': parentId,
+      },
       token: token,
     );
 
     // 将响应数据转换为评论模型对象
-    return Comment.fromJson(response);
+    return Comment.fromJson(response['comment']);
   }
 
   /// 删除评论
   ///
-  /// 从指定帖子中删除评论
+  /// 从服务器永久删除指定评论
   ///
   /// @param postId 帖子ID
   /// @param commentId 评论ID
@@ -250,7 +243,7 @@ class ForumService {
   }) async {
     // 发送DELETE请求删除评论
     await _apiService.delete(
-      '/api/forum/posts/$postId/comments/$commentId',
+      '${ApiConstants.forumPost}/$postId/comments/$commentId',
       token: token,
     );
 
@@ -260,33 +253,33 @@ class ForumService {
 
   /// 点赞/取消点赞帖子
   ///
-  /// 切换帖子的点赞状态，如已点赞则取消，未点赞则添加
+  /// 切换帖子的点赞状态
   ///
   /// @param postId 帖子ID
   /// @param token 用户令牌，必须提供（需要登录）
-  /// @return 操作后的点赞状态（true=已点赞，false=已取消点赞）
+  /// @return 更新后的点赞状态
   Future<bool> toggleLikePost({
     required String postId,
     required String token,
   }) async {
     // 发送POST请求切换点赞状态
     final response = await _apiService.post(
-      '/api/forum/posts/$postId/like',
+      '${ApiConstants.forumPost}/$postId/like',
       token: token,
     );
 
-    // 返回操作后的点赞状态
+    // 返回更新后的点赞状态
     return response['liked'] ?? false;
   }
 
   /// 点赞/取消点赞评论
   ///
-  /// 切换评论的点赞状态，如已点赞则取消，未点赞则添加
+  /// 切换评论的点赞状态
   ///
   /// @param postId 帖子ID
   /// @param commentId 评论ID
   /// @param token 用户令牌，必须提供（需要登录）
-  /// @return 操作后的点赞状态（true=已点赞，false=已取消点赞）
+  /// @return 更新后的点赞状态
   Future<bool> toggleLikeComment({
     required String postId,
     required String commentId,
@@ -294,11 +287,11 @@ class ForumService {
   }) async {
     // 发送POST请求切换评论点赞状态
     final response = await _apiService.post(
-      '/api/forum/posts/$postId/comments/$commentId/like',
+      '${ApiConstants.forumPost}/$postId/comments/$commentId/like',
       token: token,
     );
 
-    // 返回操作后的点赞状态
+    // 返回更新后的点赞状态
     return response['liked'] ?? false;
   }
 }

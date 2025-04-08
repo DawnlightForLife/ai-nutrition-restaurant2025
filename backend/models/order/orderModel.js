@@ -554,6 +554,6 @@ orderSchema.pre('save', async function(next) {
 });
 
 // 使用ModelFactory创建支持读写分离的模型
-const Order = ModelFactory.model('Order', orderSchema);
+const Order = ModelFactory.createModel('Order', orderSchema);
 
 module.exports = Order; 

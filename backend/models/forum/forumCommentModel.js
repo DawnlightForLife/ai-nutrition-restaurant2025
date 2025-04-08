@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
-const { shardingService } = require('../../services/shardingService');
+const { shardingService } = require('../../services/core/shardingService');
 
 const forumCommentSchema = new mongoose.Schema({
   post_id: {
@@ -148,7 +148,7 @@ forumCommentSchema.methods.softDelete = async function(adminId, reason) {
   // 如果评论之前是活跃的，更新帖子评论计数
   if (wasActive) {
     try {
-      const ForumPost = ModelFactory.model('ForumPost');
+      const ForumPost = ModelFactory.createModel('ForumPost');
       await ForumPost.findByIdAndUpdate(
         this.post_id,
         { $inc: { comment_count: -1 } }
@@ -181,7 +181,7 @@ forumCommentSchema.methods.moderate = async function(adminId, approved, reason) 
   // 如果评论被批准，更新帖子评论计数
   if (approved) {
     try {
-      const ForumPost = ModelFactory.model('ForumPost');
+      const ForumPost = ModelFactory.createModel('ForumPost');
       await ForumPost.findByIdAndUpdate(
         this.post_id,
         { $inc: { comment_count: 1 } }
@@ -413,7 +413,7 @@ forumCommentSchema.statics.countTopLevelAndReplies = async function(postId) {
 forumCommentSchema.post('save', async function(doc) {
   if (doc.isNew && doc.status === 'active') {
     try {
-      const ForumPost = ModelFactory.model('ForumPost');
+      const ForumPost = ModelFactory.createModel('ForumPost');
       await ForumPost.findByIdAndUpdate(
         doc.post_id,
         { $inc: { comment_count: 1 } }
@@ -428,7 +428,7 @@ forumCommentSchema.post('save', async function(doc) {
 forumCommentSchema.post('findOneAndUpdate', async function(doc) {
   if (doc && doc.status === 'deleted') {
     try {
-      const ForumPost = ModelFactory.model('ForumPost');
+      const ForumPost = ModelFactory.createModel('ForumPost');
       await ForumPost.findByIdAndUpdate(
         doc.post_id,
         { $inc: { comment_count: -1 } }
@@ -453,7 +453,7 @@ forumCommentSchema.pre('save', function(next) {
 });
 
 // 使用ModelFactory创建支持读写分离的模型
-const ForumComment = ModelFactory.model('ForumComment', forumCommentSchema);
+const ForumComment = ModelFactory.createModel('ForumComment', forumCommentSchema);
 
 // 添加分片支持
 ForumComment.getShardKey = function(doc) {

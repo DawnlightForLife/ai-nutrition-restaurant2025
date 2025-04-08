@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
-const { shardingService } = require('../../services/shardingService');
+const { shardingService } = require('../../services/core/shardingService');
 
 const dataAccessControlSchema = new mongoose.Schema({
   // 授予权限的主体
@@ -731,7 +731,7 @@ dataAccessControlSchema.statics.validateMultipleOperations = async function(prin
 };
 
 // 使用ModelFactory创建支持读写分离的数据访问控制模型
-const DataAccessControl = ModelFactory.model('DataAccessControl', dataAccessControlSchema);
+const DataAccessControl = ModelFactory.createModel('DataAccessControl', dataAccessControlSchema);
 
 // 添加分片支持的保存方法
 const originalSave = DataAccessControl.prototype.save;

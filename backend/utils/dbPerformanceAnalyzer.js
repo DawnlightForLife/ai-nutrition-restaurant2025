@@ -24,7 +24,7 @@ class DbPerformanceAnalyzer {
         });
         
         // 使用ModelFactory创建模型
-        this.dbMetricsModel = ModelFactory.model('DbMetrics', dbMetricsSchema);
+        this.dbMetricsModel = ModelFactory.createModel('DbMetrics', dbMetricsSchema);
       }
       
       return this.dbMetricsModel;

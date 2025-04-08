@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
-const { shardingService } = require('../../services/shardingService');
+const { shardingService } = require('../../services/core/shardingService');
 
 const forumPostSchema = new mongoose.Schema({
   user_id: {
@@ -430,7 +430,7 @@ forumPostSchema.pre('save', function(next) {
 });
 
 // 使用ModelFactory创建支持读写分离的模型
-const ForumPost = ModelFactory.model('ForumPost', forumPostSchema);
+const ForumPost = ModelFactory.createModel('ForumPost', forumPostSchema);
 
 // 添加分片支持
 ForumPost.getShardKey = function(doc) {

@@ -5,7 +5,7 @@ import 'dart:math' as math;
 
 import 'providers/core/auth_provider.dart';
 import 'services/core/auth_service.dart';
-import 'services/api_service.dart';
+import 'services/core/api_service.dart';
 import 'utils/global_error_handler.dart';
 import 'router/app_routes.dart';
 

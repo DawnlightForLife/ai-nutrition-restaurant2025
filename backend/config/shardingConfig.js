@@ -3,7 +3,7 @@
  * 定义各集合的分片策略
  */
 
-const { ShardingStrategy, TimeShardUnit } = require('../services/shardingService');
+const { ShardingStrategy, TimeShardUnit } = require('../services/core/shardingService');
 
 /**
  * 分片配置
@@ -97,4 +97,34 @@ const shardingConfig = {
   }
 };
 
-module.exports = shardingConfig; 
+// 创建分片服务实例
+const shardingService = {
+  config: shardingConfig,
+  
+  /**
+   * 初始化分片服务
+   * @param {Object} config - 分片配置
+   */
+  init(config) {
+    this.config = config;
+    console.log('分片服务已初始化');
+  },
+  
+  /**
+   * 根据指定key获取分片名称
+   * @param {string} collection - 集合名称
+   * @param {string|Object} key - 分片键
+   * @returns {string} 分片集合名称
+   */
+  getShardName(collection, key) {
+    if (!this.config.enabled || !this.config.strategies[collection]) {
+      return collection; // 未启用分片或集合无分片策略
+    }
+    
+    // 简单实现：返回原集合名称
+    // 实际实现中，应根据策略计算分片
+    return collection;
+  }
+};
+
+module.exports = { shardingConfig, shardingService }; 

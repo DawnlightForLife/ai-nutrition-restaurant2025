@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../models/health/nutrition_profile_model.dart';
 import '../../services/health/health_profile_service.dart';
 import '../../services/health/health_data_service.dart';
-import '../../services/api_service.dart';
+import '../../services/core/api_service.dart';
 import '../../services/core/auth_service.dart';
 import '../core/auth_provider.dart';
 

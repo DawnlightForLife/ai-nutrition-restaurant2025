@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
-const { shardingService } = require('../../services/shardingService');
+const { shardingService } = require('../../services/core/shardingService');
 
 const userRoleSchema = new mongoose.Schema({
   name: {
@@ -226,7 +226,7 @@ userRoleSchema.statics.initializeDefaultRoles = async function() {
 };
 
 // 使用ModelFactory创建支持读写分离的模型
-const UserRole = ModelFactory.model('UserRole', userRoleSchema);
+const UserRole = ModelFactory.createModel('UserRole', userRoleSchema);
 
 // 由于角色数据量少且重要，不进行分片，但可以加入缓存
 // 添加角色缓存支持

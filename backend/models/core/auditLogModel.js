@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
-const { shardingService } = require('../../services/shardingService');
+const { shardingService } = require('../../services/core/shardingService');
 
 const auditLogSchema = new mongoose.Schema({
   // 操作类型
@@ -567,7 +567,7 @@ auditLogSchema.statics.cleanExpiredLogs = async function() {
 };
 
 // 使用ModelFactory创建支持读写分离和分片的审计日志模型
-const AuditLog = ModelFactory.model('AuditLog', auditLogSchema);
+const AuditLog = ModelFactory.createModel('AuditLog', auditLogSchema);
 
 // 添加分片支持
 // 由于审计日志数据量大，按时间和用户ID进行分片

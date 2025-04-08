@@ -972,6 +972,6 @@ merchantSchema.statics.findWithPermissionCheck = async function(query = {}, opti
   return [];
 };
 
-const Merchant = ModelFactory.model('Merchant', merchantSchema);
+const Merchant = ModelFactory.createModel('Merchant', merchantSchema);
 
 module.exports = Merchant; 

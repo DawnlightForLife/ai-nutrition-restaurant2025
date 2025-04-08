@@ -808,6 +808,6 @@ merchantStatsSchema.statics.getAggregatedStats = async function(merchantIds, per
   return aggregated;
 };
 
-const MerchantStats = ModelFactory.model('MerchantStats', merchantStatsSchema);
+const MerchantStats = ModelFactory.createModel('MerchantStats', merchantStatsSchema);
 
 module.exports = MerchantStats; 

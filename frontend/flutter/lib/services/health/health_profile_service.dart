@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../../models/health/nutrition_profile_model.dart';
 import '../../utils/global_error_handler.dart';
-import '../../services/api_service.dart';
-import '../../services/core/auth_service.dart';
+import '../core/api_service.dart';
+import '../core/auth_service.dart';
 import '../../providers/core/auth_provider.dart';
+import '../../common/constants/api_constants.dart';
 import 'package:dio/dio.dart';
 
 class HealthProfileService {
@@ -64,7 +65,7 @@ class HealthProfileService {
       debugPrint('获取健康档案列表 - 用户ID: $userId');
 
       final response = await _apiService.get(
-        '/api/nutrition-profiles',
+        ApiConstants.nutritionProfile,
         queryParams: {'userId': userId},
         token: authToken,
       );
@@ -115,7 +116,7 @@ class HealthProfileService {
       }
 
       final response = await _apiService.get(
-        '/api/nutrition-profiles/$id',
+        ApiConstants.nutritionProfile + '/' + id,
         token: authToken,
       );
 
@@ -173,7 +174,7 @@ class HealthProfileService {
       
       // 发送创建请求
       final response = await _apiService.post(
-        '/api/nutrition-profiles',
+        ApiConstants.nutritionProfile,
         data: profileData,
         token: authToken,
       );
@@ -260,9 +261,9 @@ class HealthProfileService {
       // 打印最终请求数据，用于调试
       debugPrint('最终更新请求数据: $profileData');
 
-      debugPrint('发送更新请求到: /api/nutrition-profiles/$id');
+      debugPrint('发送更新请求到: ${ApiConstants.nutritionProfile}/$id');
       final response = await _apiService.put(
-        '/api/nutrition-profiles/$id',
+        ApiConstants.nutritionProfile + '/' + id,
         data: profileData,
         token: authToken,
       );
@@ -343,7 +344,7 @@ class HealthProfileService {
       }
 
       final response = await _apiService.delete(
-        '/api/nutrition-profiles/$profileId',
+        ApiConstants.nutritionProfile + '/' + profileId,
         data: {'userId': userId},  // 作为查询参数传递
         token: authToken,
       );

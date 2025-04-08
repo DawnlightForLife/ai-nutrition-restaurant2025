@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import '../../services/api_service.dart';
+import '../../services/core/api_service.dart';
 import '../../utils/global_error_handler.dart';
+import '../../common/constants/api_constants.dart';
 import 'package:flutter/material.dart';
 import '../../providers/core/auth_provider.dart';
 import 'package:provider/provider.dart';
@@ -42,6 +43,9 @@ class AuthService {
   DateTime? _lastSentTime;           // 上次发送登录/注册验证码的时间
   DateTime? _lastResetCodeSentTime;  // 上次发送重置密码验证码的时间
   static const int _codeCooldownSeconds = 60;  // 验证码冷却时间（秒）
+  
+  /// 缓存的用户信息
+  Map<String, dynamic>? _cachedUserInfo;
   
   /**
    * 构造函数
@@ -89,7 +93,7 @@ class AuthService {
     try {
       // 发送验证码登录请求
       final response = await _apiService.post(
-        '/api/users/login/code',
+        ApiConstants.auth + '/login/code',
         data: {
           'phone': phone,
           'code': code,
@@ -145,7 +149,7 @@ class AuthService {
     try {
       // 发送密码登录请求
       final response = await _apiService.post(
-        '/api/users/login',
+        ApiConstants.login,
         data: {
           'phone': phone,
           'password': password,
@@ -196,6 +200,7 @@ class AuthService {
    * @param code 验证码，验证手机号所有权
    * @param username 可选的用户名，用于显示和登录
    * @param nickname 可选的用户昵称，用于显示
+   * @param inviteCode 可选的邀请码，用于邀请注册
    * @param context 可选的构建上下文，用于显示错误消息
    * @return 注册成功后的Token字符串
    * @throws Exception 注册失败时抛出异常，包含错误信息
@@ -206,30 +211,21 @@ class AuthService {
     required String code, 
     String? username,
     String? nickname,
+    String? inviteCode,
     BuildContext? context
   }) async {
     try {
-      // 准备注册数据
-      final data = {
-        'phone': phone,
-        'password': password,
-        'code': code,
-      };
-      
-      // 添加可选的用户名
-      if (username != null && username.isNotEmpty) {
-        data['username'] = username;
-      }
-      
-      // 添加可选的昵称
-      if (nickname != null && nickname.isNotEmpty) {
-        data['nickname'] = nickname;
-      }
-      
       // 发送注册请求
       final response = await _apiService.post(
-        '/api/users/register',
-        data: data,
+        ApiConstants.register,
+        data: {
+          'phone': phone,
+          'password': password,
+          'code': code,
+          if (username != null) 'username': username,
+          if (nickname != null) 'nickname': nickname,
+          if (inviteCode != null) 'inviteCode': inviteCode,
+        },
       );
       
       // 检查注册是否成功
@@ -261,21 +257,22 @@ class AuthService {
    * @throws Exception 发送失败时抛出异常
    */
   Future<bool> sendVerificationCode(String phone, {BuildContext? context}) async {
-    // 检查是否在冷却期内
-    if (_lastSentTime != null) {
-      final now = DateTime.now();
-      final difference = now.difference(_lastSentTime!).inSeconds;
-      
-      if (difference < _codeCooldownSeconds) {
-        return false; // 仍在冷却期内，不发送新验证码
-      }
-    }
-    
     try {
-      // 发送获取验证码请求
-      await _apiService.post(
-        '/api/users/send-code',
-        data: {'phone': phone},
+      // 检查是否在冷却期内
+      if (_lastSentTime != null) {
+        final difference = DateTime.now().difference(_lastSentTime!);
+        if (difference.inSeconds < _codeCooldownSeconds) {
+          final remainingSeconds = _codeCooldownSeconds - difference.inSeconds;
+          throw Exception('请求过于频繁，请${remainingSeconds}秒后再试');
+        }
+      }
+      
+      final response = await _apiService.post(
+        ApiConstants.auth + '/send-code',
+        data: {
+          'phone': phone,
+          'type': 'login'
+        },
       );
       
       // 记录发送时间，用于冷却期判断
@@ -302,21 +299,21 @@ class AuthService {
    * @throws Exception 发送失败时抛出异常
    */
   Future<bool> sendResetCode(String phone, {BuildContext? context}) async {
-    // 检查是否在冷却期内
-    if (_lastResetCodeSentTime != null) {
-      final now = DateTime.now();
-      final difference = now.difference(_lastResetCodeSentTime!).inSeconds;
-      
-      if (difference < _codeCooldownSeconds) {
-        return false; // 仍在冷却期内，不发送新验证码
-      }
-    }
-    
     try {
-      // 发送重置密码验证码请求
-      await _apiService.post(
-        '/api/users/send-reset-code',
-        data: {'phone': phone},
+      // 检查是否在冷却期内
+      if (_lastResetCodeSentTime != null) {
+        final difference = DateTime.now().difference(_lastResetCodeSentTime!);
+        if (difference.inSeconds < _codeCooldownSeconds) {
+          final remainingSeconds = _codeCooldownSeconds - difference.inSeconds;
+          throw Exception('请求过于频繁，请${remainingSeconds}秒后再试');
+        }
+      }
+      
+      final response = await _apiService.post(
+        ApiConstants.forgotPassword,
+        data: {
+          'phone': phone
+        },
       );
       
       // 记录发送时间，用于冷却期判断
@@ -346,13 +343,12 @@ class AuthService {
    */
   Future<bool> resetPassword(String phone, String code, String newPassword, {BuildContext? context}) async {
     try {
-      // 发送重置密码请求
       final response = await _apiService.post(
-        '/api/users/reset-password', // 使用正确的API端点
+        ApiConstants.resetPassword,
         data: {
           'phone': phone,
           'code': code,
-          'newPassword': newPassword,
+          'newPassword': newPassword
         },
       );
       
@@ -514,21 +510,12 @@ class AuthService {
    * @param token 可选的Token，如果不提供则从本地存储读取
    * @return Token有效返回true，否则返回false
    */
-  Future<bool> validateToken([String? token]) async {
+  Future<bool> validateToken(String token) async {
     try {
-      // 如果没有提供token，尝试从本地存储获取
-      token ??= await getToken();
-      if (token == null) return false;
-
-      debugPrint('验证Token: ${token.length > 10 ? token.substring(0, 10) + '...' : token}');
-      
-      // 调用验证Token的API
       final response = await _apiService.get(
-        '/api/auth/validate',  // 正确的API路径
+        '${ApiConstants.auth}/validate',  // 正确的API路径
         token: token,
       );
-      
-      debugPrint('Token验证响应: $response');
       
       // 根据响应判断Token是否有效
       if (response['success'] == true) {
@@ -549,8 +536,8 @@ class AuthService {
    * @param oldToken 过期的旧Token
    * @return 新的Token，如果刷新失败则返回null
    */
-  Future<String?> refreshToken(String? oldToken) async {
-    if (oldToken == null || oldToken.isEmpty) {
+  Future<String?> refreshToken(String refreshToken) async {
+    if (refreshToken == null || refreshToken.isEmpty) {
       debugPrint('无法刷新令牌：未提供旧令牌');
       return null;
     }
@@ -560,9 +547,9 @@ class AuthService {
       debugPrint('尝试刷新Token...');
       
       final response = await _apiService.post(
-        '/api/auth/refresh',  // 正确的API路径
+        '${ApiConstants.auth}/refresh',  // 正确的API路径
         data: {
-          'token': oldToken
+          'refreshToken': refreshToken
         },
       );
       
@@ -639,18 +626,22 @@ class AuthService {
    * 
    * @return 包含用户信息的Map，如果获取失败则返回空Map
    */
-  Future<Map<String, dynamic>> getUserInfo() async {
+  Future<Map<String, dynamic>> getUserInfo({String? token, bool forceRefresh = false}) async {
     try {
-      // 获取Token
-      final token = await getToken();
-      if (token == null) {
-        throw Exception('未登录，无法获取用户信息');
+      // 如果有缓存且不强制刷新，则返回缓存的用户信息
+      if (_cachedUserInfo != null && !forceRefresh) {
+        return _cachedUserInfo!;
       }
       
-      // 调用获取用户信息的API
+      // 获取token，如果未提供
+      final useToken = token ?? await getToken();
+      if (useToken == null) {
+        throw Exception('需要登录才能获取用户信息');
+      }
+      
       final response = await _apiService.get(
-        '/api/users/profile',
-        token: token,
+        ApiConstants.userProfile,
+        token: useToken,
       );
       
       // 检查响应是否成功
@@ -661,6 +652,9 @@ class AuthService {
       // 提取用户数据，兼容不同的响应格式
       final userData = response['data'] ?? response['user'] ?? {};
       debugPrint('获取到用户信息: $userData');
+      
+      // 缓存用户信息
+      _cachedUserInfo = userData;
       return userData;
     } catch (e) {
       debugPrint('获取用户信息失败: $e');

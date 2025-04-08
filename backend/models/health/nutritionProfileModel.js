@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const modelFactory = require('../modelFactory');
-const { shardingService } = require('../../services/shardingService');
+const { shardingService } = require('../../services/core/shardingService');
 
 // 定义营养档案模型的结构
 const nutritionProfileSchema = new mongoose.Schema({

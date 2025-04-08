@@ -327,7 +327,7 @@ adminSchema.methods.isIpAllowed = function(ipAddress) {
 };
 
 // 使用ModelFactory创建支持读写分离的模型
-const Admin = ModelFactory.model('Admin', adminSchema);
+const Admin = ModelFactory.createModel('Admin', adminSchema);
 
 // 添加缓存支持的方法
 Admin.findByUsernameWithCache = async function(username) {

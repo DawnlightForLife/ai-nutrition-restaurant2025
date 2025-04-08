@@ -647,6 +647,6 @@ dishSchema.statics.findSuitableForUser = async function(user, nutritionProfile, 
 };
 
 // 使用ModelFactory创建支持读写分离的菜品模型
-const Dish = ModelFactory.model('Dish', dishSchema);
+const Dish = ModelFactory.createModel('Dish', dishSchema);
 
 module.exports = Dish; 

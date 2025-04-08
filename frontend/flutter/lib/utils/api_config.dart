@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../common/constants/api_constants.dart';
 
 class ApiConfig {
   /// 获取适合当前环境的API基础URL
@@ -20,9 +21,20 @@ class ApiConfig {
   static const int timeout = 15000;
   
   /// API路径
-  static const Map<String, String> apiPaths = {
-    'auth': '/api/auth',
-    'users': '/api/users',
-    'nutritionProfiles': '/api/nutrition-profiles',
+  static final Map<String, String> apiPaths = {
+    'auth': ApiConstants.auth,
+    'users': ApiConstants.users,
+    'nutritionProfiles': ApiConstants.nutritionProfile,
+    'healthData': ApiConstants.healthData,
+    'forumPost': ApiConstants.forumPost,
+    'forumComment': ApiConstants.forumComment,
+    'merchant': ApiConstants.merchant,
+    'store': ApiConstants.store,
+    'dish': ApiConstants.dish,
+    'order': ApiConstants.order,
+    'nutritionist': ApiConstants.nutritionist,
+    'consult': ApiConstants.consult,
+    'recommendation': ApiConstants.recommendation,
+    'aiAnalysis': ApiConstants.aiAnalysis,
   };
 } 

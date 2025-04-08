@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
-const shardAccessService = require('../../services/shardAccessService');
+const shardAccessService = require('../../services/core/shardAccessService');
 
 /**
  * 消息提醒模型 - 处理系统通知、未读状态、关联对象等
@@ -198,7 +198,7 @@ notificationSchema.set('shardKey', {
 });
 
 // 使用ModelFactory创建模型
-const Notification = ModelFactory.model('Notification', notificationSchema);
+const Notification = ModelFactory.createModel('Notification', notificationSchema);
 
 // 导出模型
 module.exports = Notification; 

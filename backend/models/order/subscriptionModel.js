@@ -880,6 +880,6 @@ subscriptionSchema.pre('save', function(next) {
 });
 
 // 使用ModelFactory创建支持读写分离的模型
-const Subscription = ModelFactory.model('Subscription', subscriptionSchema);
+const Subscription = ModelFactory.createModel('Subscription', subscriptionSchema);
 
 module.exports = Subscription; 

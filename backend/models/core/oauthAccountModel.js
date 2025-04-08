@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
-const shardAccessService = require('../../services/shardAccessService');
+const shardAccessService = require('../../services/core/shardAccessService');
 const crypto = require('crypto');
 
 /**
@@ -360,7 +360,7 @@ function decryptSensitiveData(data) {
 }
 
 // 使用ModelFactory创建模型
-const OAuthAccount = ModelFactory.model('OAuthAccount', oauthAccountSchema);
+const OAuthAccount = ModelFactory.createModel('OAuthAccount', oauthAccountSchema);
 
 // 导出模型
 module.exports = OAuthAccount; 

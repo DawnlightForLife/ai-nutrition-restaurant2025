@@ -114,7 +114,16 @@ const config = {
     maxSize: process.env.LOG_MAX_SIZE || '20m',
     maxFiles: process.env.LOG_MAX_FILES || '14d',
     auditEnabled: process.env.AUDIT_LOGGING === 'true'
-  }
+  },
+
+  email: {
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.EMAIL_PORT) || 587,
+    secure: process.env.EMAIL_SECURE === 'true',
+    user: process.env.EMAIL_USER,
+    password: process.env.EMAIL_PASSWORD,
+    from: process.env.EMAIL_FROM || 'noreply@ainutrition.com'
+  },
 };
 
 // 根据环境加载特定配置

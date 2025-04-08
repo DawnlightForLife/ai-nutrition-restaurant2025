@@ -1,24 +1,31 @@
-const express = require('express');
-const router = express.Router();
-const { createAuth, getAuthList, getAuthById, updateAuth, deleteAuth } = require('../../controllers/core/authController');
-
 /**
  * 认证相关路由
+ * 处理用户认证过程中的各种请求，如注册、登录、密码重置等
+ * @module routes/core/authRoutes
  */
+const express = require('express');
+const router = express.Router();
+const { 
+  createAuth, 
+  login, 
+  sendVerificationCode, 
+  updateAuth, 
+  verifyToken 
+} = require('../../controllers/core/authController');
 
-// 创建认证信息
-router.post('/', createAuth);
+// 用户注册
+router.post('/register', createAuth);
 
-// 获取认证信息列表
-router.get('/', getAuthList);
+// 用户登录
+router.post('/login', login);
 
-// 获取单个认证信息详情
-router.get('/:id', getAuthById);
+// 发送验证码
+router.post('/send-code', sendVerificationCode);
 
-// 更新认证信息
-router.put('/:id', updateAuth);
+// 重置密码
+router.post('/reset-password', updateAuth);
 
-// 删除认证信息
-router.delete('/:id', deleteAuth);
+// 验证令牌
+router.get('/verify-token', verifyToken);
 
 module.exports = router; 

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
-const { shardingService } = require('../../services/shardingService');
+const { shardingService } = require('../../services/core/shardingService');
 
 // 导入可能会用到的模型
 const Dish = require('../merchant/ProductDishModel');
@@ -361,7 +361,7 @@ userFavoriteSchema.pre('save', function(next) {
 });
 
 // 使用ModelFactory创建支持读写分离的模型
-const UserFavorite = ModelFactory.model('UserFavorite', userFavoriteSchema);
+const UserFavorite = ModelFactory.createModel('UserFavorite', userFavoriteSchema);
 
 // 添加分片支持
 UserFavorite.getShardKey = function(doc) {

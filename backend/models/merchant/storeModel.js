@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
-const { shardingService } = require('../../services/shardingService');
+const { shardingService } = require('../../services/core/shardingService');
 
 // 导入需要的模型
 const StoreDish = require('./storeDishModel');
@@ -432,7 +432,7 @@ storeSchema.pre('save', function(next) {
 });
 
 // 使用ModelFactory创建支持读写分离的模型
-const Store = ModelFactory.model('Store', storeSchema);
+const Store = ModelFactory.createModel('Store', storeSchema);
 
 // 添加分片支持的保存方法
 const originalSave = Store.prototype.save;

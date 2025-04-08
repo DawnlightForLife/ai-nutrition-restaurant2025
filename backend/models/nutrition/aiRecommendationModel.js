@@ -706,6 +706,6 @@ aiRecommendationSchema.pre('save', function(next) {
 });
 
 // 使用ModelFactory创建模型
-const AiRecommendation = ModelFactory.model('AiRecommendation', aiRecommendationSchema);
+const AiRecommendation = ModelFactory.createModel('AiRecommendation', aiRecommendationSchema);
 
 module.exports = AiRecommendation; 

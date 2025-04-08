@@ -98,36 +98,50 @@ const startServer = async () => {
     }
     
     // 导入路由和其他服务
-    const userRoutes = require('./routes/userRoutes');
-    const profileRoutes = require('./routes/profileRoutes');
-    const merchantStatsRoutes = require('./routes/merchantStatsRoutes');
-    const nutritionProfileRoutes = require('./routes/nutritionProfileRoutes');
-    const cacheService = require('./services/cacheService');
-    const { shardingService } = require('./services/shardingService');
-    const shardingConfig = require('./config/shardingConfig');
-    const ScheduledTasks = require('./services/scheduledTasks');
+    const userRoutes = require('./routes/core/userRoutes');
+    const authRoutes = require('./routes/core/authRoutes');
+    const adminRoutes = require('./routes/core/adminRoutes');
+    const auditLogRoutes = require('./routes/audit/auditLogRoutes');
+    const merchantRoutes = require('./routes/merchant/merchantRoutes');
+    const storeRoutes = require('./routes/merchant/storeRoutes');
+    const dishRoutes = require('./routes/merchant/dishRoutes');
+    const orderRoutes = require('./routes/order/orderRoutes');
+    
+    // 导入服务
+    const { appConfigService } = require('./services/misc/appConfigService');
+    const { dataAccessControlService } = require('./services/misc/dataAccessControlService');
+    const { shardingConfig, shardingService } = require('./config/shardingConfig');
+    const ScheduledTasks = require('./utils/scheduledTasks');
 
     // 设置路由
     app.use('/api/users', userRoutes);
-    app.use('/api/profiles', profileRoutes);
-    app.use('/api/merchant-stats', merchantStatsRoutes);
-    app.use('/api/nutrition-profiles', nutritionProfileRoutes);
+    app.use('/api/auth', authRoutes);
+    app.use('/api/admin', adminRoutes);
+    app.use('/api/audit', auditLogRoutes);
+    app.use('/api/merchants', merchantRoutes);
+    app.use('/api/stores', storeRoutes);
+    app.use('/api/dishes', dishRoutes);
+    app.use('/api/orders', orderRoutes);
     
     // 初始化服务
-    if (process.env.REDIS_ENABLED === 'true') {
-      await cacheService.initRedis();
+    const redisEnabled = process.env.REDIS_ENABLED === 'true';
+    if (redisEnabled) {
+      const { initRedisCache } = require('./utils/cache');
+      await initRedisCache();
       console.log('Redis缓存服务已初始化');
     }
     
     // 初始化分片服务
-    shardingService.init(shardingConfig);
     if (shardingConfig.enabled) {
+      await shardingService.init(shardingConfig);
       console.log('数据分片服务已初始化');
     }
     
     // 初始化定时任务
-    ScheduledTasks.initTasks();
-    console.log('定时任务系统已初始化');
+    if (ScheduledTasks && ScheduledTasks.initTasks) {
+      ScheduledTasks.initTasks();
+      console.log('定时任务系统已初始化');
+    }
     
     console.log('所有服务初始化完成');
     
