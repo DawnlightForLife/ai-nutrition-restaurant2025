@@ -11,12 +11,12 @@ import 'package:dio/dio.dart';
 class ApiService {
   /// 服务器基础URL，所有请求都会基于此URL构建
   final String baseUrl;
-  
+
   /// 默认请求头，应用于所有HTTP请求
   final Map<String, String> defaultHeaders;
 
   /// 构造函数
-  /// 
+  ///
   /// @param baseUrl 必需参数，API服务器的基础URL（例如：https://api.example.com/v1/）
   /// @param defaultHeaders 可选参数，默认的HTTP请求头，默认包含Content-Type和Accept为application/json
   ApiService({
@@ -28,22 +28,29 @@ class ApiService {
   });
 
   /// 设置授权头
-  /// 
+  ///
   /// 根据提供的令牌创建包含授权信息的请求头
   /// @param token JWT令牌，如果提供则添加到Authorization头
-  /// @return 包含默认头和授权头的完整HTTP请求头映射
-  Map<String, String> _getHeaders(String? token) {
+  /// @param customHeaders 可选的额外请求头
+  /// @return 包含默认头、授权头和自定义头的完整HTTP请求头映射
+  Map<String, String> _getHeaders(String? token,
+      {Map<String, String>? customHeaders}) {
     final headers = Map<String, String>.from(defaultHeaders);
-    
+
     if (token != null) {
       headers['Authorization'] = 'Bearer $token';
     }
-    
+
+    // 添加自定义请求头
+    if (customHeaders != null) {
+      headers.addAll(customHeaders);
+    }
+
     return headers;
   }
 
   /// 处理HTTP响应
-  /// 
+  ///
   /// 解析HTTP响应体，处理成功和错误情况
   /// @param response HTTP响应对象
   /// @return 解析后的JSON数据
@@ -54,21 +61,23 @@ class ApiService {
       if (response.body.isEmpty) {
         return {};
       }
-      
+
       try {
         // 尝试解析JSON响应
         final jsonResponse = jsonDecode(response.body);
-        debugPrint('📥 API响应: ${response.statusCode} ${jsonResponse.toString().substring(0, jsonResponse.toString().length > 200 ? 200 : jsonResponse.toString().length)}...');
+        debugPrint(
+            '📥 API响应: ${response.statusCode} ${jsonResponse.toString().substring(0, jsonResponse.toString().length > 200 ? 200 : jsonResponse.toString().length)}...');
         return jsonResponse;
       } catch (e) {
         // JSON解析错误处理
-        debugPrint('⚠️ JSON解析错误: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)}...');
+        debugPrint(
+            '⚠️ JSON解析错误: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)}...');
         throw Exception('服务器响应格式错误：无法解析JSON');
       }
     } else {
       // 处理错误响应（非2xx状态码）
       String errorMessage;
-      
+
       try {
         // 尝试从错误响应中提取错误消息
         final errorBody = jsonDecode(response.body);
@@ -104,25 +113,25 @@ class ApiService {
             errorMessage = '服务器错误: ${response.statusCode}';
         }
       }
-      
+
       // 记录详细错误信息到控制台，便于调试
       debugPrint('HTTP错误: [${response.statusCode}] $errorMessage');
       debugPrint('请求URL: ${response.request?.url}');
-      
+
       throw Exception(errorMessage);
     }
   }
-  
+
   /// 包装HTTP异常
-  /// 
+  ///
   /// 将原始异常转换为更具用户友好性的异常信息
   /// @param error 原始异常对象
   /// @return 包装后的Exception对象，包含用户友好的错误消息
   Exception _wrapException(dynamic error) {
     String message = error.toString();
-    
+
     // 根据异常类型提供更具体的错误消息
-    if (message.contains('SocketException') || 
+    if (message.contains('SocketException') ||
         message.contains('Connection refused') ||
         message.contains('Network is unreachable')) {
       return Exception('无法连接到服务器，请检查网络连接');
@@ -135,33 +144,63 @@ class ApiService {
     }
   }
 
+  /// 构建请求URI
+  ///
+  /// @param endpoint API端点
+  /// @param queryParams 查询参数（可选）
+  /// @return 构建好的URI
+  Uri _buildUri(String endpoint, Map<String, dynamic>? queryParams) {
+    final uri = Uri.parse('$baseUrl$endpoint');
+    if (queryParams != null && queryParams.isNotEmpty) {
+      return uri.replace(queryParameters: queryParams);
+    }
+    return uri;
+  }
+
+  /// 构建请求头
+  ///
+  /// @param token 认证令牌（可选）
+  /// @param customHeaders 自定义请求头（可选）
+  /// @return 完整的请求头
+  Map<String, String> _buildHeaders(
+      String? token, Map<String, String>? customHeaders) {
+    return _getHeaders(token, customHeaders: customHeaders);
+  }
+
   /// 发送GET请求
-  /// 
+  ///
   /// @param path API路径（不包含baseUrl）
   /// @param queryParams 可选的URL查询参数
   /// @param token 可选的JWT令牌用于认证
+  /// @param customHeaders 可选的额外请求头
   /// @return 解析后的响应数据
   /// @throws Exception 当请求失败或响应无效时
   Future<Map<String, dynamic>> get(
     String path, {
     Map<String, dynamic>? queryParams,
     String? token,
+    Map<String, String>? customHeaders,
   }) async {
     try {
       // 记录请求信息
-      debugPrint('🌐 GET请求: $baseUrl$path${queryParams != null ? "?${_formatQueryParams(queryParams)}" : ""}');
+      debugPrint(
+          '🌐 GET请求: $baseUrl$path${queryParams != null ? "?${_formatQueryParams(queryParams)}" : ""}');
       if (token != null) {
         debugPrint('🔑 Token: 已设置');
+      }
+      if (customHeaders != null && customHeaders.isNotEmpty) {
+        debugPrint('🔒 自定义请求头: $customHeaders');
       }
 
       // 执行GET请求
       final response = await http.get(
-        Uri.parse('$baseUrl$path${queryParams != null ? "?${_formatQueryParams(queryParams)}" : ""}'),
-        headers: _getHeaders(token),
+        _buildUri(path, queryParams),
+        headers: _buildHeaders(token, customHeaders),
       );
 
       // 记录响应信息
-      debugPrint('📥 API响应: ${response.statusCode} ${_truncateResponse(response.body)}');
+      debugPrint(
+          '📥 API响应: ${response.statusCode} ${_truncateResponse(response.body)}');
       return _handleResponse(response);
     } catch (e) {
       // 记录并包装异常
@@ -171,11 +210,12 @@ class ApiService {
   }
 
   /// 发送POST请求
-  /// 
+  ///
   /// @param path API路径（不包含baseUrl）
   /// @param data 可选的请求体数据，将被转换为JSON
   /// @param queryParams 可选的URL查询参数
   /// @param token 可选的JWT令牌用于认证
+  /// @param customHeaders 可选的额外请求头
   /// @return 解析后的响应数据
   /// @throws Exception 当请求失败或响应无效时
   Future<Map<String, dynamic>> post(
@@ -183,6 +223,7 @@ class ApiService {
     Map<String, dynamic>? data,
     Map<String, dynamic>? queryParams,
     String? token,
+    Map<String, String>? customHeaders,
   }) async {
     try {
       // 记录请求信息
@@ -194,20 +235,20 @@ class ApiService {
       if (token != null) {
         debugPrint('🔑 Token: 已设置');
       }
-
-      // 构建URI，处理查询参数
-      final uri = Uri.parse('$baseUrl$path');
-      final queryUri = queryParams != null ? uri.replace(queryParameters: queryParams) : uri;
+      if (customHeaders != null && customHeaders.isNotEmpty) {
+        debugPrint('🔒 自定义请求头: $customHeaders');
+      }
 
       // 执行POST请求
       final response = await http.post(
-        queryUri,
-        headers: _getHeaders(token),
+        _buildUri(path, queryParams),
+        headers: _buildHeaders(token, customHeaders),
         body: data != null ? jsonEncode(data) : null,
       );
 
       // 记录响应信息
-      debugPrint('📥 API响应: ${response.statusCode} ${_truncateResponse(response.body)}');
+      debugPrint(
+          '📥 API响应: ${response.statusCode} ${_truncateResponse(response.body)}');
       return _handleResponse(response);
     } catch (e) {
       // 记录并包装异常
@@ -217,33 +258,38 @@ class ApiService {
   }
 
   /// 发送PUT请求
-  /// 
+  ///
   /// 用于更新资源
   /// @param endpoint API端点路径（不包含baseUrl）
   /// @param data 可选的请求体数据，将被转换为JSON
   /// @param token 可选的JWT令牌用于认证
+  /// @param customHeaders 可选的额外请求头
   /// @return 解析后的响应数据
   /// @throws Exception 当请求失败或响应无效时
   Future<Map<String, dynamic>> put(
     String endpoint, {
     Map<String, dynamic>? data,
     String? token,
+    Map<String, String>? customHeaders,
   }) async {
     try {
       // 构建URI
       final uri = Uri.parse('$baseUrl$endpoint');
       final body = data != null ? jsonEncode(data) : null;
-      
+
       // 记录请求信息
       debugPrint('PUT请求: $uri');
-      
+      if (customHeaders != null && customHeaders.isNotEmpty) {
+        debugPrint('🔒 自定义请求头: $customHeaders');
+      }
+
       // 执行PUT请求
       final response = await http.put(
         uri,
-        headers: _getHeaders(token),
+        headers: _buildHeaders(token, customHeaders),
         body: body,
       );
-      
+
       // 处理响应
       return _handleResponse(response);
     } catch (e) {
@@ -254,39 +300,50 @@ class ApiService {
   }
 
   /// 发送DELETE请求
-  /// 
+  ///
   /// 用于删除资源
   /// @param endpoint API端点路径（不包含baseUrl）
   /// @param data 可选参数，会被转换为URL查询参数
   /// @param token 可选的JWT令牌用于认证
+  /// @param customHeaders 可选的额外请求头
   /// @return 解析后的响应数据
   /// @throws Exception 当请求失败或响应无效时
   Future<Map<String, dynamic>> delete(
     String endpoint, {
     Map<String, dynamic>? data,
     String? token,
+    Map<String, String>? customHeaders,
   }) async {
     try {
       // 构建基础URI
       final uri = Uri.parse('$baseUrl$endpoint');
-      
+
       // 将data中的参数添加为URL查询参数（DELETE请求通常不包含请求体）
       Uri requestUri = uri;
       if (data != null && data.isNotEmpty) {
         requestUri = uri.replace(queryParameters: data);
         debugPrint('DELETE请求参数: $data');
       }
-      
+
       // 记录请求信息
       debugPrint('DELETE请求: $requestUri');
-      
+      if (customHeaders != null && customHeaders.isNotEmpty) {
+        debugPrint('🔒 自定义请求头: $customHeaders');
+      }
+
       // 执行DELETE请求
       final response = await http.delete(
         requestUri,
-        headers: _getHeaders(token),
+        headers: _buildHeaders(token, customHeaders),
       );
-      
-      // 处理响应
+
+      // 特殊处理204状态码（成功但无内容）
+      if (response.statusCode == 204) {
+        debugPrint('DELETE请求成功，状态码: 204 No Content');
+        return {'success': true, 'status': 'success'};
+      }
+
+      // 处理其他响应
       return _handleResponse(response);
     } catch (e) {
       // 记录并包装异常
@@ -296,7 +353,7 @@ class ApiService {
   }
 
   /// 格式化查询参数，用于日志输出
-  /// 
+  ///
   /// @param params 查询参数映射
   /// @return 格式化后的查询字符串
   String _formatQueryParams(Map<String, dynamic> params) {
@@ -304,7 +361,7 @@ class ApiService {
   }
 
   /// 截断长响应，用于日志输出
-  /// 
+  ///
   /// @param data 响应数据
   /// @return 截断后的字符串（如果原字符串过长）
   String _truncateResponse(dynamic data) {

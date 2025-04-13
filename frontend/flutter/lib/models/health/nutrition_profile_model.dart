@@ -10,49 +10,49 @@ import 'package:flutter/foundation.dart';
 class NutritionProfile {
   /// 档案唯一标识符
   final String id;
-  
+
   /// 关联的用户ID
   final String userId;
-  
+
   /// 档案名称，用于区分同一用户的多个健康档案
   final String profileName;
-  
+
   /// 性别：male（男）、female（女）、other（其他）
   final String gender;
-  
+
   /// 年龄段：0_18、18_30、30_45、45_60、60_plus等
   final String ageGroup;
-  
+
   /// 身高，单位：厘米
   final double height;
-  
+
   /// 体重，单位：千克
   final double weight;
-  
+
   /// 地区信息，包含省份和城市
   final Map<String, String>? region;
-  
+
   /// 职业类型，如office_worker（办公室工作者）、physical_worker（体力工作者）等
   final String? occupation;
-  
+
   /// 健康状况信息，包括慢性疾病、特殊健康状况等
   final Map<String, dynamic> healthStatus;
-  
+
   /// 饮食偏好信息，包括素食主义、口味偏好、忌口、喜好的菜系和过敏原等
   final Map<String, dynamic> dietaryPreferences;
-  
+
   /// 生活方式信息，包括吸烟、饮酒、睡眠时长和运动频率等
   final Map<String, dynamic> lifestyle;
-  
+
   /// 营养目标列表，如减肥、增肌、控制血糖等
   final List<String> nutritionGoals;
-  
+
   /// 是否为主要档案（用户可能有多个档案，但只有一个主要档案）
   final bool isPrimary;
-  
+
   /// 档案创建时间
   final DateTime createdAt;
-  
+
   /// 档案最后更新时间
   final DateTime updatedAt;
 
@@ -105,55 +105,75 @@ class NutritionProfile {
    * @return 根据JSON数据创建的NutritionProfile对象
    */
   factory NutritionProfile.fromJson(Map<String, dynamic> json) {
-    debugPrint('开始转换JSON数据: $json');  // 添加调试日志
-    
+    debugPrint('开始转换JSON数据: $json'); // 添加调试日志
+
     // 确保profile名称字段存在
     String profileName = '';
-    if (json['profileName'] != null && json['profileName'].toString().trim().isNotEmpty) {
+    if (json['profileName'] != null &&
+        json['profileName'].toString().trim().isNotEmpty) {
       profileName = json['profileName'].toString();
-    } else if (json['nickname'] != null && json['nickname'].toString().trim().isNotEmpty) {
+    } else if (json['nickname'] != null &&
+        json['nickname'].toString().trim().isNotEmpty) {
       profileName = json['nickname'].toString();
-    } else if (json['profilekname'] != null && json['profilekname'].toString().trim().isNotEmpty) {
+    } else if (json['profilekname'] != null &&
+        json['profilekname'].toString().trim().isNotEmpty) {
       profileName = json['profilekname'].toString();
-    } else if (json['name'] != null && json['name'].toString().trim().isNotEmpty) {
+    } else if (json['name'] != null &&
+        json['name'].toString().trim().isNotEmpty) {
       profileName = json['name'].toString();
     }
-    
+
     // 如果仍然没有名称，使用默认值
     if (profileName.isEmpty) {
-      profileName = '档案 ${DateTime.now().millisecondsSinceEpoch.toString().substring(6)}';
+      profileName =
+          '档案 ${DateTime.now().millisecondsSinceEpoch.toString().substring(6)}';
       debugPrint('未找到有效的档案名称，使用默认名称: $profileName');
     }
-    
+
     final profile = NutritionProfile(
       id: json['_id'] ?? json['id'] ?? '',
-      userId: json['userId'] ?? json['user_id'] ?? '',
+      userId: json['userId'] ?? '',
       profileName: profileName,
       gender: json['gender'] ?? 'other',
       ageGroup: json['ageGroup'] ?? '18_30',
-      height: json['height'] != null ? double.parse(json['height'].toString()) : 170.0,
-      weight: json['weight'] != null ? double.parse(json['weight'].toString()) : 60.0,
-      region: json['region'] != null ? Map<String, String>.from(json['region']) : null,
+      height: json['height'] != null
+          ? double.parse(json['height'].toString())
+          : 170.0,
+      weight: json['weight'] != null
+          ? double.parse(json['weight'].toString())
+          : 60.0,
+      region: json['region'] != null
+          ? Map<String, String>.from(json['region'])
+          : null,
       occupation: json['occupation'],
-      healthStatus: json['healthStatus'] ?? {
-        'chronicDiseases': [],
-        'specialConditions': [],
-      },
-      dietaryPreferences: json['dietaryPreferences'] ?? {
-        'isVegetarian': false,
-        'tastePreference': [],
-        'taboos': [],
-        'cuisine': 'chinese',
-        'allergies': [],
-      },
-      lifestyle: json['lifestyle'] ?? {
-        'smoking': false,
-        'drinking': false,
-        'sleepDuration': 8,
-        'exerciseFrequency': 'occasional',
-      },
-      nutritionGoals: json['nutritionGoals'] != null 
-          ? List<String>.from(json['nutritionGoals'])
+      healthStatus: json['healthStatus'] ??
+          {
+            'chronicDiseases': [],
+            'specialConditions': [],
+          },
+      dietaryPreferences: json['dietaryPreferences'] ??
+          {
+            'isVegetarian': false,
+            'tastePreference': [],
+            'taboos': [],
+            'cuisine': 'chinese',
+            'allergies': [],
+          },
+      lifestyle: json['lifestyle'] ??
+          {
+            'smoking': false,
+            'drinking': false,
+            'sleepDuration': 8,
+            'exerciseFrequency': 'occasional',
+          },
+      nutritionGoals: json['nutritionGoals'] != null
+          ? List<String>.from(json['nutritionGoals']).map((goal) {
+              // 映射不兼容的目标值
+              if (goal == 'blood_sugar_control') {
+                return 'disease_management';
+              }
+              return goal;
+            }).toList()
           : ['general_health'],
       isPrimary: json['isPrimary'] ?? false,
       createdAt: json['createdAt'] != null
@@ -163,8 +183,8 @@ class NutritionProfile {
           ? DateTime.parse(json['updatedAt'])
           : DateTime.now(),
     );
-    
-    debugPrint('转换后的档案对象: ${profile.toJson()}');  // 添加调试日志
+
+    debugPrint('转换后的档案对象: ${profile.toJson()}'); // 添加调试日志
     return profile;
   }
 
@@ -180,7 +200,7 @@ class NutritionProfile {
     final data = {
       'id': id,
       'userId': userId,
-      'profileName': profileName.trim(),  // 确保去除空格并一定会传递此字段
+      'profileName': profileName.trim(), // 确保去除空格并一定会传递此字段
       'gender': gender,
       'ageGroup': ageGroup,
       'height': height,
@@ -195,19 +215,19 @@ class NutritionProfile {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
-    
+
     // 确保职业字段使用后端允许的枚举值
-    if (data['occupation'] == 'labor' || data['occupation'] == 'physical_worker') {
-      data['occupation'] = 'physical_worker'; // 将labor映射为physical_worker
+    if (data['occupation'] == 'labor' ||
+        data['occupation'] == 'physical_worker') {
+      data['occupation'] = 'physical_worker';
+    } else if (data['occupation'] == 'office' ||
+        data['occupation'] == 'office_worker') {
+      data['occupation'] = 'office_worker';
     }
-    
-    // 确保profileName字段不为空
-    if (data['profileName'] == null || data['profileName'].toString().trim().isEmpty) {
-      data['profileName'] = 'Profile_${DateTime.now().millisecondsSinceEpoch}';
-    }
-    
-    debugPrint('NutritionProfile.toJson数据: $data');
-    debugPrint('确认profileName字段: ${data['profileName']}');
+
+    // 移除空值字段
+    data.removeWhere((key, value) => value == null);
+
     return data;
   }
 
@@ -303,7 +323,7 @@ class NutritionProfile {
   String getBMICategory() {
     final bmi = calculateBMI();
     if (bmi <= 0) return '未知';
-    
+
     if (bmi < 18.5) {
       return '偏瘦';
     } else if (bmi >= 18.5 && bmi < 24.9) {
@@ -436,7 +456,8 @@ class NutritionProfile {
 
   // 获取特殊状态显示文本
   List<String> get specialConditionsText {
-    return (healthStatus['specialConditions'] as List<dynamic>).map((condition) {
+    return (healthStatus['specialConditions'] as List<dynamic>)
+        .map((condition) {
       switch (condition) {
         case 'pregnancy':
           return '备孕/怀孕';

@@ -17,8 +17,9 @@ router.use('/forum-posts', require('./forum/forumPostRoutes'));
 router.use('/forum-comments', require('./forum/forumCommentRoutes'));
 
 // Health
-router.use('/nutrition-profiles', require('./health/nutritionProfileRoutes'));
+router.use('/health/nutrition-profiles', require('./health/nutritionProfileRoutes'));
 router.use('/health-data', require('./health/healthDataRoutes'));
+router.use('/health-metrics', require('./health/healthMetricsRoutes'));
 
 // Merchant
 router.use('/merchants', require('./merchant/merchantRoutes'));

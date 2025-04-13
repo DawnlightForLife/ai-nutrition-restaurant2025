@@ -68,7 +68,7 @@ const subscriptionItemSchema = new mongoose.Schema({
 // 定义主订阅模式
 const subscriptionSchema = new mongoose.Schema({
   // 基本信息
-  user_id: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
@@ -206,7 +206,7 @@ const subscriptionSchema = new mongoose.Schema({
     special_instructions: String
   },
   // 相关的营养档案
-  nutrition_profile_id: {
+  nutritionProfileId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'NutritionProfile'
   },
@@ -311,7 +311,7 @@ const subscriptionSchema = new mongoose.Schema({
 });
 
 // 添加索引以优化查询性能
-subscriptionSchema.index({ user_id: 1 });
+subscriptionSchema.index({ userId: 1 });
 subscriptionSchema.index({ merchant_id: 1 });
 subscriptionSchema.index({ status: 1 });
 subscriptionSchema.index({ subscription_type: 1 });
@@ -319,7 +319,7 @@ subscriptionSchema.index({ 'plan.id': 1 });
 subscriptionSchema.index({ start_date: 1 });
 subscriptionSchema.index({ end_date: 1 });
 subscriptionSchema.index({ 'payment.next_payment_date': 1 });
-subscriptionSchema.index({ 'nutrition_profile_id': 1 });
+subscriptionSchema.index({ 'nutritionProfileId': 1 });
 
 // 添加虚拟字段
 subscriptionSchema.virtual('is_active').get(function() {
@@ -370,7 +370,7 @@ subscriptionSchema.virtual('current_period').get(function() {
 // 关联
 subscriptionSchema.virtual('user', {
   ref: 'User',
-  localField: 'user_id',
+  localField: 'userId',
   foreignField: '_id',
   justOne: true
 });
@@ -382,9 +382,9 @@ subscriptionSchema.virtual('merchant', {
   justOne: true
 });
 
-subscriptionSchema.virtual('nutrition_profile', {
+subscriptionSchema.virtual('nutritionProfile', {
   ref: 'NutritionProfile',
-  localField: 'nutrition_profile_id',
+  localField: 'nutritionProfileId',
   foreignField: '_id',
   justOne: true
 });
@@ -529,7 +529,7 @@ subscriptionSchema.statics.findActiveByUser = function(userId) {
   const now = new Date();
   
   return this.find({
-    user_id: userId,
+    userId: userId,
     status: 'active',
     start_date: { $lte: now },
     $or: [
@@ -721,7 +721,7 @@ subscriptionSchema.methods.renewSubscription = function(endDate = null) {
   
   this.modification_history.push({
     modified_at: Date.now(),
-    modified_by: this.user_id,
+    modified_by: this.userId,
     modified_by_type: 'User',
     changes: ['subscription renewed', 'next_billing_date updated'],
     reason: '订阅续期'
@@ -832,7 +832,7 @@ subscriptionSchema.methods.logAccess = async function(userId, userType, ipAddres
 // 安全查询方法 - 考虑访问控制
 subscriptionSchema.statics.findWithPermissionCheck = async function(query = {}, options = {}, user) {
   // 如果是用户查询自己的订阅，直接返回
-  if (user && query.user_id && user._id.equals(query.user_id)) {
+  if (user && query.userId && user._id.equals(query.userId)) {
     return this.find(query, options);
   }
   

@@ -88,6 +88,12 @@ const {
 const app = express();
 const API_PREFIX = '/api';
 
+// 设置环境变量(如果未定义)
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'development';
+  console.log('环境变量NODE_ENV设置为:', process.env.NODE_ENV);
+}
+
 // 性能监控
 app.use(performanceMonitor({ threshold: 1000, logLevel: 'warn' }));
 app.use(resourceMonitor({ interval: 60000, threshold: 0.9 }));

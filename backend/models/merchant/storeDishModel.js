@@ -6,56 +6,85 @@ const { shardingService } = require('../../services/core/shardingService');
 const Dish = require('./ProductDishModel');
 
 const storeDishSchema = new mongoose.Schema({
-  store_id: {
+  storeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Store',
     required: true
   },
-  dish_id: {
+  dishId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Dish',
     required: true
   },
   // 门店特有的价格覆盖
-  price_override: {
+  priceOverride: {
     type: Number,
     min: 0
   },
-  discount_price_override: {
+  discountPriceOverride: {
     type: Number,
     min: 0
   },
   // 是否在此门店可用
-  is_available: {
+  isAvailable: {
     type: Boolean,
     default: true
   },
   // 门店特有描述
-  store_specific_description: {
+  storeSpecificDescription: {
     type: String
+  },
+  // 可用时间和日期
+  availability: {
+    startTime: {
+      type: String,
+      default: "00:00"
+    },
+    endTime: {
+      type: String,
+      default: "23:59"
+    },
+    daysOfWeek: {
+      type: [Number],
+      default: [0, 1, 2, 3, 4, 5, 6] // 0=周日, 1=周一, ..., 6=周六
+    }
+  },
+  // 促销信息
+  promotion: {
+    isOnSale: {
+      type: Boolean,
+      default: false
+    },
+    salePrice: {
+      type: Number,
+      min: 0
+    },
+    validUntil: {
+      type: Date
+    }
   },
   // 库存信息
   inventory: {
-    current_stock: {
+    currentStock: {
       type: Number,
       default: 0
     },
-    alert_threshold: {
+    alertThreshold: {
       type: Number,
       default: 10
     }
   },
   // 销售数据
-  sales_data: {
-    total_sales: {
+  salesData: {
+    totalSales: {
       type: Number,
       default: 0
     },
-    last_week_sales: {
+    lastWeekSales: {
       type: Number,
       default: 0
     },
-    last_month_sales: {
+    lastMonthSales: {
       type: Number,
       default: 0
     }
@@ -64,30 +93,35 @@ const storeDishSchema = new mongoose.Schema({
   attributes: [{
     type: String
   }],
-  created_at: {
-    type: Date,
-    default: Date.now
+  specialNote: {
+    type: String
   },
-  updated_at: {
-    type: Date,
-    default: Date.now
-  }
+  availableStatus: {
+    type: String,
+    enum: ['available', 'unavailable', 'sold_out', 'low_stock', 'in_stock'],
+    default: 'available'
+  },
+  availableTimes: [{
+    startTime: String,
+    endTime: String,
+    dayOfWeek: Number // 0-6 表示周日到周六
+  }]
 }, {
-  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+  timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
 
 // 创建复合索引确保每个门店的每个菜品只有一条记录
-storeDishSchema.index({ store_id: 1, dish_id: 1 }, { unique: true });
+storeDishSchema.index({ storeId: 1, dishId: 1 }, { unique: true });
 // 创建门店ID索引，便于查询特定门店的所有菜品
-storeDishSchema.index({ store_id: 1, is_available: 1 });
+storeDishSchema.index({ storeId: 1, isAvailable: 1 });
 // 创建菜品ID索引，便于查询特定菜品在哪些门店可用
-storeDishSchema.index({ dish_id: 1, is_available: 1 });
+storeDishSchema.index({ dishId: 1, isAvailable: 1 });
 // 创建销售量索引，便于查询热销菜品
-storeDishSchema.index({ store_id: 1, 'sales_data.total_sales': -1 });
+storeDishSchema.index({ storeId: 1, 'salesData.totalSales': -1 });
 // 创建库存索引，便于查询库存紧张的菜品
-storeDishSchema.index({ store_id: 1, 'inventory.current_stock': 1 });
+storeDishSchema.index({ storeId: 1, 'inventory.currentStock': 1 });
 
 // 添加虚拟字段
 storeDishSchema.virtual('dish').get(function() {
@@ -106,21 +140,21 @@ storeDishSchema.virtual('store').set(function(store) {
   this._store = store;
 });
 
-storeDishSchema.virtual('effective_price').get(function() {
+storeDishSchema.virtual('effectivePrice').get(function() {
   // 返回有效价格（优先使用折扣价）
-  if (this.discount_price_override !== undefined && this.discount_price_override !== null) {
-    return this.discount_price_override;
+  if (this.discountPriceOverride !== undefined && this.discountPriceOverride !== null) {
+    return this.discountPriceOverride;
   }
-  return this.price_override;
+  return this.priceOverride;
 });
 
-storeDishSchema.virtual('availability_status').get(function() {
-  if (!this.is_available) return 'unavailable';
+storeDishSchema.virtual('availabilityStatus').get(function() {
+  if (!this.isAvailable) return 'unavailable';
   
   // 如果有库存信息，检查库存状态
-  if (this.inventory && this.inventory.current_stock !== undefined) {
-    if (this.inventory.current_stock <= 0) return 'sold_out';
-    if (this.inventory.current_stock <= this.inventory.alert_threshold) return 'low_stock';
+  if (this.inventory && this.inventory.currentStock !== undefined) {
+    if (this.inventory.currentStock <= 0) return 'sold_out';
+    if (this.inventory.currentStock <= this.inventory.alertThreshold) return 'low_stock';
     return 'in_stock';
   }
   
@@ -137,16 +171,16 @@ storeDishSchema.methods = {
   async updateStock(quantity) {
     if (!this.inventory) {
       this.inventory = {
-        current_stock: 0,
-        alert_threshold: 10
+        currentStock: 0,
+        alertThreshold: 10
       };
     }
     
-    this.inventory.current_stock += quantity;
+    this.inventory.currentStock += quantity;
     
     // 确保库存不为负数
-    if (this.inventory.current_stock < 0) {
-      this.inventory.current_stock = 0;
+    if (this.inventory.currentStock < 0) {
+      this.inventory.currentStock = 0;
     }
     
     return this.save();
@@ -159,16 +193,16 @@ storeDishSchema.methods = {
    * @returns {Promise<Object>} 更新后的记录
    */
   async updateSalesData(quantity, revenue) {
-    if (!this.sales_data) {
-      this.sales_data = {
-        total_sales: 0,
-        last_week_sales: 0,
-        last_month_sales: 0
+    if (!this.salesData) {
+      this.salesData = {
+        totalSales: 0,
+        lastWeekSales: 0,
+        lastMonthSales: 0
       };
     }
     
     // 更新总销售量
-    this.sales_data.total_sales += quantity;
+    this.salesData.totalSales += quantity;
     
     // 更新最近一周和一个月的销售量（这里需要配合定时任务定期刷新）
     const now = new Date();
@@ -176,8 +210,8 @@ storeDishSchema.methods = {
     const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     
     // 这里仅做简单累加，实际应用中可能需要使用更复杂的统计逻辑
-    this.sales_data.last_week_sales += quantity;
-    this.sales_data.last_month_sales += quantity;
+    this.salesData.lastWeekSales += quantity;
+    this.salesData.lastMonthSales += quantity;
     
     // 同时减少库存
     if (this.inventory) {
@@ -194,10 +228,10 @@ storeDishSchema.methods = {
    * @returns {Promise<Object>} 更新后的记录
    */
   async setPrice(regularPrice, discountPrice = null) {
-    this.price_override = regularPrice;
+    this.priceOverride = regularPrice;
     
     if (discountPrice !== null) {
-      this.discount_price_override = discountPrice;
+      this.discountPriceOverride = discountPrice;
     }
     
     return this.save();
@@ -210,9 +244,9 @@ storeDishSchema.methods = {
    */
   async toggleAvailability(available = null) {
     if (available === null) {
-      this.is_available = !this.is_available;
+      this.isAvailable = !this.isAvailable;
     } else {
-      this.is_available = !!available;
+      this.isAvailable = !!available;
     }
     
     return this.save();
@@ -224,7 +258,7 @@ storeDishSchema.methods = {
    */
   getShardKey() {
     // 使用门店ID作为分片键，确保同一门店的菜品在同一分片
-    return this.store_id.toString();
+    return this.storeId.toString();
   }
 };
 
@@ -243,7 +277,7 @@ storeDishSchema.statics = {
     }
     
     const query = { 
-      store_id: storeId,
+      storeId: storeId,
       ...filters
     };
     
@@ -252,14 +286,14 @@ storeDishSchema.statics = {
     
     // 批量更新
     const updatePromises = storeDishes.map(async (sd) => {
-      if (sd.price_override !== undefined && sd.price_override !== null) {
-        const adjustment = sd.price_override * (percentage / 100);
-        sd.price_override = Math.max(0, sd.price_override + adjustment);
+      if (sd.priceOverride !== undefined && sd.priceOverride !== null) {
+        const adjustment = sd.priceOverride * (percentage / 100);
+        sd.priceOverride = Math.max(0, sd.priceOverride + adjustment);
       }
       
-      if (sd.discount_price_override !== undefined && sd.discount_price_override !== null) {
-        const adjustment = sd.discount_price_override * (percentage / 100);
-        sd.discount_price_override = Math.max(0, sd.discount_price_override + adjustment);
+      if (sd.discountPriceOverride !== undefined && sd.discountPriceOverride !== null) {
+        const adjustment = sd.discountPriceOverride * (percentage / 100);
+        sd.discountPriceOverride = Math.max(0, sd.discountPriceOverride + adjustment);
       }
       
       return sd.save();
@@ -280,12 +314,12 @@ storeDishSchema.statics = {
    */
   async findBestSellers(storeId, limit = 10) {
     return this.find({
-      store_id: storeId,
-      is_available: true
+      storeId: storeId,
+      isAvailable: true
     })
-    .sort({ 'sales_data.total_sales': -1 })
+    .sort({ 'salesData.totalSales': -1 })
     .limit(limit)
-    .populate('dish_id');
+    .populate('dishId');
   },
   
   /**
@@ -295,11 +329,11 @@ storeDishSchema.statics = {
    */
   async findLowStock(storeId) {
     return this.find({
-      store_id: storeId,
-      is_available: true,
-      'inventory.current_stock': { $lte: '$inventory.alert_threshold' }
+      storeId: storeId,
+      isAvailable: true,
+      'inventory.currentStock': { $lte: '$inventory.alertThreshold' }
     })
-    .populate('dish_id');
+    .populate('dishId');
   },
   
   /**
@@ -315,17 +349,17 @@ storeDishSchema.statics = {
     
     // 再查找门店中有这些菜品的记录
     return this.find({
-      store_id: storeId,
-      dish_id: { $in: dishIds },
-      is_available: true
+      storeId: storeId,
+      dishId: { $in: dishIds },
+      isAvailable: true
     })
-    .populate('dish_id')
-    .sort({ 'sales_data.total_sales': -1 });
+    .populate('dishId')
+    .sort({ 'salesData.totalSales': -1 });
   },
   
   /**
    * 同步门店菜品库存（批量操作）
-   * @param {Array} stockUpdates 库存更新数组 [{dish_id, quantity}]
+   * @param {Array} stockUpdates 库存更新数组 [{dishId, quantity}]
    * @param {ObjectId} storeId 门店ID
    * @returns {Promise<Object>} 更新结果
    */
@@ -334,26 +368,26 @@ storeDishSchema.statics = {
       throw new Error('库存更新参数无效');
     }
     
-    const updatePromises = stockUpdates.map(async ({ dish_id, quantity }) => {
+    const updatePromises = stockUpdates.map(async ({ dishId, quantity }) => {
       const record = await this.findOne({
-        store_id: storeId,
-        dish_id
+        storeId: storeId,
+        dishId
       });
       
       if (!record) {
-        console.warn(`门店 ${storeId} 中未找到菜品 ${dish_id} 的记录`);
+        console.warn(`门店 ${storeId} 中未找到菜品 ${dishId} 的记录`);
         return null;
       }
       
       if (!record.inventory) {
         record.inventory = {
-          current_stock: 0,
-          alert_threshold: 10
+          currentStock: 0,
+          alertThreshold: 10
         };
       }
       
       // 设置新库存
-      record.inventory.current_stock = Math.max(0, quantity);
+      record.inventory.currentStock = Math.max(0, quantity);
       
       return record.save();
     });
@@ -366,12 +400,6 @@ storeDishSchema.statics = {
     };
   }
 };
-
-// 更新前自动更新时间
-storeDishSchema.pre('save', function(next) {
-  this.updated_at = Date.now();
-  next();
-});
 
 // 使用ModelFactory创建支持读写分离的模型
 const StoreDish = ModelFactory.createModel('StoreDish', storeDishSchema);

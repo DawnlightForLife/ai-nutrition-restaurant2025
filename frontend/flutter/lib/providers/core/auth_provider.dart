@@ -19,28 +19,28 @@ import 'dart:async';
 class AuthProvider with ChangeNotifier {
   /// 本地存储键名常量，用于SharedPreferences
   /// 这些键用于在设备本地持久化存储用户的认证信息
-  static const String _tokenKey = 'auth_token';       // 存储认证令牌的键
-  static const String _userIdKey = 'user_id';         // 存储用户ID的键
-  static const String _userPhoneKey = 'user_phone';   // 存储用户手机号的键
-  static const String _usernameKey = 'username';      // 存储用户名的键
-  static const String _nicknameKey = 'nickname';      // 存储用户昵称的键
+  static const String _tokenKey = 'auth_token'; // 存储认证令牌的键
+  static const String _userIdKey = 'userId'; // 存储用户ID的键
+  static const String _userPhoneKey = 'user_phone'; // 存储用户手机号的键
+  static const String _usernameKey = 'username'; // 存储用户名的键
+  static const String _nicknameKey = 'nickname'; // 存储用户昵称的键
   static const String _userAvatarKey = 'user_avatar'; // 存储用户头像URL的键
-  
+
   /// 用户认证信息
   /// 这些变量存储当前登录用户的核心信息，用于验证身份和个性化功能
-  String? _token;     // 认证令牌，用于API请求认证
-  String? _userId;    // 用户ID，系统内部唯一标识符
-  String? _phone;     // 用户手机号，用于登录和找回密码
-  String? _username;  // 用户名，可用于登录的用户标识
-  String? _nickname;  // 用户昵称，用于显示和社交功能
-  String? _avatar;    // 用户头像URL，用于UI显示
-  
+  String? _token; // 认证令牌，用于API请求认证
+  String? _userId; // 用户ID，系统内部唯一标识符
+  String? _phone; // 用户手机号，用于登录和找回密码
+  String? _username; // 用户名，可用于登录的用户标识
+  String? _nickname; // 用户昵称，用于显示和社交功能
+  String? _avatar; // 用户头像URL，用于UI显示
+
   /// 状态标志
   /// 这些变量跟踪认证过程中的各种状态
-  bool _isCodeLogin = true;    // 登录方式标志：true=验证码登录，false=密码登录
+  bool _isCodeLogin = true; // 登录方式标志：true=验证码登录，false=密码登录
   bool _isInitialized = false; // 是否已完成初始化，从本地存储加载完成用户状态
-  bool _isLoading = false;     // 是否正在加载中，如正在请求API或处理认证
-  bool _isResetting = false;   // 是否正在重设密码，标识密码重置流程的状态
+  bool _isLoading = false; // 是否正在加载中，如正在请求API或处理认证
+  bool _isResetting = false; // 是否正在重设密码，标识密码重置流程的状态
 
   /**
    * 获取当前认证令牌
@@ -50,7 +50,7 @@ class AuthProvider with ChangeNotifier {
    * @return 认证令牌，未登录时为null
    */
   String? get token => _token;
-  
+
   /**
    * 获取当前登录用户ID
    * 
@@ -59,7 +59,7 @@ class AuthProvider with ChangeNotifier {
    * @return 用户ID，未登录时为null
    */
   String? get userId => _userId;
-  
+
   /**
    * 获取用户手机号
    * 
@@ -68,7 +68,7 @@ class AuthProvider with ChangeNotifier {
    * @return 用户手机号，未登录时为null
    */
   String? get phone => _phone;
-  
+
   /**
    * 获取用户名
    * 
@@ -77,7 +77,7 @@ class AuthProvider with ChangeNotifier {
    * @return 用户名，未设置或未登录时为null
    */
   String? get username => _username;
-  
+
   /**
    * 获取用户昵称
    * 
@@ -86,7 +86,7 @@ class AuthProvider with ChangeNotifier {
    * @return 用户昵称，未设置或未登录时为null
    */
   String? get nickname => _nickname;
-  
+
   /**
    * 获取用户头像URL
    * 
@@ -105,7 +105,7 @@ class AuthProvider with ChangeNotifier {
    * @return 如果用户已登录(token不为null)则返回true，否则返回false
    */
   bool get isAuthenticated => _token != null;
-  
+
   /**
    * 判断认证提供者是否已初始化
    * 
@@ -115,7 +115,7 @@ class AuthProvider with ChangeNotifier {
    * @return 如果已初始化则返回true，否则返回false
    */
   bool get isInitialized => _isInitialized;
-  
+
   /**
    * 判断是否有认证相关操作正在进行中
    * 
@@ -124,7 +124,7 @@ class AuthProvider with ChangeNotifier {
    * @return 如果正在加载中则返回true，否则返回false
    */
   bool get isLoading => _isLoading;
-  
+
   /**
    * 判断是否正在进行密码重设操作
    * 
@@ -153,7 +153,7 @@ class AuthProvider with ChangeNotifier {
    */
   void setLoginMethod(bool isCodeLogin) {
     _isCodeLogin = isCodeLogin;
-    notifyListeners();  // 通知UI状态已更新
+    notifyListeners(); // 通知UI状态已更新
   }
 
   /**
@@ -169,36 +169,35 @@ class AuthProvider with ChangeNotifier {
    * @param nickname  用户昵称，可选 
    * @param avatar    用户头像URL，可选
    */
-  Future<void> login(String token, {
-    String? userId, 
-    String? phone, 
-    String? username,
-    String? nickname,
-    String? avatar
-  }) async {
+  Future<void> login(String token,
+      {String? userId,
+      String? phone,
+      String? username,
+      String? nickname,
+      String? avatar}) async {
     _setLoading(true);
-    
+
     try {
       _token = token;
-      
+
       // 如果提供了其他用户信息，也一并保存
       if (userId != null && userId.isNotEmpty) _userId = userId;
       if (phone != null && phone.isNotEmpty) _phone = phone;
       if (username != null) _username = username;
       if (nickname != null) _nickname = nickname;
       if (avatar != null) _avatar = avatar;
-      
+
       // 保存信息到本地存储，实现记住登录状态
       await _saveToPrefs();
-      
+
       _setLoading(false);
-      notifyListeners();  // 通知UI用户已登录
+      notifyListeners(); // 通知UI用户已登录
     } catch (e) {
       _setLoading(false);
-      rethrow;  // 抛出异常便于上层处理
+      rethrow; // 抛出异常便于上层处理
     }
   }
-  
+
   /**
    * 注册并自动登录
    * 
@@ -221,7 +220,7 @@ class AuthProvider with ChangeNotifier {
     BuildContext? context,
   }) async {
     _setLoading(true);
-    
+
     try {
       // 调用认证服务进行注册
       final token = await authService.register(
@@ -231,18 +230,18 @@ class AuthProvider with ChangeNotifier {
         nickname: nickname,
         context: context,
       );
-      
+
       // 注册成功后自动登录，复用登录逻辑
       await login(token, phone: phone, nickname: nickname);
-      
+
       _setLoading(false);
       notifyListeners();
     } catch (e) {
       _setLoading(false);
-      rethrow;  // 抛出异常便于上层处理
+      rethrow; // 抛出异常便于上层处理
     }
   }
-  
+
   /**
    * 发送重置密码验证码
    * 
@@ -259,17 +258,17 @@ class AuthProvider with ChangeNotifier {
     BuildContext? context,
   }) async {
     _setLoading(true);
-    
+
     try {
       final result = await authService.sendResetCode(phone, context: context);
       _setLoading(false);
       return result;
     } catch (e) {
       _setLoading(false);
-      rethrow;  // 抛出异常便于上层处理
+      rethrow; // 抛出异常便于上层处理
     }
   }
-  
+
   /**
    * 重置密码
    * 
@@ -290,19 +289,15 @@ class AuthProvider with ChangeNotifier {
     BuildContext? context,
   }) async {
     _setResetting(true);
-    
+
     try {
-      final result = await authService.resetPassword(
-        phone, 
-        code, 
-        newPassword, 
-        context: context
-      );
+      final result = await authService.resetPassword(phone, code, newPassword,
+          context: context);
       _setResetting(false);
       return result;
     } catch (e) {
       _setResetting(false);
-      rethrow;  // 抛出异常便于上层处理
+      rethrow; // 抛出异常便于上层处理
     }
   }
 
@@ -313,7 +308,7 @@ class AuthProvider with ChangeNotifier {
    */
   Future<void> logout() async {
     _setLoading(true);
-    
+
     try {
       // 清除内存中的用户信息
       _token = null;
@@ -322,15 +317,15 @@ class AuthProvider with ChangeNotifier {
       _username = null;
       _nickname = null;
       _avatar = null;
-      
+
       // 从本地存储删除信息，确保下次启动时不会自动登录
       await _clearPrefs();
-      
+
       _setLoading(false);
-      notifyListeners();  // 通知UI用户已登出
+      notifyListeners(); // 通知UI用户已登出
     } catch (e) {
       _setLoading(false);
-      rethrow;  // 抛出异常便于上层处理
+      rethrow; // 抛出异常便于上层处理
     }
   }
 
@@ -346,31 +341,31 @@ class AuthProvider with ChangeNotifier {
   Future<bool> checkAuth({AuthService? authService}) async {
     // 如果已初始化，直接返回当前登录状态
     if (_isInitialized) return isAuthenticated;
-    
+
     _setLoading(true);
-    
+
     try {
       // 从本地存储读取用户信息和token
       await _loadFromPrefs();
       _isInitialized = true;
-      
+
       // 如果没有找到token，直接返回未认证状态
       if (_token == null) {
         _setLoading(false);
         return false;
       }
-      
+
       // 如果提供了authService，验证token有效性
       if (authService != null) {
         final isValid = await authService.validateToken(_token ?? "");
-        
+
         if (!isValid) {
           try {
             // 尝试刷新token
             debugPrint('Token无效，尝试刷新...');
             if (_token != null) {
               final newToken = await authService.refreshToken(_token!);
-              
+
               if (newToken != null) {
                 // 刷新成功，更新token
                 debugPrint('Token刷新成功，新token长度: ${newToken.length}');
@@ -391,9 +386,9 @@ class AuthProvider with ChangeNotifier {
           }
         }
       }
-      
+
       _setLoading(false);
-      notifyListeners();  // 通知UI登录状态可能已改变
+      notifyListeners(); // 通知UI登录状态可能已改变
       return isAuthenticated;
     } catch (e) {
       debugPrint('检查认证状态失败: $e');
@@ -401,7 +396,7 @@ class AuthProvider with ChangeNotifier {
       return false;
     }
   }
-  
+
   /**
    * 更新用户信息
    * 
@@ -414,42 +409,47 @@ class AuthProvider with ChangeNotifier {
    * @param nickname 用户昵称，可选
    * @param avatar   用户头像URL，可选
    */
-  Future<void> updateUserInfo({String? userId, String? phone, String? username, String? nickname, String? avatar}) async {
+  Future<void> updateUserInfo(
+      {String? userId,
+      String? phone,
+      String? username,
+      String? nickname,
+      String? avatar}) async {
     bool hasChanges = false;
-    
+
     // 检查每个字段是否有变化
     if (userId != null && userId != _userId) {
       _userId = userId;
       hasChanges = true;
     }
-    
+
     if (phone != null && phone != _phone) {
       _phone = phone;
       hasChanges = true;
     }
-    
+
     if (username != null && username != _username) {
       _username = username;
       hasChanges = true;
     }
-    
+
     if (nickname != null && nickname != _nickname) {
       _nickname = nickname;
       hasChanges = true;
     }
-    
+
     if (avatar != null && avatar != _avatar) {
       _avatar = avatar;
       hasChanges = true;
     }
-    
+
     // 只有在信息有变化时才保存和通知
     if (hasChanges) {
       await _saveToPrefs();
-      notifyListeners();  // 通知UI用户信息已更新
+      notifyListeners(); // 通知UI用户信息已更新
     }
   }
-  
+
   /**
    * 设置加载状态
    * 
@@ -459,9 +459,9 @@ class AuthProvider with ChangeNotifier {
    */
   void _setLoading(bool loading) {
     _isLoading = loading;
-    notifyListeners();  // 通知UI加载状态已更改
+    notifyListeners(); // 通知UI加载状态已更改
   }
-  
+
   /**
    * 设置重设密码状态
    * 
@@ -471,9 +471,9 @@ class AuthProvider with ChangeNotifier {
    */
   void _setResetting(bool resetting) {
     _isResetting = resetting;
-    notifyListeners();  // 通知UI重设密码状态已更改
+    notifyListeners(); // 通知UI重设密码状态已更改
   }
-  
+
   /**
    * 保存所有用户信息到本地存储
    * 
@@ -481,7 +481,7 @@ class AuthProvider with ChangeNotifier {
    */
   Future<void> _saveToPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // 只保存非空值
     if (_token != null) await prefs.setString(_tokenKey, _token!);
     if (_userId != null) await prefs.setString(_userIdKey, _userId!);
@@ -490,7 +490,7 @@ class AuthProvider with ChangeNotifier {
     if (_nickname != null) await prefs.setString(_nicknameKey, _nickname!);
     if (_avatar != null) await prefs.setString(_userAvatarKey, _avatar!);
   }
-  
+
   /**
    * 仅保存token到本地存储
    * 
@@ -502,7 +502,7 @@ class AuthProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
   }
-  
+
   /**
    * 从本地存储清除所有用户信息
    * 
@@ -510,7 +510,7 @@ class AuthProvider with ChangeNotifier {
    */
   Future<void> _clearPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // 移除所有与用户相关的存储项
     await prefs.remove(_tokenKey);
     await prefs.remove(_userIdKey);
@@ -527,7 +527,7 @@ class AuthProvider with ChangeNotifier {
    */
   Future<void> _loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // 读取所有用户相关的存储项
     _token = prefs.getString(_tokenKey);
     _userId = prefs.getString(_userIdKey);

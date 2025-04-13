@@ -26,27 +26,27 @@ import 'dart:typed_data';
 class AuthService {
   /// API服务，用于向后端发送HTTP请求
   final ApiService _apiService;
-  
+
   /// 全局错误处理器，用于统一处理和显示认证相关错误
   final GlobalErrorHandler _errorHandler = GlobalErrorHandler();
-  
+
   /// 本地存储，用于持久化保存Token等认证信息
   prefs.SharedPreferences? _prefs;
-  
+
   /// 本地存储键名常量
   /// 用于存取认证相关的持久化数据
-  static const String _tokenKey = 'auth_token';         // 访问令牌键名
+  static const String _tokenKey = 'auth_token'; // 访问令牌键名
   static const String _refreshTokenKey = 'refresh_token'; // 刷新令牌键名
-  
+
   /// 防止重复发送验证码的冷却时间管理
   /// 记录上次发送时间，确保用户不能频繁请求验证码
-  DateTime? _lastSentTime;           // 上次发送登录/注册验证码的时间
-  DateTime? _lastResetCodeSentTime;  // 上次发送重置密码验证码的时间
-  static const int _codeCooldownSeconds = 60;  // 验证码冷却时间（秒）
-  
+  DateTime? _lastSentTime; // 上次发送登录/注册验证码的时间
+  DateTime? _lastResetCodeSentTime; // 上次发送重置密码验证码的时间
+  static const int _codeCooldownSeconds = 60; // 验证码冷却时间（秒）
+
   /// 缓存的用户信息
   Map<String, dynamic>? _cachedUserInfo;
-  
+
   /**
    * 构造函数
    * 
@@ -57,7 +57,7 @@ class AuthService {
    * @param _prefs 可选的SharedPreferences实例，用于本地存储
    */
   AuthService(this._apiService, [this._prefs]);
-  
+
   /**
    * 初始化服务
    * 
@@ -75,7 +75,7 @@ class AuthService {
       }
     }
   }
-  
+
   /**
    * 使用验证码登录
    * 
@@ -89,24 +89,46 @@ class AuthService {
    * @return 包含用户信息和Token的Map
    * @throws Exception 登录失败时抛出异常，包含错误信息
    */
-  Future<Map<String, dynamic>> loginWithCode(String phone, String code, {BuildContext? context}) async {
+  Future<Map<String, dynamic>> loginWithCode(String phone, String code,
+      {BuildContext? context}) async {
     try {
-      // 发送验证码登录请求
-      final response = await _apiService.post(
-        ApiConstants.auth + '/login/code',
-        data: {
-          'phone': phone,
-          'code': code,
-        },
-      );
-      
-      debugPrint('登录响应: $response');  // 添加调试日志
-      
+      Map<String, dynamic> response;
+
+      try {
+        // 首先尝试主要路径
+        response = await _apiService.post(
+          ApiConstants.loginWithCode,
+          data: {
+            'phone': phone,
+            'code': code,
+          },
+        );
+        debugPrint('使用主路径登录成功');
+      } catch (primaryError) {
+        // 如果主路径失败，尝试兼容路径
+        debugPrint('主路径登录失败: $primaryError，尝试使用兼容路径');
+        try {
+          response = await _apiService.post(
+            ApiConstants.loginWithCodeLegacy,
+            data: {
+              'phone': phone,
+              'code': code,
+            },
+          );
+          debugPrint('使用兼容路径登录成功');
+        } catch (fallbackError) {
+          debugPrint('兼容路径也失败: $fallbackError');
+          throw fallbackError; // 如果兼容路径也失败，重新抛出错误
+        }
+      }
+
+      debugPrint('登录响应: $response'); // 添加调试日志
+
       // 检查登录是否成功
       if (response['success'] == true && response['token'] != null) {
         // 立即保存token到本地存储
         await setToken(response['token']);
-        
+
         // 提取用户信息，如果某些字段不存在则使用默认值
         final user = response['user'] ?? {};
         return {
@@ -128,10 +150,10 @@ class AuthService {
       if (context != null) {
         _errorHandler.handleAuthError(context, e);
       }
-      rethrow;  // 抛出原始错误，而不是包装成新的异常
+      rethrow; // 抛出原始错误，而不是包装成新的异常
     }
   }
-  
+
   /**
    * 使用密码登录
    * 
@@ -145,7 +167,8 @@ class AuthService {
    * @return 包含用户信息和Token的Map
    * @throws Exception 登录失败时抛出异常，包含错误信息
    */
-  Future<Map<String, dynamic>> loginWithPassword(String phone, String password, {BuildContext? context}) async {
+  Future<Map<String, dynamic>> loginWithPassword(String phone, String password,
+      {BuildContext? context}) async {
     try {
       // 发送密码登录请求
       final response = await _apiService.post(
@@ -155,14 +178,14 @@ class AuthService {
           'password': password,
         },
       );
-      
-      debugPrint('登录响应: $response');  // 添加调试日志
-      
+
+      debugPrint('登录响应: $response'); // 添加调试日志
+
       // 检查登录是否成功
       if (response['success'] == true && response['token'] != null) {
         // 立即保存token到本地存储
         await setToken(response['token']);
-        
+
         // 提取用户信息，如果某些字段不存在则使用默认值
         final user = response['user'] ?? {};
         return {
@@ -184,7 +207,7 @@ class AuthService {
       if (context != null) {
         _errorHandler.handleAuthError(context, e);
       }
-      rethrow;  // 抛出原始错误，而不是包装成新的异常
+      rethrow; // 抛出原始错误，而不是包装成新的异常
     }
   }
 
@@ -205,15 +228,14 @@ class AuthService {
    * @return 注册成功后的Token字符串
    * @throws Exception 注册失败时抛出异常，包含错误信息
    */
-  Future<String> register({
-    required String phone, 
-    required String password, 
-    required String code, 
-    String? username,
-    String? nickname,
-    String? inviteCode,
-    BuildContext? context
-  }) async {
+  Future<String> register(
+      {required String phone,
+      required String password,
+      required String code,
+      String? username,
+      String? nickname,
+      String? inviteCode,
+      BuildContext? context}) async {
     try {
       // 发送注册请求
       final response = await _apiService.post(
@@ -227,7 +249,7 @@ class AuthService {
           if (inviteCode != null) 'inviteCode': inviteCode,
         },
       );
-      
+
       // 检查注册是否成功
       if (response.containsKey('token')) {
         return response['token'];
@@ -256,7 +278,8 @@ class AuthService {
    * @return 发送成功返回true，如果在冷却期内则返回false
    * @throws Exception 发送失败时抛出异常
    */
-  Future<bool> sendVerificationCode(String phone, {BuildContext? context}) async {
+  Future<bool> sendVerificationCode(String phone,
+      {BuildContext? context}) async {
     try {
       // 检查是否在冷却期内
       if (_lastSentTime != null) {
@@ -266,15 +289,12 @@ class AuthService {
           throw Exception('请求过于频繁，请${remainingSeconds}秒后再试');
         }
       }
-      
+
       final response = await _apiService.post(
-        ApiConstants.auth + '/send-code',
-        data: {
-          'phone': phone,
-          'type': 'login'
-        },
+        ApiConstants.sendCode,
+        data: {'phone': phone, 'type': 'login'},
       );
-      
+
       // 记录发送时间，用于冷却期判断
       _lastSentTime = DateTime.now();
       return true;
@@ -287,7 +307,7 @@ class AuthService {
       throw Exception('发送验证码失败：${e.toString()}');
     }
   }
-  
+
   /**
    * 发送重置密码验证码
    * 
@@ -308,14 +328,12 @@ class AuthService {
           throw Exception('请求过于频繁，请${remainingSeconds}秒后再试');
         }
       }
-      
+
       final response = await _apiService.post(
         ApiConstants.forgotPassword,
-        data: {
-          'phone': phone
-        },
+        data: {'phone': phone},
       );
-      
+
       // 记录发送时间，用于冷却期判断
       _lastResetCodeSentTime = DateTime.now();
       return true;
@@ -328,7 +346,7 @@ class AuthService {
       throw Exception('发送重置密码验证码失败：${e.toString()}');
     }
   }
-  
+
   /**
    * 重置密码
    * 
@@ -341,17 +359,14 @@ class AuthService {
    * @return 重置成功返回true
    * @throws Exception 重置失败时抛出异常
    */
-  Future<bool> resetPassword(String phone, String code, String newPassword, {BuildContext? context}) async {
+  Future<bool> resetPassword(String phone, String code, String newPassword,
+      {BuildContext? context}) async {
     try {
       final response = await _apiService.post(
         ApiConstants.resetPassword,
-        data: {
-          'phone': phone,
-          'code': code,
-          'newPassword': newPassword
-        },
+        data: {'phone': phone, 'code': code, 'newPassword': newPassword},
       );
-      
+
       // 处理后端返回的响应
       if (response.containsKey('success') && response['success'] == true) {
         return true;
@@ -367,10 +382,10 @@ class AuthService {
         _errorHandler.handleAuthError(context, e, operation: '重置密码');
       }
       // 抛出异常，不应该返回true表示成功
-      throw Exception('重置密码失败：${e.toString()}'); 
+      throw Exception('重置密码失败：${e.toString()}');
     }
   }
-  
+
   /**
    * 获取验证码剩余冷却时间（秒）
    * 
@@ -382,11 +397,11 @@ class AuthService {
     if (_lastSentTime == null) {
       return 0;
     }
-    
+
     final now = DateTime.now();
     final difference = now.difference(_lastSentTime!).inSeconds;
     final remaining = _codeCooldownSeconds - difference;
-    
+
     return remaining > 0 ? remaining : 0;
   }
 
@@ -401,14 +416,14 @@ class AuthService {
     if (_lastResetCodeSentTime == null) {
       return 0;
     }
-    
+
     final now = DateTime.now();
     final difference = now.difference(_lastResetCodeSentTime!).inSeconds;
     final remaining = _codeCooldownSeconds - difference;
-    
+
     return remaining > 0 ? remaining : 0;
   }
-  
+
   /**
    * 退出登录
    * 
@@ -421,17 +436,16 @@ class AuthService {
     try {
       // 这里可以添加实际的退出登录API调用，例如：
       // await _apiService.post('/api/auth/logout');
-      
+
       // 通过AuthProvider清除本地token和登录状态
       await Provider.of<AuthProvider>(context, listen: false).logout();
-      
     } catch (e) {
       debugPrint('退出登录失败: $e');
       _errorHandler.handleNetworkError(context, e, operation: '退出登录');
       throw Exception('退出登录失败：${e.toString()}');
     }
   }
-  
+
   /**
    * 获取当前用户Token（内存中）
    * 
@@ -460,9 +474,10 @@ class AuthService {
         return null;
       }
     }
-    
+
     final token = _prefs!.getString(_tokenKey);
-    debugPrint('AuthService.getToken: ${token != null ? "Token已获取" : "Token为空"}');
+    debugPrint(
+        'AuthService.getToken: ${token != null ? "Token已获取" : "Token为空"}');
     return token;
   }
 
@@ -513,10 +528,10 @@ class AuthService {
   Future<bool> validateToken(String token) async {
     try {
       final response = await _apiService.get(
-        '${ApiConstants.auth}/validate',  // 正确的API路径
+        ApiConstants.verifyToken,
         token: token,
       );
-      
+
       // 根据响应判断Token是否有效
       if (response['success'] == true) {
         return true;
@@ -527,7 +542,7 @@ class AuthService {
       return false;
     }
   }
-  
+
   /**
    * 刷新令牌
    * 
@@ -541,28 +556,26 @@ class AuthService {
       debugPrint('无法刷新令牌：未提供旧令牌');
       return null;
     }
-    
+
     try {
       // 调用刷新Token的API
       debugPrint('尝试刷新Token...');
-      
+
       final response = await _apiService.post(
-        '${ApiConstants.auth}/refresh',  // 正确的API路径
-        data: {
-          'refreshToken': refreshToken
-        },
+        ApiConstants.refreshToken,
+        data: {'refreshToken': refreshToken},
       );
-      
+
       debugPrint('刷新Token响应: $response');
-      
+
       // 处理刷新结果
       if (response['success'] == true && response['token'] != null) {
         final newToken = response['token'] as String;
         debugPrint('Token刷新成功，长度: ${newToken.length}');
-        
+
         // 保存新令牌到本地存储
         await setToken(newToken);
-        
+
         return newToken;
       } else {
         debugPrint('Token刷新失败: ${response['message'] ?? '未知错误'}');
@@ -581,44 +594,126 @@ class AuthService {
    * 
    * @return 用户ID，如果解析失败则返回null
    */
-  Future<String?> getUserIdFromToken() async {
-    try {
-      // 从本地存储获取Token
-      final token = await getToken();
+  Future<String?> getUserIdFromToken([String? token]) async {
+    if (token == null || token.isEmpty) {
+      // 如果没有提供token，尝试从本地存储获取
+      token = await getToken();
       if (token == null || token.isEmpty) {
-        debugPrint('未找到有效令牌，无法解析用户ID');
         return null;
       }
-      
-      // 如果是JWT令牌，尝试解析payload部分
-      final parts = token.split('.');
-      if (parts.length != 3) {
-        debugPrint('令牌格式不是有效的JWT');
-        return null;
+    }
+
+    try {
+      // 尝试从缓存获取用户信息
+      final userId = await _extractUserIdFromCache();
+      if (userId != null) {
+        return userId;
       }
-      
-      // 解码payload部分（base64解码）
-      String normalizedPayload = parts[1];
-      // 修正base64字符串长度，确保能够正确解码
-      while (normalizedPayload.length % 4 != 0) {
-        normalizedPayload += '=';
+
+      // 尝试解析JWT token
+      final String? id = await _extractUserIdFromJwt(token);
+      if (id != null) {
+        return id;
       }
-      
-      // 执行base64解码并转换为JSON
-      final payloadBytes = base64Url.decode(normalizedPayload);
-      final payloadString = utf8.decode(payloadBytes);
-      final payload = json.decode(payloadString) as Map<String, dynamic>;
-      
-      // 提取用户ID
-      final userId = payload['userId'] as String?;
-      debugPrint('从令牌中解析到用户ID: $userId');
-      return userId;
+
+      // 如果JWT解析失败，尝试从API获取用户信息
+      return await _fetchUserIdFromApi(token);
     } catch (e) {
-      debugPrint('解析令牌出错: $e');
+      debugPrint('从令牌获取用户ID时出错: $e');
       return null;
     }
   }
-  
+
+  // 从缓存的用户信息中提取用户ID
+  Future<String?> _extractUserIdFromCache() async {
+    if (_cachedUserInfo != null) {
+      if (_cachedUserInfo!.containsKey('userId')) {
+        final userId = _cachedUserInfo!['userId'];
+        debugPrint('从缓存的用户信息中获取到用户ID: $userId');
+        return userId.toString();
+      }
+    }
+    return null;
+  }
+
+  // 从JWT令牌中提取用户ID
+  Future<String?> _extractUserIdFromJwt(String token) async {
+    try {
+      // 分离令牌的三个部分
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        throw Exception('无效的JWT格式');
+      }
+
+      // 解码payload部分
+      final payload = parts[1];
+      final normalized = base64Url.normalize(payload);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final payloadMap = json.decode(decoded) as Map<String, dynamic>;
+
+      // 尝试从不同可能的字段中获取用户ID
+      final possibleIdFields = ['userId', 'id', '_id', 'sub'];
+      for (final field in possibleIdFields) {
+        if (payloadMap.containsKey(field)) {
+          final id = payloadMap[field];
+          debugPrint('从JWT获取到用户ID字段[$field]: $id');
+          return id.toString();
+        }
+      }
+
+      // 如果没有找到用户ID，添加令牌载荷到临时缓存
+      _cachedUserInfo = payloadMap;
+      if (_cachedUserInfo!.containsKey('userId')) {
+        return _cachedUserInfo!['userId'].toString();
+      }
+      debugPrint('JWT中未找到用户ID');
+      return null;
+    } catch (e) {
+      debugPrint('JWT解析失败: $e');
+      return null;
+    }
+  }
+
+  // 从API获取用户信息及ID
+  Future<String?> _fetchUserIdFromApi(String token) async {
+    try {
+      debugPrint('尝试从API获取用户信息...');
+      final userData = await _apiService.get(
+        ApiConstants.userProfile,
+        token: token,
+      );
+
+      if (userData == null) {
+        debugPrint('API返回空数据');
+        return null;
+      }
+
+      // 保存用户信息到缓存
+      _cachedUserInfo = userData;
+
+      // 确保缓存的用户信息包含userId字段
+      if (!_cachedUserInfo!.containsKey('userId')) {
+        // 尝试从其他可能的字段复制userId
+        if (_cachedUserInfo!.containsKey('_id')) {
+          _cachedUserInfo!['userId'] = _cachedUserInfo!['_id'];
+        } else if (_cachedUserInfo!.containsKey('id')) {
+          _cachedUserInfo!['userId'] = _cachedUserInfo!['id'];
+        }
+      }
+
+      // 尝试从返回的用户数据中获取用户ID
+      if (userData.containsKey('userId')) {
+        debugPrint('从API响应获取到用户ID: ${userData['userId']}');
+        return userData['userId'].toString();
+      }
+      debugPrint('API响应中未找到用户ID');
+      return null;
+    } catch (e) {
+      debugPrint('从API获取用户信息失败: $e');
+      return null;
+    }
+  }
+
   /**
    * 获取当前用户信息
    * 
@@ -626,33 +721,81 @@ class AuthService {
    * 
    * @return 包含用户信息的Map，如果获取失败则返回空Map
    */
-  Future<Map<String, dynamic>> getUserInfo({String? token, bool forceRefresh = false}) async {
+  Future<Map<String, dynamic>> getUserInfo(
+      {String? token, bool forceRefresh = false}) async {
     try {
       // 如果有缓存且不强制刷新，则返回缓存的用户信息
       if (_cachedUserInfo != null && !forceRefresh) {
+        // 确保缓存的用户信息包含userId字段
+        if (!_cachedUserInfo!.containsKey('userId')) {
+          // 尝试从其他可能的字段复制userId
+          if (_cachedUserInfo!.containsKey('_id')) {
+            _cachedUserInfo!['userId'] = _cachedUserInfo!['_id'];
+          } else if (_cachedUserInfo!.containsKey('id')) {
+            _cachedUserInfo!['userId'] = _cachedUserInfo!['id'];
+          }
+        }
         return _cachedUserInfo!;
       }
-      
+
       // 获取token，如果未提供
       final useToken = token ?? await getToken();
       if (useToken == null) {
         throw Exception('需要登录才能获取用户信息');
       }
-      
+
       final response = await _apiService.get(
         ApiConstants.userProfile,
         token: useToken,
       );
-      
-      // 检查响应是否成功
-      if (response['success'] != true) {
-        throw Exception(response['message'] ?? '获取用户信息失败');
+
+      // 增强成功判断逻辑
+      bool isSuccessful = false;
+      if (response['success'] == true) {
+        isSuccessful = true;
+      } else if (response['status'] == 'success') {
+        isSuccessful = true;
       }
-      
+
+      if (!isSuccessful) {
+        throw Exception(response['message'] ?? response['error'] ?? '获取用户信息失败');
+      }
+
       // 提取用户数据，兼容不同的响应格式
-      final userData = response['data'] ?? response['user'] ?? {};
+      Map<String, dynamic> userData = {};
+
+      // 尝试不同的数据位置
+      if (response['data'] != null && response['data'] is Map) {
+        userData = response['data'];
+      } else if (response['user'] != null && response['user'] is Map) {
+        userData = response['user'];
+      } else if (response['data'] != null &&
+          response['data'] is Map &&
+          response['data']['user'] != null) {
+        userData = response['data']['user'];
+      } else {
+        // 如果找不到明确的user数据，使用整个响应
+        userData = Map<String, dynamic>.from(response);
+        // 移除不相关的字段
+        userData.remove('success');
+        userData.remove('status');
+        userData.remove('message');
+      }
+
       debugPrint('获取到用户信息: $userData');
-      
+
+      // 确保userId字段存在
+      if (!userData.containsKey('userId')) {
+        // 尝试从其他可能的字段复制userId
+        if (userData.containsKey('_id')) {
+          userData['userId'] = userData['_id'];
+          debugPrint('已从_id添加userId字段: ${userData['userId']}');
+        } else if (userData.containsKey('id')) {
+          userData['userId'] = userData['id'];
+          debugPrint('已从id添加userId字段: ${userData['userId']}');
+        }
+      }
+
       // 缓存用户信息
       _cachedUserInfo = userData;
       return userData;

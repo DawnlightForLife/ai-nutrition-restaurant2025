@@ -51,6 +51,7 @@
 ### 1. userModel.js - 用户模型
 
 **主要字段：**
+
 - `phone`: String (必填，唯一) - 用户手机号
 - `password`: String (必填) - 加密密码
 - `role`: String (枚举: user, admin, nutritionist, merchant)
@@ -69,26 +70,24 @@
 ### 2. nutritionProfileModel.js - 营养档案模型
 
 **主要字段：**
-- `user_id`: ObjectId (必填，关联User)
-- `name`: String (必填) - 档案名称
-- 基本信息: gender, age, height, weight, activity_level
-- `health_conditions`: 健康状况
-- `dietary_preferences`: 饮食偏好
-- `goals`: 营养目标
-- `nutrition_targets`: 目标热量和宏量素
-- `notes`: 备注
-- `is_family_member`: 是否为家庭成员档案
-- `family_relationship`: 家庭成员关系
-- `privacy_settings`: 档案隐私设置
-- `access_grants`: 授权记录
-- `related_health_data`: 关联的健康数据
-- `recommendation_history`: 关联的AI推荐历史
-- `version`: 档案版本
-- `modification_history`: 修改历史
+
+- `userId`: ObjectId (必填，关联User)
+- `profileName`: String (必填) - 档案名称
+- 基本信息: `gender`, `ageGroup`, `height`, `weight`, `occupation`
+- `region`: 地区信息 (province, city)
+- `healthStatus`: 健康状况 (chronicDiseases, specialConditions)
+- `dietaryPreferences`: 饮食偏好 (isVegetarian, tastePreference, taboos, cuisine, allergies)
+- `lifestyle`: 生活方式 (smoking, drinking, sleepDuration, exerciseFrequency)
+- `nutritionGoals`: 营养目标列表
+- `nutritionTargets`: 目标热量和宏量素
+- `isPrimary`: 是否为主要档案
+- `archived`: 是否已归档
+- `createdAt`, `updatedAt`: 创建和更新时间
 
 ### 3. aiRecommendationModel.js - AI推荐模型
 
 **主要字段：**
+
 - `user_id`: ObjectId (必填，关联User)
 - `nutrition_profile_id`: ObjectId (必填，关联NutritionProfile)
 - `recommendation_type`: String (枚举: dish, meal, meal_plan, diet_suggestion)
@@ -107,6 +106,7 @@
 ### 4. forumPostModel.js - 论坛帖子模型
 
 **主要字段：**
+
 - `user_id`: ObjectId (必填，关联User)
 - `title`: String (必填) - 帖子标题
 - `content`: String (必填) - 帖子内容
@@ -124,6 +124,7 @@
 ### 5. consultationModel.js - 咨询模型
 
 **主要字段：**
+
 - `user_id`: ObjectId (必填，关联User)
 - `nutritionist_id`: ObjectId (必填，关联Nutritionist)
 - `consultation_type`: String (枚举: text, voice, video, in_person)
@@ -142,6 +143,7 @@
 ### 6. merchantModel.js - 商家模型
 
 **主要字段：**
+
 - `user_id`: ObjectId (必填，关联User)
 - `business_name`: String (必填) - 商家名称
 - `business_type`: String (必填，枚举: restaurant, gym, maternity_center, school_company)
@@ -156,6 +158,7 @@
 ### 7. orderModel.js - 订单模型
 
 **主要字段：**
+
 - `order_number`: String (必填，唯一) - 订单号
 - `user_id`: ObjectId (必填，关联User)
 - `merchant_id`: ObjectId (必填，关联Merchant)
@@ -175,6 +178,7 @@
 ### 8. adminModel.js - 管理员模型
 
 **主要字段：**
+
 - `username`: String (必填，唯一) - 用户名
 - `password`: String (必填) - 加密密码
 - `name`: String (必填) - 姓名
@@ -192,6 +196,7 @@
 ### 9. auditLogModel.js - 审计日志模型
 
 **主要字段：**
+
 - `action`: String (必填，枚举) - 操作类型
 - `description`: String (必填) - 操作描述
 - `actor`: 操作执行者
@@ -208,6 +213,7 @@
 ### 10. userRoleModel.js - 用户角色与权限模型
 
 **主要字段：**
+
 - `name`: String (必填，唯一) - 角色名称
 - `description`: String (必填) - 角色描述
 - `permissions`: 权限列表
@@ -221,30 +227,31 @@
 ### 11. healthDataModel.js - 健康数据模型
 
 **主要字段：**
-- `user_id`: ObjectId (必填，关联User)
-- `nutrition_profile_id`: ObjectId (必填，关联NutritionProfile)
-- `data_type`: String (必填，枚举: daily_record, medical_report, body_index, nutrition_intake)
-- `record_date`: Date (必填) - 记录日期
-- `weight`: 体重记录
-- `blood_pressure`: 血压记录
-- `blood_sugar`: 血糖记录
-- `heart_rate`: 心率记录
-- `water_intake`: 饮水量记录
-- `food_logs`: 饮食记录
-- `exercise_logs`: 运动记录
-- `sleep_logs`: 睡眠记录
-- `mood_logs`: 情绪记录
-- `medical_conditions`: 医疗状况
+
+- `userId`: ObjectId (必填，关联User)
+- `nutritionProfileId`: ObjectId (必填，关联NutritionProfile)
+- `dataType`: String (必填，枚举: daily_record, medical_report, body_index, nutrition_intake)
+- `recordDate`: Date (必填) - 记录日期
+- `basicMetrics`: 基础健康指标 (weight, height, bmi)
+- `bloodMetrics`: 血液健康指标 (bloodPressure, bloodSugar, heartRate)
+- `waterIntake`: 饮水量记录
+- `foodLogs`: 饮食记录
+- `exerciseLogs`: 运动记录
+- `sleepLogs`: 睡眠记录
+- `moodLogs`: 情绪记录
+- `medicalConditions`: 医疗状况
 - `medication`: 药物使用情况
 - `allergies`: 过敏记录
 - `source`: 数据来源
 - `verified`: 是否已验证
-- `privacy_level`: 隐私级别
-- `data_sharing`: 数据共享设置
+- `privacyLevel`: 隐私级别
+- `dataSharing`: 数据共享设置
+- `createdAt`, `updatedAt`: 创建和更新时间
 
 ### 12. dishModel.js - 菜品模型
 
 **主要字段：**
+
 - `name`: String (必填) - 菜品名称
 - `description`: String - 菜品描述
 - `categories`: 菜品分类
@@ -273,6 +280,7 @@
 ### 13. storeDishModel.js - 商家菜品模型
 
 **主要字段：**
+
 - `store_id`: ObjectId (必填，关联Store)
 - `dish_id`: ObjectId (必填, 关联Dish)
 - `merchant_id`: ObjectId (必填，关联Merchant)
@@ -291,6 +299,7 @@
 ### 14. storeModel.js - 店铺模型
 
 **主要字段：**
+
 - `merchant_id`: ObjectId (必填，关联Merchant)
 - `store_name`: String (必填) - 店铺名称
 - `store_type`: String (必填) - 店铺类型
@@ -313,6 +322,7 @@
 ### 15. subscriptionModel.js - 订阅模型
 
 **主要字段：**
+
 - `user_id`: ObjectId (必填，关联User)
 - `plan_id`: ObjectId (必填) - 套餐ID
 - `subscription_type`: String (必填) - 订阅类型
@@ -332,6 +342,7 @@
 ### 16. userFavoriteModel.js - 用户收藏模型
 
 **主要字段：**
+
 - `user_id`: ObjectId (必填，关联User)
 - `item_id`: ObjectId (必填) - 收藏项目ID
 - `item_type`: String (必填) - 收藏项目类型
@@ -346,6 +357,7 @@
 ### 17. forumCommentModel.js - 论坛评论模型
 
 **主要字段：**
+
 - `user_id`: ObjectId (必填，关联User)
 - `post_id`: ObjectId (必填，关联ForumPost)
 - `parent_id`: ObjectId - 父评论ID
@@ -361,6 +373,7 @@
 ### 18. dataAccessControlModel.js - 数据访问控制模型
 
 **主要字段：**
+
 - `access_id`: String (必填, 唯一) - 访问控制ID
 - `access_name`: String (必填) - 访问控制名称
 - `description`: String - 描述
@@ -380,6 +393,7 @@
 ### 19. dbMetricsModel.js - 数据库指标模型
 
 **主要字段：**
+
 - `timestamp`: Date (必填) - 时间戳
 - `collection_name`: String (必填) - 集合名称
 - `operation_type`: String - 操作类型
@@ -399,6 +413,7 @@
 ### 20. merchantStatsModel.js - 商家统计模型
 
 **主要字段：**
+
 - `merchant_id`: ObjectId (必填，关联Merchant)
 - `date_range`: 日期范围
 - `total_orders`: 总订单数
@@ -459,4 +474,4 @@
 
 4. 测试环境完整验证后才能应用到生产环境
 
-任何未经上述流程的模型修改将被视为违规操作，可能导致系统不稳定和数据不一致。 
+任何未经上述流程的模型修改将被视为违规操作，可能导致系统不稳定和数据不一致。

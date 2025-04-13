@@ -9,30 +9,30 @@ const auditLogSchema = new mongoose.Schema({
     required: true,
     enum: [
       // 数据访问操作
-      'data_access', 'data_modify', 'data_delete', 
+      'dataAccess', 'dataModify', 'dataDelete', 
       
       // 用户和权限相关
-      'user_login', 'user_logout', 'user_register', 'user_update',
-      'password_change', 'password_reset', 'role_change',
-      'access_grant', 'access_revoke', 
+      'userLogin', 'userLogout', 'userRegister', 'userUpdate',
+      'passwordChange', 'passwordReset', 'roleChange',
+      'accessGrant', 'accessRevoke', 
       
       // 认证相关
-      'auth_success', 'auth_failure', 'session_expired',
-      'two_factor_enabled', 'two_factor_disabled', 'two_factor_auth',
+      'authSuccess', 'authFailure', 'sessionExpired',
+      'twoFactorEnabled', 'twoFactorDisabled', 'twoFactorAuth',
       
       // 管理操作
-      'admin_login', 'admin_action', 'config_change',
-      'user_lock', 'user_unlock', 'account_deactivate',
+      'adminLogin', 'adminAction', 'configChange',
+      'userLock', 'userUnlock', 'accountDeactivate',
       
       // 验证和审核
-      'nutritionist_verify', 'merchant_verify', 'content_moderate',
+      'nutritionistVerify', 'merchantVerify', 'contentModerate',
       
       // 业务操作
-      'order_create', 'order_update', 'order_cancel', 'payment_process',
-      'refund_process', 'health_data_upload', 'ai_recommendation',
+      'orderCreate', 'orderUpdate', 'orderCancel', 'paymentProcess',
+      'refundProcess', 'healthDataUpload', 'aiRecommendation',
       
       // 系统事件
-      'system_error', 'security_alert', 'api_call', 'export_data'
+      'systemError', 'securityAlert', 'apiCall', 'exportData'
     ]
   },
   // 操作描述
@@ -76,10 +76,10 @@ const auditLogSchema = new mongoose.Schema({
     type: {
       type: String,
       enum: [
-        'user', 'nutrition_profile', 'health_data', 'order', 
+        'user', 'nutritionProfile', 'healthData', 'order', 
         'dish', 'merchant', 'store', 'nutritionist', 'payment',
-        'refund', 'system_config', 'forum_post', 'forum_comment',
-        'access_control', 'sensitive_data'
+        'refund', 'systemConfig', 'forumPost', 'forumComment',
+        'accessControl', 'sensitiveData'
       ],
       required: true
     },
@@ -89,13 +89,13 @@ const auditLogSchema = new mongoose.Schema({
     name: {
       type: String
     },
-    owner_id: {
+    ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     }
   },
   // 记录操作前后的数据（用于敏感操作）
-  data_snapshot: {
+  dataSnapshot: {
     before: {
       type: Map,
       of: mongoose.Schema.Types.Mixed
@@ -104,7 +104,7 @@ const auditLogSchema = new mongoose.Schema({
       type: Map,
       of: mongoose.Schema.Types.Mixed
     },
-    changed_fields: [String]
+    changedFields: [String]
   },
   // 操作结果
   result: {
@@ -116,10 +116,10 @@ const auditLogSchema = new mongoose.Schema({
     message: {
       type: String
     },
-    error_code: {
+    errorCode: {
       type: String
     },
-    error_details: {
+    errorDetails: {
       type: String
     }
   },
@@ -130,50 +130,50 @@ const auditLogSchema = new mongoose.Schema({
   },
   // 操作环境
   context: {
-    ip_address: {
+    ipAddress: {
       type: String
     },
-    user_agent: {
+    userAgent: {
       type: String
     },
-    device_info: {
+    deviceInfo: {
       type: String
     },
     location: {
       type: String
     },
-    session_id: {
+    sessionId: {
       type: String
     },
-    request_id: {
+    requestId: {
       type: String
     }
   },
   // 敏感度分级
-  sensitivity_level: {
+  sensitivityLevel: {
     type: Number,
     enum: [1, 2, 3], // 1=高敏感, 2=中敏感, 3=低敏感
     default: 3
   },
   // 操作时间
-  created_at: {
+  createdAt: {
     type: Date,
     default: Date.now,
     index: true
   },
   // 数据保留策略
-  retention_policy: {
+  retentionPolicy: {
     type: String,
     enum: ['standard', 'extended', 'permanent'],
     default: 'standard'
   },
   // 添加TTL索引，根据不同保留策略自动过期
-  // 增加用于计算过期时间的expiry_date字段
-  expiry_date: {
+  // 增加用于计算过期时间的expiryDate字段
+  expiryDate: {
     type: Date
   }
 }, {
-  timestamps: false, // 不使用默认timestamps，使用自定义created_at字段
+  timestamps: false, // 不使用默认timestamps，使用自定义createdAt字段
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
@@ -181,50 +181,50 @@ const auditLogSchema = new mongoose.Schema({
 // 创建索引用于高效查询
 auditLogSchema.index({ 'actor.id': 1, 'actor.type': 1 });
 auditLogSchema.index({ 'resource.id': 1, 'resource.type': 1 });
-auditLogSchema.index({ 'resource.owner_id': 1 });
+auditLogSchema.index({ 'resource.ownerId': 1 });
 auditLogSchema.index({ action: 1 });
 auditLogSchema.index({ 'result.status': 1 });
-auditLogSchema.index({ sensitivity_level: 1 });
-auditLogSchema.index({ created_at: 1 });
-auditLogSchema.index({ 'context.ip_address': 1 });
+auditLogSchema.index({ sensitivityLevel: 1 });
+auditLogSchema.index({ createdAt: 1 });
+auditLogSchema.index({ 'context.ipAddress': 1 });
 
 // 为标准保留期限的日志添加TTL索引 (365天)
-auditLogSchema.index({ expiry_date: 1 }, { expireAfterSeconds: 0 });
+auditLogSchema.index({ expiryDate: 1 }, { expireAfterSeconds: 0 });
 
 // 添加复合索引优化常见查询
-auditLogSchema.index({ action: 1, created_at: -1 });
-auditLogSchema.index({ sensitivity_level: 1, created_at: -1 });
-auditLogSchema.index({ 'actor.id': 1, action: 1, created_at: -1 });
-auditLogSchema.index({ 'resource.type': 1, 'result.status': 1, created_at: -1 });
+auditLogSchema.index({ action: 1, createdAt: -1 });
+auditLogSchema.index({ sensitivityLevel: 1, createdAt: -1 });
+auditLogSchema.index({ 'actor.id': 1, action: 1, createdAt: -1 });
+auditLogSchema.index({ 'resource.type': 1, 'result.status': 1, createdAt: -1 });
 
 // 部分索引，仅对高敏感度操作创建索引，优化安全审计查询
 auditLogSchema.index(
-  { 'actor.id': 1, created_at: -1 },
-  { partialFilterExpression: { sensitivity_level: 1 } }
+  { 'actor.id': 1, createdAt: -1 },
+  { partialFilterExpression: { sensitivityLevel: 1 } }
 );
 
 // 添加虚拟字段
-auditLogSchema.virtual('is_sensitive').get(function() {
-  return this.sensitivity_level === 1;
+auditLogSchema.virtual('isSensitive').get(function() {
+  return this.sensitivityLevel === 1;
 });
 
-auditLogSchema.virtual('days_until_expiry').get(function() {
-  if (!this.expiry_date || this.retention_policy === 'permanent') return null;
+auditLogSchema.virtual('daysUntilExpiry').get(function() {
+  if (!this.expiryDate || this.retentionPolicy === 'permanent') return null;
   
   const now = new Date();
-  const diffTime = this.expiry_date - now;
+  const diffTime = this.expiryDate - now;
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 });
 
-auditLogSchema.virtual('action_category').get(function() {
+auditLogSchema.virtual('actionCategory').get(function() {
   const actionCategories = {
-    data_access: 'data', data_modify: 'data', data_delete: 'data',
-    user_login: 'auth', user_logout: 'auth', user_register: 'auth', 
-    password_change: 'auth', password_reset: 'auth',
-    admin_login: 'admin', admin_action: 'admin', config_change: 'admin',
-    order_create: 'business', order_update: 'business', order_cancel: 'business',
-    payment_process: 'business', refund_process: 'business',
-    system_error: 'system', security_alert: 'security'
+    dataAccess: 'data', dataModify: 'data', dataDelete: 'data',
+    userLogin: 'auth', userLogout: 'auth', userRegister: 'auth', 
+    passwordChange: 'auth', passwordReset: 'auth',
+    adminLogin: 'admin', adminAction: 'admin', configChange: 'admin',
+    orderCreate: 'business', orderUpdate: 'business', orderCancel: 'business',
+    paymentProcess: 'business', refundProcess: 'business',
+    systemError: 'system', securityAlert: 'security'
   };
   
   return actionCategories[this.action] || 'other';
@@ -235,31 +235,31 @@ auditLogSchema.pre('save', function(next) {
   if (this.isNew) {
     // 根据保留策略设置过期日期
     const now = new Date();
-    if (this.retention_policy === 'standard') {
+    if (this.retentionPolicy === 'standard') {
       // 标准保留期 - 1年
-      this.expiry_date = new Date(now.setFullYear(now.getFullYear() + 1));
-    } else if (this.retention_policy === 'extended') {
+      this.expiryDate = new Date(now.setFullYear(now.getFullYear() + 1));
+    } else if (this.retentionPolicy === 'extended') {
       // 扩展保留期 - 5年
-      this.expiry_date = new Date(now.setFullYear(now.getFullYear() + 5));
+      this.expiryDate = new Date(now.setFullYear(now.getFullYear() + 5));
     }
     // 永久保留的不设置过期日期
     
     // 确保创建时间已设置
-    if (!this.created_at) {
-      this.created_at = new Date();
+    if (!this.createdAt) {
+      this.createdAt = new Date();
     }
     
     // 根据操作类型自动设置敏感度
-    if (!this.sensitivity_level) {
-      const highSensitivityActions = ['password_change', 'password_reset', 'data_delete', 'admin_action', 'system_error', 'security_alert'];
-      const mediumSensitivityActions = ['user_login', 'user_logout', 'role_change', 'access_grant', 'access_revoke', 'data_modify'];
+    if (!this.sensitivityLevel) {
+      const highSensitivityActions = ['passwordChange', 'passwordReset', 'dataDelete', 'adminAction', 'systemError', 'securityAlert'];
+      const mediumSensitivityActions = ['userLogin', 'userLogout', 'roleChange', 'accessGrant', 'accessRevoke', 'dataModify'];
       
       if (highSensitivityActions.includes(this.action)) {
-        this.sensitivity_level = 1;
+        this.sensitivityLevel = 1;
       } else if (mediumSensitivityActions.includes(this.action)) {
-        this.sensitivity_level = 2;
+        this.sensitivityLevel = 2;
       } else {
-        this.sensitivity_level = 3;
+        this.sensitivityLevel = 3;
       }
     }
   }
@@ -269,7 +269,7 @@ auditLogSchema.pre('save', function(next) {
 // 静态方法：记录用户登录
 auditLogSchema.statics.logUserLogin = async function(userId, username, isSuccess, ipAddress, userAgent, details = {}) {
   const log = new this({
-    action: 'user_login',
+    action: 'userLogin',
     description: isSuccess ? `用户 ${username} 登录成功` : `用户 ${username} 登录失败`,
     actor: {
       type: 'user',
@@ -285,15 +285,15 @@ auditLogSchema.statics.logUserLogin = async function(userId, username, isSuccess
     result: {
       status: isSuccess ? 'success' : 'failure',
       message: isSuccess ? '登录成功' : '登录失败',
-      error_code: details.error_code,
-      error_details: details.error_details
+      errorCode: details.errorCode,
+      errorDetails: details.errorDetails
     },
     context: {
-      ip_address: ipAddress,
-      user_agent: userAgent,
-      session_id: details.session_id
+      ipAddress: ipAddress,
+      userAgent: userAgent,
+      sessionId: details.sessionId
     },
-    sensitivity_level: 2
+    sensitivityLevel: 2
   });
   
   return await log.save();
@@ -302,7 +302,7 @@ auditLogSchema.statics.logUserLogin = async function(userId, username, isSuccess
 // 静态方法：记录数据访问
 auditLogSchema.statics.logDataAccess = async function(actorId, actorType, actorName, resourceType, resourceId, resourceName, isSuccess, ipAddress, details = {}) {
   const log = new this({
-    action: 'data_access',
+    action: 'dataAccess',
     description: `${actorType} ${actorName} 访问了 ${resourceType} ${resourceName || resourceId}`,
     actor: {
       type: actorType,
@@ -314,22 +314,22 @@ auditLogSchema.statics.logDataAccess = async function(actorId, actorType, actorN
       type: resourceType,
       id: resourceId,
       name: resourceName,
-      owner_id: details.owner_id
+      ownerId: details.ownerId
     },
     result: {
       status: isSuccess ? 'success' : 'failure',
       message: isSuccess ? '访问成功' : '访问失败',
-      error_code: details.error_code,
-      error_details: details.error_details
+      errorCode: details.errorCode,
+      errorDetails: details.errorDetails
     },
     parameters: details.parameters,
     context: {
-      ip_address: ipAddress,
-      user_agent: details.user_agent,
-      session_id: details.session_id,
-      request_id: details.request_id
+      ipAddress: ipAddress,
+      userAgent: details.userAgent,
+      sessionId: details.sessionId,
+      requestId: details.requestId
     },
-    sensitivity_level: details.sensitivity_level || 3
+    sensitivityLevel: details.sensitivityLevel || 3
   });
   
   return await log.save();
@@ -349,7 +349,7 @@ auditLogSchema.statics.logDataModify = async function(actorId, actorType, actorN
   }
   
   const log = new this({
-    action: 'data_modify',
+    action: 'dataModify',
     description: `${actorType} ${actorName} 修改了 ${resourceType} ${resourceName || resourceId}`,
     actor: {
       type: actorType,
@@ -361,27 +361,27 @@ auditLogSchema.statics.logDataModify = async function(actorId, actorType, actorN
       type: resourceType,
       id: resourceId,
       name: resourceName,
-      owner_id: details.owner_id
+      ownerId: details.ownerId
     },
-    data_snapshot: {
+    dataSnapshot: {
       before: dataBefore,
       after: dataAfter,
-      changed_fields: changedFields
+      changedFields: changedFields
     },
     result: {
       status: isSuccess ? 'success' : 'failure',
       message: isSuccess ? '修改成功' : '修改失败',
-      error_code: details.error_code,
-      error_details: details.error_details
+      errorCode: details.errorCode,
+      errorDetails: details.errorDetails
     },
     parameters: details.parameters,
     context: {
-      ip_address: ipAddress,
-      user_agent: details.user_agent,
-      session_id: details.session_id,
-      request_id: details.request_id
+      ipAddress: ipAddress,
+      userAgent: details.userAgent,
+      sessionId: details.sessionId,
+      requestId: details.requestId
     },
-    sensitivity_level: details.sensitivity_level || 2
+    sensitivityLevel: details.sensitivityLevel || 2
   });
   
   return await log.save();
@@ -390,7 +390,7 @@ auditLogSchema.statics.logDataModify = async function(actorId, actorType, actorN
 // 静态方法：记录管理员操作
 auditLogSchema.statics.logAdminAction = async function(adminId, adminName, action, resourceType, resourceId, resourceName, details = {}) {
   const log = new this({
-    action: 'admin_action',
+    action: 'adminAction',
     description: `管理员 ${adminName} 执行了操作: ${action} 于 ${resourceType} ${resourceName || resourceId}`,
     actor: {
       type: 'admin',
@@ -402,28 +402,28 @@ auditLogSchema.statics.logAdminAction = async function(adminId, adminName, actio
       type: resourceType,
       id: resourceId,
       name: resourceName,
-      owner_id: details.owner_id
+      ownerId: details.ownerId
     },
-    data_snapshot: {
+    dataSnapshot: {
       before: details.dataBefore,
       after: details.dataAfter,
-      changed_fields: details.changedFields
+      changedFields: details.changedFields
     },
     result: {
       status: details.status || 'success',
       message: details.message || '操作成功',
-      error_code: details.error_code,
-      error_details: details.error_details
+      errorCode: details.errorCode,
+      errorDetails: details.errorDetails
     },
     parameters: details.parameters,
     context: {
-      ip_address: details.ipAddress,
-      user_agent: details.userAgent,
-      session_id: details.sessionId,
-      request_id: details.requestId
+      ipAddress: details.ipAddress,
+      userAgent: details.userAgent,
+      sessionId: details.sessionId,
+      requestId: details.requestId
     },
-    sensitivity_level: 1, // 管理员操作为高敏感度
-    retention_policy: 'extended' // 管理员操作保留更长时间
+    sensitivityLevel: 1, // 管理员操作为高敏感度
+    retentionPolicy: 'extended' // 管理员操作保留更长时间
   });
   
   return await log.save();
@@ -432,30 +432,30 @@ auditLogSchema.statics.logAdminAction = async function(adminId, adminName, actio
 // 静态方法：记录系统错误
 auditLogSchema.statics.logSystemError = async function(errorCode, errorMessage, stackTrace, context = {}) {
   const log = new this({
-    action: 'system_error',
+    action: 'systemError',
     description: `系统错误: ${errorMessage}`,
     actor: {
       type: 'system',
       name: 'system'
     },
     resource: {
-      type: 'system_config',
+      type: 'systemConfig',
       name: 'system'
     },
     result: {
       status: 'failure',
       message: errorMessage,
-      error_code: errorCode,
-      error_details: stackTrace
+      errorCode: errorCode,
+      errorDetails: stackTrace
     },
     context: {
-      ip_address: context.ipAddress,
-      user_agent: context.userAgent,
-      session_id: context.sessionId,
-      request_id: context.requestId
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+      sessionId: context.sessionId,
+      requestId: context.requestId
     },
-    sensitivity_level: 2,
-    retention_policy: 'extended'
+    sensitivityLevel: 2,
+    retentionPolicy: 'extended'
   });
   
   return await log.save();
@@ -464,7 +464,7 @@ auditLogSchema.statics.logSystemError = async function(errorCode, errorMessage, 
 // 静态方法：记录安全警报
 auditLogSchema.statics.logSecurityAlert = async function(alertType, severity, description, ipAddress, userId, details = {}) {
   const log = new this({
-    action: 'security_alert',
+    action: 'securityAlert',
     description: `安全警报 [${severity}]: ${description}`,
     actor: {
       type: userId ? 'user' : 'system',
@@ -473,27 +473,27 @@ auditLogSchema.statics.logSecurityAlert = async function(alertType, severity, de
       name: details.username || 'system'
     },
     resource: {
-      type: 'sensitive_data',
+      type: 'sensitiveData',
       id: userId,
-      owner_id: userId
+      ownerId: userId
     },
     result: {
       status: 'warning',
       message: `${alertType}安全警报: ${description}`,
-      error_code: details.error_code
+      errorCode: details.errorCode
     },
     parameters: {
-      alert_type: alertType,
+      alertType: alertType,
       severity: severity
     },
     context: {
-      ip_address: ipAddress,
-      user_agent: details.userAgent,
-      device_info: details.deviceInfo,
+      ipAddress: ipAddress,
+      userAgent: details.userAgent,
+      deviceInfo: details.deviceInfo,
       location: details.location
     },
-    sensitivity_level: 1, // 安全警报为高敏感度
-    retention_policy: 'permanent' // 安全警报永久保存
+    sensitivityLevel: 1, // 安全警报为高敏感度
+    retentionPolicy: 'permanent' // 安全警报永久保存
   });
   
   return await log.save();
@@ -504,9 +504,9 @@ auditLogSchema.statics.getUserActivityHistory = function(userId, startDate = nul
   const query = { 'actor.id': userId };
   
   if (startDate || endDate) {
-    query.created_at = {};
-    if (startDate) query.created_at.$gte = new Date(startDate);
-    if (endDate) query.created_at.$lte = new Date(endDate);
+    query.createdAt = {};
+    if (startDate) query.createdAt.$gte = new Date(startDate);
+    if (endDate) query.createdAt.$lte = new Date(endDate);
   }
   
   if (actions && Array.isArray(actions) && actions.length > 0) {
@@ -514,7 +514,7 @@ auditLogSchema.statics.getUserActivityHistory = function(userId, startDate = nul
   }
   
   return this.find(query)
-    .sort({ created_at: -1 })
+    .sort({ createdAt: -1 })
     .limit(limit);
 };
 
@@ -526,26 +526,26 @@ auditLogSchema.statics.getResourceAccessHistory = function(resourceType, resourc
   };
   
   if (startDate || endDate) {
-    query.created_at = {};
-    if (startDate) query.created_at.$gte = new Date(startDate);
-    if (endDate) query.created_at.$lte = new Date(endDate);
+    query.createdAt = {};
+    if (startDate) query.createdAt.$gte = new Date(startDate);
+    if (endDate) query.createdAt.$lte = new Date(endDate);
   }
   
   return this.find(query)
-    .sort({ created_at: -1 })
+    .sort({ createdAt: -1 })
     .limit(limit);
 };
 
 // 静态方法：查询安全事件
 auditLogSchema.statics.getSecurityEvents = function(startDate = null, endDate = null, severity = null, limit = 100) {
   const query = { 
-    action: { $in: ['security_alert', 'auth_failure', 'system_error'] }
+    action: { $in: ['securityAlert', 'authFailure', 'systemError'] }
   };
   
   if (startDate || endDate) {
-    query.created_at = {};
-    if (startDate) query.created_at.$gte = new Date(startDate);
-    if (endDate) query.created_at.$lte = new Date(endDate);
+    query.createdAt = {};
+    if (startDate) query.createdAt.$gte = new Date(startDate);
+    if (endDate) query.createdAt.$lte = new Date(endDate);
   }
   
   if (severity) {
@@ -553,7 +553,7 @@ auditLogSchema.statics.getSecurityEvents = function(startDate = null, endDate = 
   }
   
   return this.find(query)
-    .sort({ created_at: -1 })
+    .sort({ createdAt: -1 })
     .limit(limit);
 };
 
@@ -561,8 +561,8 @@ auditLogSchema.statics.getSecurityEvents = function(startDate = null, endDate = 
 auditLogSchema.statics.cleanExpiredLogs = async function() {
   const now = new Date();
   return await this.deleteMany({
-    expiry_date: { $lt: now },
-    retention_policy: { $ne: 'permanent' }
+    expiryDate: { $lt: now },
+    retentionPolicy: { $ne: 'permanent' }
   });
 };
 
@@ -574,16 +574,16 @@ const AuditLog = ModelFactory.createModel('AuditLog', auditLogSchema);
 AuditLog.getShardKey = function(doc) {
   if (doc.actor && doc.actor.id) {
     // 基于用户ID和日期进行分片
-    const dateStr = doc.created_at ? 
-      new Date(doc.created_at).toISOString().substring(0, 7) : // YYYY-MM
+    const dateStr = doc.createdAt ? 
+      new Date(doc.createdAt).toISOString().substring(0, 7) : // YYYY-MM
       new Date().toISOString().substring(0, 7);
     
     return `${doc.actor.id}-${dateStr}`;
   }
   
   // 如果没有用户ID，仅基于日期分片
-  const dateStr = doc.created_at ? 
-    new Date(doc.created_at).toISOString().substring(0, 7) : // YYYY-MM
+  const dateStr = doc.createdAt ? 
+    new Date(doc.createdAt).toISOString().substring(0, 7) : // YYYY-MM
     new Date().toISOString().substring(0, 7);
   
   return `system-${dateStr}`;

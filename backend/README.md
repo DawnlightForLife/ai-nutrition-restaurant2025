@@ -78,6 +78,27 @@ backend/
 
 ## 开发规范
 
+### 文件编码规范
+
+- **强制要求**: 所有代码文件(*.js, *.json, *.md)必须使用**UTF-8编码**(无BOM)
+- **禁止使用**: UTF-16、UTF-32或其他编码格式会导致服务器启动失败
+- **编辑器设置**: 请配置您的编辑器默认使用UTF-8编码保存文件
+- **中文注释**: 确保所有包含中文字符的文件也使用UTF-8编码
+
+如遇编码问题，可使用以下命令转换:
+```bash
+# 单个文件转换
+iconv -f UTF-16 -t UTF-8 问题文件.js > 临时文件.js && mv 临时文件.js 问题文件.js
+
+# Windows PowerShell转换
+$content = Get-Content 问题文件.js
+$utf8 = [System.Text.Encoding]::UTF8
+Set-Content -Path 问题文件.js -Value $utf8.GetString($utf8.GetBytes($content)) -Encoding UTF8
+
+# 批量转换目录下所有JS文件
+find ./目录名 -name "*.js" -type f -exec bash -c 'iconv -f UTF-16 -t UTF-8 "$0" > "$0.tmp" && mv "$0.tmp" "$0"' {} \;
+```
+
 ### 命名规范
 
 - **文件命名**: 使用驼峰命名法，如`userController.js`

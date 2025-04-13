@@ -8,6 +8,8 @@ const router = express.Router();
 const { 
   createAuth, 
   login, 
+  loginWithCode,
+  loginWithCodeLegacy,
   sendVerificationCode, 
   updateAuth, 
   verifyToken 
@@ -18,6 +20,12 @@ router.post('/register', createAuth);
 
 // 用户登录
 router.post('/login', login);
+
+// 验证码登录（标准路径）
+router.post('/login-with-code', loginWithCode);
+
+// 验证码登录（兼容旧版前端路径）
+router.post('/login/code', loginWithCodeLegacy);
 
 // 发送验证码
 router.post('/send-code', sendVerificationCode);

@@ -9,7 +9,7 @@ class ApiUtils {
   static Future<String?> getAuthToken() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('auth_token');
+      return prefs.getString('authToken');
     } catch (e) {
       debugPrint('获取授权令牌失败: $e');
       return null;
@@ -20,7 +20,7 @@ class ApiUtils {
   static Future<void> saveAuthToken(String token) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', token);
+      await prefs.setString('authToken', token);
     } catch (e) {
       debugPrint('保存授权令牌失败: $e');
     }
@@ -30,7 +30,7 @@ class ApiUtils {
   static Future<void> clearAuthToken() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('auth_token');
+      await prefs.remove('authToken');
     } catch (e) {
       debugPrint('清除授权令牌失败: $e');
     }
@@ -40,7 +40,7 @@ class ApiUtils {
   static Future<String?> getUserId() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('user_id');
+      return prefs.getString('userId');
     } catch (e) {
       debugPrint('获取用户ID失败: $e');
       return null;
@@ -51,24 +51,27 @@ class ApiUtils {
   static Future<void> saveUserId(String userId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_id', userId);
+      await prefs.setString('userId', userId);
     } catch (e) {
       debugPrint('保存用户ID失败: $e');
     }
   }
 
   /// 缓存API响应
-  static Future<void> cacheApiResponse(String key, Map<String, dynamic> response, {Duration expiration = const Duration(hours: 1)}) async {
+  static Future<void> cacheApiResponse(
+      String key, Map<String, dynamic> response,
+      {Duration expiration = const Duration(hours: 1)}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final expirationTime = DateTime.now().add(expiration).millisecondsSinceEpoch;
-      
+      final expirationTime =
+          DateTime.now().add(expiration).millisecondsSinceEpoch;
+
       final cacheData = {
         'data': response,
         'expiration': expirationTime,
       };
-      
-      await prefs.setString('api_cache_$key', jsonEncode(cacheData));
+
+      await prefs.setString('apiCache_$key', jsonEncode(cacheData));
     } catch (e) {
       debugPrint('缓存API响应失败: $e');
     }
@@ -78,21 +81,21 @@ class ApiUtils {
   static Future<Map<String, dynamic>?> getCachedApiResponse(String key) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final cacheJson = prefs.getString('api_cache_$key');
-      
+      final cacheJson = prefs.getString('apiCache_$key');
+
       if (cacheJson == null) {
         return null;
       }
-      
+
       final cacheData = jsonDecode(cacheJson) as Map<String, dynamic>;
       final expiration = cacheData['expiration'] as int;
-      
+
       // 检查缓存是否过期
       if (DateTime.now().millisecondsSinceEpoch > expiration) {
-        await prefs.remove('api_cache_$key');
+        await prefs.remove('apiCache_$key');
         return null;
       }
-      
+
       return cacheData['data'] as Map<String, dynamic>;
     } catch (e) {
       debugPrint('获取缓存的API响应失败: $e');
@@ -104,7 +107,7 @@ class ApiUtils {
   static Future<void> clearApiCache(String key) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('api_cache_$key');
+      await prefs.remove('apiCache_$key');
     } catch (e) {
       debugPrint('清除API缓存失败: $e');
     }
@@ -115,9 +118,9 @@ class ApiUtils {
     try {
       final prefs = await SharedPreferences.getInstance();
       final keys = prefs.getKeys();
-      
+
       for (final key in keys) {
-        if (key.startsWith('api_cache_')) {
+        if (key.startsWith('apiCache_')) {
           await prefs.remove(key);
         }
       }
@@ -131,22 +134,24 @@ class ApiUtils {
     if (params == null || params.isEmpty) {
       return null;
     }
-    
+
     return params.entries
         .where((entry) => entry.value != null)
-        .map((entry) => '${Uri.encodeComponent(entry.key)}=${Uri.encodeComponent(entry.value.toString())}')
+        .map((entry) =>
+            '${Uri.encodeComponent(entry.key)}=${Uri.encodeComponent(entry.value.toString())}')
         .join('&');
   }
 
   /// 构建完整URL
-  static String buildUrl(String baseUrl, String path, Map<String, dynamic>? queryParams) {
+  static String buildUrl(
+      String baseUrl, String path, Map<String, dynamic>? queryParams) {
     final url = baseUrl + path;
     final queryString = formatQueryParameters(queryParams);
-    
+
     if (queryString != null && queryString.isNotEmpty) {
       return '$url?$queryString';
     }
-    
+
     return url;
   }
-} 
+}

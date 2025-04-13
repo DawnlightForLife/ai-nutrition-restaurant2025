@@ -9,12 +9,15 @@
 ## 通用规范
 
 ### 基础URL
+
 - 开发环境: `https://dev-api.nutritioneats.com/v1`
 - 测试环境: `https://test-api.nutritioneats.com/v1`
 - 生产环境: `https://api.nutritioneats.com/v1`
 
 ### 请求头
+
 所有请求必须包含以下头信息：
+
 ```
 Content-Type: application/json
 Accept: application/json
@@ -22,7 +25,9 @@ Authorization: Bearer {token} (除了登录和注册API)
 ```
 
 ### 响应格式
+
 所有API响应必须遵循统一格式：
+
 ```json
 {
   "success": true|false,
@@ -41,6 +46,7 @@ Authorization: Bearer {token} (除了登录和注册API)
 ```
 
 ### 错误码
+
 | 错误码 | 描述 |
 |--------|------|
 | AUTH_FAILED | 身份验证失败 |
@@ -54,9 +60,11 @@ Authorization: Bearer {token} (除了登录和注册API)
 ### 用户管理
 
 #### 用户注册
+
 - **URL**: `/users/register`
 - **方法**: `POST`
 - **请求体**:
+
 ```json
 {
   "username": "string",
@@ -66,7 +74,9 @@ Authorization: Bearer {token} (除了登录和注册API)
   "fullName": "string"
 }
 ```
+
 - **响应**:
+
 ```json
 {
   "success": true,
@@ -81,23 +91,29 @@ Authorization: Bearer {token} (除了登录和注册API)
 ```
 
 #### 用户登录
+
 - **URL**: `/users/login`
 - **方法**: `POST`
 - **请求体**:
+
 ```json
 {
   "username": "string",
   "password": "string"
 }
 ```
+
 或
+
 ```json
 {
   "email": "string",
   "password": "string"
 }
 ```
+
 - **响应**:
+
 ```json
 {
   "success": true,
@@ -113,9 +129,11 @@ Authorization: Bearer {token} (除了登录和注册API)
 ```
 
 #### 获取用户信息
+
 - **URL**: `/users/profile`
 - **方法**: `GET`
 - **响应**:
+
 ```json
 {
   "success": true,
@@ -136,15 +154,19 @@ Authorization: Bearer {token} (除了登录和注册API)
 ```
 
 ### 营养档案管理
+
 说明：
+
 - 所有获取健康档案的 API 应返回当前用户所创建的所有营养档案（而非单个档案）
 - 所有档案均以 ownerId 作为归属标识，一个用户可以拥有多个
 - 建议前端支持多档案切换或选择创建新档案
 
 #### 创建营养档案
+
 - **URL**: `/nutrition-profiles`
 - **方法**: `POST`
 - **请求体**:
+
 ```json
 {
   "userId": "string",
@@ -158,7 +180,9 @@ Authorization: Bearer {token} (除了登录和注册API)
   "healthGoals": ["WEIGHT_LOSS", "MUSCLE_GAIN", "MAINTENANCE", ...]
 }
 ```
+
 - **响应**:
+
 ```json
 {
   "success": true,
@@ -182,14 +206,18 @@ Authorization: Bearer {token} (除了登录和注册API)
 ### AI推荐
 
 #### 获取个性化菜单推荐
+
 - **URL**: `/recommendations/menu`
 - **方法**: `GET`
 - **查询参数**:
+
 ```
 mealType=BREAKFAST|LUNCH|DINNER
 calories=number (可选)
 ```
+
 - **响应**:
+
 ```json
 {
   "success": true,
@@ -228,16 +256,20 @@ calories=number (可选)
 ### 商家管理
 
 #### 获取商家列表
+
 - **URL**: `/merchants`
 - **方法**: `GET`
 - **查询参数**:
+
 ```
 page=number
 pageSize=number
 location=string (可选)
 cuisine=string (可选)
 ```
+
 - **响应**:
+
 ```json
 {
   "success": true,
@@ -272,26 +304,34 @@ cuisine=string (可选)
 ### 健康数据管理
 
 #### 记录健康数据
-- **URL**: `/health-data`
+
+- **URL**: `/health/health-data`
 - **方法**: `POST`
 - **请求体**:
+
 ```json
 {
   "userId": "string",
   "nutritionProfileId": "string",
-  "dataType": "DAILY_RECORD|MEDICAL_REPORT|BODY_INDEX|NUTRITION_INTAKE",
+  "dataType": "daily_record|medical_report|body_index|nutrition_intake",
   "recordDate": "string (ISO date)",
-  "weight": number,
-  "bloodPressure": {
-    "systolic": number,
-    "diastolic": number
+  "basicMetrics": {
+    "weight": number,
+    "height": number,
+    "bmi": number
   },
-  "bloodSugar": number,
-  "heartRate": number,
+  "bloodMetrics": {
+    "bloodPressure": {
+      "systolic": number,
+      "diastolic": number
+    },
+    "bloodSugar": number,
+    "heartRate": number
+  },
   "waterIntake": number,
   "foodLogs": [
     {
-      "mealType": "BREAKFAST|LUNCH|DINNER|SNACK",
+      "mealType": "breakfast|lunch|dinner|snack",
       "foods": [
         {
           "name": "string",
@@ -312,28 +352,30 @@ cuisine=string (可选)
       "type": "string",
       "duration": number,
       "caloriesBurned": number,
-      "intensity": "LOW|MEDIUM|HIGH"
+      "intensity": "low|medium|high"
     }
   ],
   "sleepLogs": {
     "duration": number,
-    "quality": "POOR|FAIR|GOOD|EXCELLENT"
+    "quality": "poor|fair|good|excellent"
   },
   "moodLogs": {
-    "mood": "VERY_BAD|BAD|NEUTRAL|GOOD|VERY_GOOD",
+    "mood": "very_bad|bad|neutral|good|very_good",
     "notes": "string"
   }
 }
 ```
+
 - **响应**:
+
 ```json
 {
   "success": true,
   "data": {
-    "healthDataId": "string",
+    "id": "string",
     "userId": "string",
     "nutritionProfileId": "string",
-    "dataType": "DAILY_RECORD|MEDICAL_REPORT|BODY_INDEX|NUTRITION_INTAKE",
+    "dataType": "daily_record|medical_report|body_index|nutrition_intake",
     "recordDate": "string (ISO date)",
     "createdAt": "string",
     "updatedAt": "string"
@@ -342,33 +384,43 @@ cuisine=string (可选)
 ```
 
 #### 获取健康数据历史
-- **URL**: `/health-data/history`
+
+- **URL**: `/health/health-data/history`
 - **方法**: `GET`
 - **查询参数**:
+
 ```
 profileId=string
 startDate=string (ISO date)
 endDate=string (ISO date)
-dataType=DAILY_RECORD|MEDICAL_REPORT|BODY_INDEX|NUTRITION_INTAKE (可选)
+dataType=daily_record|medical_report|body_index|nutrition_intake (可选)
 ```
+
 - **响应**:
+
 ```json
 {
   "success": true,
   "data": [
     {
-      "healthDataId": "string",
+      "id": "string",
       "userId": "string",
       "nutritionProfileId": "string",
-      "dataType": "DAILY_RECORD|MEDICAL_REPORT|BODY_INDEX|NUTRITION_INTAKE",
+      "dataType": "daily_record|medical_report|body_index|nutrition_intake",
       "recordDate": "string (ISO date)",
-      "weight": number,
-      "bloodPressure": {
-        "systolic": number,
-        "diastolic": number
+      "basicMetrics": {
+        "weight": number,
+        "height": number,
+        "bmi": number
       },
-      "bloodSugar": number,
-      "heartRate": number,
+      "bloodMetrics": {
+        "bloodPressure": {
+          "systolic": number,
+          "diastolic": number
+        },
+        "bloodSugar": number,
+        "heartRate": number
+      },
       "waterIntake": number,
       "foodLogs": [...],
       "exerciseLogs": [...],
@@ -381,8 +433,8 @@ dataType=DAILY_RECORD|MEDICAL_REPORT|BODY_INDEX|NUTRITION_INTAKE (可选)
   "pagination": {
     "total": 100,
     "page": 1,
-    "pageSize": 10,
-    "totalPages": 10
+    "limit": 10,
+    "pages": 10
   }
 }
 ```
@@ -390,9 +442,11 @@ dataType=DAILY_RECORD|MEDICAL_REPORT|BODY_INDEX|NUTRITION_INTAKE (可选)
 ### 菜品管理
 
 #### 获取菜品列表
+
 - **URL**: `/dishes`
 - **方法**: `GET`
 - **查询参数**:
+
 ```
 page=number
 pageSize=number
@@ -400,7 +454,9 @@ category=string (可选)
 tags=string,string,... (可选)
 searchQuery=string (可选)
 ```
+
 - **响应**:
+
 ```json
 {
   "success": true,
@@ -446,9 +502,11 @@ searchQuery=string (可选)
 ### 店铺管理
 
 #### 获取店铺列表
+
 - **URL**: `/stores`
 - **方法**: `GET`
 - **查询参数**:
+
 ```
 merchantId=string (可选)
 page=number
@@ -456,7 +514,9 @@ pageSize=number
 location=string (可选)
 storeType=string (可选)
 ```
+
 - **响应**:
+
 ```json
 {
   "success": true,
@@ -506,16 +566,20 @@ storeType=string (可选)
 ### 商家菜品管理
 
 #### 获取商家菜品
+
 - **URL**: `/store-dishes`
 - **方法**: `GET`
 - **查询参数**:
+
 ```
 storeId=string
 page=number
 pageSize=number
 category=string (可选)
 ```
+
 - **响应**:
+
 ```json
 {
   "success": true,
@@ -557,9 +621,11 @@ category=string (可选)
 ### 用户收藏管理
 
 #### 添加收藏
+
 - **URL**: `/favorites`
 - **方法**: `POST`
 - **请求体**:
+
 ```json
 {
   "userId": "string",
@@ -570,7 +636,9 @@ category=string (可选)
   "collectionName": "string"
 }
 ```
+
 - **响应**:
+
 ```json
 {
   "success": true,
@@ -589,9 +657,11 @@ category=string (可选)
 ```
 
 #### 获取用户收藏列表
+
 - **URL**: `/favorites`
 - **方法**: `GET`
 - **查询参数**:
+
 ```
 userId=string
 itemType=DISH|MERCHANT|STORE|NUTRITIONIST (可选)
@@ -599,7 +669,9 @@ collectionName=string (可选)
 page=number
 pageSize=number
 ```
+
 - **响应**:
+
 ```json
 {
   "success": true,
@@ -632,9 +704,11 @@ pageSize=number
 ### 论坛评论管理
 
 #### 发表评论
+
 - **URL**: `/forum/comments`
 - **方法**: `POST`
 - **请求体**:
+
 ```json
 {
   "userId": "string",
@@ -644,7 +718,9 @@ pageSize=number
   "images": ["string"] // 可选，图片URL数组
 }
 ```
+
 - **响应**:
+
 ```json
 {
   "success": true,
@@ -669,15 +745,19 @@ pageSize=number
 ```
 
 #### 获取帖子评论
+
 - **URL**: `/forum/posts/{postId}/comments`
 - **方法**: `GET`
 - **查询参数**:
+
 ```
 page=number
 pageSize=number
 sortBy=newest|oldest|popular (可选)
 ```
+
 - **响应**:
+
 ```json
 {
   "success": true,
@@ -719,9 +799,11 @@ sortBy=newest|oldest|popular (可选)
 ### 数据访问控制
 
 #### 授予数据访问权限
+
 - **URL**: `/data-access-controls`
 - **方法**: `POST`
 - **请求体**:
+
 ```json
 {
   "accessName": "string",
@@ -745,7 +827,9 @@ sortBy=newest|oldest|popular (可选)
   }
 }
 ```
+
 - **响应**:
+
 ```json
 {
   "success": true,
@@ -820,4 +904,4 @@ API版本控制通过URL路径中的版本号实现，例如`/v1/users`。当前
 | profileId | _id (nutritionProfileModel) | |
 | recommendationId | _id (aiRecommendationModel) | |
 | merchantId | _id (merchantModel) | |
-| orderId | _id (orderModel) | | 
+| orderId | _id (orderModel) | |

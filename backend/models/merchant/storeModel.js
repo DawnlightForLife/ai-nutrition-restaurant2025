@@ -7,16 +7,16 @@ const StoreDish = require('./storeDishModel');
 const Dish = require('./ProductDishModel');
 
 const storeSchema = new mongoose.Schema({
-  merchant_id: {
+  merchantId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Merchant',
     required: true
   },
-  name: {
+  storeName: {
     type: String,
     required: true
   },
-  address: {
+  storeAddress: {
     province: {
       type: String,
       required: true
@@ -34,73 +34,83 @@ const storeSchema = new mongoose.Schema({
       required: true
     },
     location: {
-      type: {
-        type: String,
-        enum: ['Point'],
-        default: 'Point'
+      lng: {
+        type: Number,
+        default: 0
       },
-      coordinates: {
-        type: [Number], // [longitude, latitude]
-        default: [0, 0]
+      lat: {
+        type: Number,
+        default: 0
       }
     }
   },
-  contact_phone: {
+  contactPhone: {
     type: String,
     required: true
   },
-  manager_name: {
+  managerName: {
     type: String,
     required: true
   },
-  manager_phone: {
+  managerPhone: {
     type: String,
     required: true
   },
-  image_urls: [{
+  imageUrls: [{
     type: String
   }],
-  business_hours: {
-    monday: String,
-    tuesday: String,
-    wednesday: String,
-    thursday: String,
-    friday: String,
-    saturday: String,
-    sunday: String
-  },
+  businessHours: [{
+    day: {
+      type: String,
+      enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+      required: true
+    },
+    open: {
+      type: String,
+      required: true
+    },
+    close: {
+      type: String,
+      required: true
+    }
+  }],
   // 门店级特定类型属性
-  type_specific_data: {
+  storeType: {
+    type: String,
+    enum: ['restaurant', 'gym', 'maternity_center', 'school_company'],
+    required: true
+  },
+  typeSpecificData: {
     // 餐厅特有
     restaurant: {
-      seating_capacity: Number,
-      private_rooms: Number,
-      cuisine_focus: [String],
-      delivery_radius: Number // 公里
+      seatingCapacity: Number,
+      privateRooms: Number,
+      cuisineFocus: [String],
+      deliveryRadius: Number // 公里
     },
     // 健身房特有
     gym: {
-      equipment_count: Number,
-      shower_rooms: Number,
-      locker_count: Number,
-      class_schedule: [String]
+      equipmentCount: Number,
+      showerRooms: Number,
+      lockerCount: Number,
+      classSchedule: [String]
     },
     // 月子中心特有
     maternity_center: {
-      bed_count: Number,
-      nanny_count: Number,
-      doctor_count: Number,
+      bedCount: Number,
+      nannyCount: Number,
+      doctorCount: Number,
       facilities: [String]
     },
     // 学校/公司食堂特有
     school_company: {
       capacity: Number,
-      serving_times: [String],
-      number_of_counters: Number,
-      special_dietary_options: Boolean
+      servingTimes: [String],
+      numberOfCounters: Number,
+      specialDietaryOptions: Boolean
     }
   },
-  is_active: {
+  isActive: {
     type: Boolean,
     default: true
   },
@@ -114,32 +124,27 @@ const storeSchema = new mongoose.Schema({
       default: 0
     }
   },
-  created_at: {
-    type: Date,
-    default: Date.now
-  },
-  updated_at: {
-    type: Date,
-    default: Date.now
+  description: {
+    type: String
   }
 }, {
-  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+  timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
 
 // 创建地理空间索引
-storeSchema.index({ 'address.location': '2dsphere' });
+storeSchema.index({ 'storeAddress.location': '2dsphere' });
 // 创建商家ID索引，便于查询特定商家的所有门店
-storeSchema.index({ merchant_id: 1 });
+storeSchema.index({ merchantId: 1 });
 // 创建名称文本索引，便于门店搜索
-storeSchema.index({ name: 'text' });
+storeSchema.index({ storeName: 'text' });
 // 创建省市区组合索引，便于按地区查询门店
-storeSchema.index({ 'address.province': 1, 'address.city': 1, 'address.district': 1 });
+storeSchema.index({ 'storeAddress.province': 1, 'storeAddress.city': 1, 'storeAddress.district': 1 });
 // 创建评分索引，便于查询高评分门店
 storeSchema.index({ 'ratings.average': -1 });
 // 创建活跃状态索引，便于查询活跃门店
-storeSchema.index({ is_active: 1 });
+storeSchema.index({ isActive: 1 });
 
 // 添加虚拟字段
 storeSchema.virtual('merchant').get(function() {
@@ -158,36 +163,34 @@ storeSchema.virtual('dishes').set(function(dishes) {
   this._dishes = dishes;
 });
 
-storeSchema.virtual('full_address').get(function() {
-  if (!this.address) return '';
-  return `${this.address.province} ${this.address.city} ${this.address.district} ${this.address.street}`;
+storeSchema.virtual('fullAddress').get(function() {
+  if (!this.storeAddress) return '';
+  return `${this.storeAddress.province} ${this.storeAddress.city} ${this.storeAddress.district} ${this.storeAddress.street}`;
 });
 
-storeSchema.virtual('is_open').get(function() {
-  if (!this.business_hours) return false;
+storeSchema.virtual('isOpen').get(function() {
+  if (!this.businessHours || this.businessHours.length === 0) return false;
   
   // 获取当前时间和星期几
   const now = new Date();
   const dayOfWeek = now.getDay(); // 0是星期日，1-6是星期一到星期六
   const daysMap = {
-    0: 'sunday',
-    1: 'monday',
-    2: 'tuesday',
-    3: 'wednesday',
-    4: 'thursday',
-    5: 'friday',
-    6: 'saturday'
+    0: 'Sunday',
+    1: 'Monday',
+    2: 'Tuesday',
+    3: 'Wednesday',
+    4: 'Thursday',
+    5: 'Friday',
+    6: 'Saturday'
   };
   
-  const todayHours = this.business_hours[daysMap[dayOfWeek]];
-  if (!todayHours || todayHours.toLowerCase() === 'closed') return false;
+  // 查找今天的营业时间
+  const todayHours = this.businessHours.find(hours => hours.day === daysMap[dayOfWeek]);
+  if (!todayHours) return false;
   
-  // 解析营业时间格式 "09:00-22:00"
-  const [openTimeStr, closeTimeStr] = todayHours.split('-');
-  if (!openTimeStr || !closeTimeStr) return false;
-  
-  const [openHour, openMinute] = openTimeStr.split(':').map(Number);
-  const [closeHour, closeMinute] = closeTimeStr.split(':').map(Number);
+  // 解析营业时间
+  const [openHour, openMinute] = todayHours.open.split(':').map(Number);
+  const [closeHour, closeMinute] = todayHours.close.split(':').map(Number);
   
   // 设置今天的营业开始和结束时间
   const openTime = new Date(now);
@@ -208,27 +211,26 @@ storeSchema.methods = {
    * @returns {Boolean} 是否营业
    */
   isOpenAt(date) {
-    if (!this.business_hours) return false;
+    if (!this.businessHours || this.businessHours.length === 0) return false;
     
     const dayOfWeek = date.getDay();
     const daysMap = {
-      0: 'sunday',
-      1: 'monday',
-      2: 'tuesday',
-      3: 'wednesday',
-      4: 'thursday',
-      5: 'friday',
-      6: 'saturday'
+      0: 'Sunday',
+      1: 'Monday',
+      2: 'Tuesday',
+      3: 'Wednesday',
+      4: 'Thursday',
+      5: 'Friday',
+      6: 'Saturday'
     };
     
-    const dayHours = this.business_hours[daysMap[dayOfWeek]];
-    if (!dayHours || dayHours.toLowerCase() === 'closed') return false;
+    // 查找特定日期的营业时间
+    const dayHours = this.businessHours.find(hours => hours.day === daysMap[dayOfWeek]);
+    if (!dayHours) return false;
     
-    const [openTimeStr, closeTimeStr] = dayHours.split('-');
-    if (!openTimeStr || !closeTimeStr) return false;
-    
-    const [openHour, openMinute] = openTimeStr.split(':').map(Number);
-    const [closeHour, closeMinute] = closeTimeStr.split(':').map(Number);
+    // 解析营业时间
+    const [openHour, openMinute] = dayHours.open.split(':').map(Number);
+    const [closeHour, closeMinute] = dayHours.close.split(':').map(Number);
     
     const openTime = new Date(date);
     openTime.setHours(openHour, openMinute, 0, 0);
@@ -246,40 +248,40 @@ storeSchema.methods = {
    */
   async getAvailableDishes(options = {}) {
     const query = { 
-      store_id: this._id,
-      is_available: true
+      storeId: this._id,
+      isAvailable: true
     };
     
     if (options.category) {
       // 这里需要通过关联Dish模型查询特定分类的菜品
       const dishes = await Dish.find({ category: options.category });
       const dishIds = dishes.map(dish => dish._id);
-      query.dish_id = { $in: dishIds };
+      query.dishId = { $in: dishIds };
     }
     
     const storeDishes = await StoreDish.find(query)
-      .populate('dish_id')
-      .sort(options.sort || { 'sales_data.total_sales': -1 });
+      .populate('dishId')
+      .sort(options.sort || { 'salesData.totalSales': -1 });
     
     return storeDishes.map(sd => {
       // 合并Dish和StoreDish信息
-      const dish = sd.dish_id;
+      const dish = sd.dishId;
       if (!dish) return null;
       
       const dishObj = dish.toObject();
       // 用门店特定的价格覆盖默认价格
-      if (sd.price_override !== undefined && sd.price_override !== null) {
-        dishObj.price = sd.price_override;
+      if (sd.priceOverride !== undefined && sd.priceOverride !== null) {
+        dishObj.price = sd.priceOverride;
       }
-      if (sd.discount_price_override !== undefined && sd.discount_price_override !== null) {
-        dishObj.discount_price = sd.discount_price_override;
+      if (sd.discountPriceOverride !== undefined && sd.discountPriceOverride !== null) {
+        dishObj.discountPrice = sd.discountPriceOverride;
       }
       
       // 添加门店特定的属性
-      dishObj.store_specific_description = sd.store_specific_description;
+      dishObj.storeSpecificDescription = sd.storeSpecificDescription;
       dishObj.inventory = sd.inventory;
-      dishObj.sales_data = sd.sales_data;
-      dishObj.store_attributes = sd.attributes;
+      dishObj.salesData = sd.salesData;
+      dishObj.storeAttributes = sd.attributes;
       
       return dishObj;
     }).filter(Boolean); // 过滤掉null值
@@ -287,12 +289,12 @@ storeSchema.methods = {
   
   /**
    * 检查门店是否可以配送到特定位置
-   * @param {Array} coordinates 目标位置的坐标 [经度, 纬度]
+   * @param {Array} coordinates 目标位置的坐标 [lng, lat]
    * @returns {Boolean} 是否可配送
    */
   canDeliverTo(coordinates) {
-    if (!this.address || !this.address.location || 
-        !this.address.location.coordinates || 
+    if (!this.storeAddress || !this.storeAddress.location || 
+        !this.storeAddress.location.lng || !this.storeAddress.location.lat || 
         !Array.isArray(coordinates) || coordinates.length !== 2) {
       return false;
     }
@@ -300,12 +302,13 @@ storeSchema.methods = {
     // 获取门店配送半径，根据商家类型不同会有不同默认值
     let deliveryRadius = 5; // 默认5公里
     
-    if (this.type_specific_data && this.type_specific_data.restaurant) {
-      deliveryRadius = this.type_specific_data.restaurant.delivery_radius || deliveryRadius;
+    if (this.typeSpecificData && this.typeSpecificData.restaurant) {
+      deliveryRadius = this.typeSpecificData.restaurant.deliveryRadius || deliveryRadius;
     }
     
     // 计算两点之间的距离（使用简化的Haversine公式）
-    const [lng1, lat1] = this.address.location.coordinates;
+    const lng1 = this.storeAddress.location.lng;
+    const lat1 = this.storeAddress.location.lat;
     const [lng2, lat2] = coordinates;
     
     const toRadians = deg => deg * Math.PI / 180;
@@ -354,9 +357,9 @@ storeSchema.methods = {
    */
   getShardKey() {
     // 优先使用地理位置作为分片键，否则使用商家ID
-    return (this.address && this.address.location) ? 
-           this.address.location.coordinates.join(',') : 
-           this.merchant_id.toString();
+    return (this.storeAddress && this.storeAddress.location) ? 
+           `${this.storeAddress.location.lng},${this.storeAddress.location.lat}` : 
+           this.merchantId.toString();
   }
 };
 
@@ -364,7 +367,7 @@ storeSchema.methods = {
 storeSchema.statics = {
   /**
    * 查找附近的门店
-   * @param {Array} coordinates 坐标 [经度, 纬度]
+   * @param {Array} coordinates 坐标 [lng, lat]
    * @param {Number} maxDistance 最大距离（公里）
    * @param {Object} filters 其他过滤条件
    * @returns {Promise<Array>} 门店列表
@@ -374,16 +377,16 @@ storeSchema.statics = {
     const distanceInMeters = maxDistance * 1000;
     
     const query = {
-      'address.location': {
+      'storeAddress.location': {
         $near: {
           $geometry: {
             type: 'Point',
-            coordinates: coordinates
+            coordinates: [coordinates[0], coordinates[1]]
           },
           $maxDistance: distanceInMeters
         }
       },
-      is_active: true,
+      isActive: true,
       ...filters
     };
     
@@ -398,7 +401,7 @@ storeSchema.statics = {
    */
   async findPopular(filters = {}, limit = 10) {
     const query = {
-      is_active: true,
+      isActive: true,
       'ratings.count': { $gte: 5 }, // 至少有5个评分
       ...filters
     };
@@ -415,21 +418,15 @@ storeSchema.statics = {
    * @returns {Promise<Array>} 门店列表
    */
   async findByMerchant(merchantId, includeInactive = false) {
-    const query = { merchant_id: merchantId };
+    const query = { merchantId: merchantId };
     
     if (!includeInactive) {
-      query.is_active = true;
+      query.isActive = true;
     }
     
     return this.find(query);
   }
 };
-
-// 更新前自动更新时间
-storeSchema.pre('save', function(next) {
-  this.updated_at = Date.now();
-  next();
-});
 
 // 使用ModelFactory创建支持读写分离的模型
 const Store = ModelFactory.createModel('Store', storeSchema);

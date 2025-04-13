@@ -3,52 +3,52 @@ const ModelFactory = require('../modelFactory');
 
 // 营业时间子模式
 const operatingHoursSchema = new mongoose.Schema({
-  day_of_week: {
+  dayOfWeek: {
     type: String,
     enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
     required: true
   },
-  is_open: {
+  isOpen: {
     type: Boolean,
     default: true
   },
-  opening_time: {
+  openingTime: {
     type: String,
     required: true
   },
-  closing_time: {
+  closingTime: {
     type: String,
     required: true
   },
-  break_start: String,
-  break_end: String
+  breakStart: String,
+  breakEnd: String
 });
 
 const merchantSchema = new mongoose.Schema({
-  user_id: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
   // 基本信息
-  business_name: {
+  businessName: {
     type: String,
     required: true,
     trim: true,
     sensitivity_level: 3 // 低度敏感数据
   },
-  business_type: {
+  businessType: {
     type: String,
     enum: ['restaurant', 'gym', 'maternity_center', 'school_company'],
     required: true,
     sensitivity_level: 3 // 低度敏感数据
   },
-  registration_number: {
+  registrationNumber: {
     type: String,
     required: true,
     sensitivity_level: 1 // 高度敏感数据
   },
-  tax_id: {
+  taxId: {
     type: String,
     required: true,
     sensitivity_level: 1 // 高度敏感数据
@@ -65,7 +65,7 @@ const merchantSchema = new mongoose.Schema({
       required: true,
       sensitivity_level: 2 // 中度敏感数据
     },
-    alternative_phone: {
+    alternativePhone: {
       type: String,
       sensitivity_level: 2 // 中度敏感数据
     },
@@ -95,7 +95,7 @@ const merchantSchema = new mongoose.Schema({
       required: true,
       sensitivity_level: 3 // 低度敏感数据
     },
-    postal_code: {
+    postalCode: {
       type: String,
       required: true,
       sensitivity_level: 2 // 中度敏感数据
@@ -117,23 +117,23 @@ const merchantSchema = new mongoose.Schema({
     }
   },
   // 营业信息
-  business_profile: {
+  businessProfile: {
     description: {
       type: String,
       required: true,
       sensitivity_level: 3 // 低度敏感数据
     },
-    establishment_year: {
+    establishmentYear: {
       type: Number,
       sensitivity_level: 3 // 低度敏感数据
     },
-    operating_hours: [operatingHoursSchema],
-    cuisine_types: [{
+    operatingHours: [operatingHoursSchema],
+    cuisineTypes: [{
       type: String,
       enum: ['chinese', 'sichuan', 'cantonese', 'hunan', 'western', 'fast_food', 'vegetarian', 'fusion', 'other'],
       sensitivity_level: 3 // 低度敏感数据
     }],
-    average_price_range: {
+    averagePriceRange: {
       min: {
         type: Number,
         sensitivity_level: 3 // 低度敏感数据
@@ -152,142 +152,142 @@ const merchantSchema = new mongoose.Schema({
       type: String,
       sensitivity_level: 3 // 低度敏感数据
     }],
-    logo_url: {
+    logoUrl: {
       type: String,
       sensitivity_level: 3 // 低度敏感数据
     }
   },
   // 营养与健康特色
-  nutrition_features: {
-    has_nutritionist: {
+  nutritionFeatures: {
+    hasNutritionist: {
       type: Boolean,
       default: false,
       sensitivity_level: 3 // 低度敏感数据
     },
-    nutrition_certified: {
+    nutritionCertified: {
       type: Boolean,
       default: false,
       sensitivity_level: 3 // 低度敏感数据
     },
-    certification_details: {
+    certificationDetails: {
       type: String,
       sensitivity_level: 3 // 低度敏感数据
     },
-    nutritionist_id: {
+    nutritionistId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Nutritionist',
       sensitivity_level: 2 // 中度敏感数据
     },
-    specialty_diets: [{
+    specialtyDiets: [{
       type: String,
       enum: ['weight_loss', 'diabetes_friendly', 'heart_healthy', 'high_protein', 'low_sodium', 'gluten_free', 'pregnancy_nutrition', 'senior_nutrition', 'child_nutrition', 'athlete_nutrition', 'other'],
       sensitivity_level: 3 // 低度敏感数据
     }]
   },
   // 商家特定设置
-  merchant_settings: {
+  merchantSettings: {
     // 餐厅特定设置
-    restaurant_settings: {
-      allows_reservations: {
+    restaurantSettings: {
+      allowsReservations: {
         type: Boolean,
         default: true
       },
-      min_order_amount: {
+      minOrderAmount: {
         type: Number,
         default: 0
       },
-      delivery_radius: {
+      deliveryRadius: {
         type: Number // 公里
       },
-      delivery_fee: {
+      deliveryFee: {
         type: Number,
         default: 0
       },
-      estimated_delivery_time: {
+      estimatedDeliveryTime: {
         type: Number // 分钟
       },
-      seating_capacity: Number
+      seatingCapacity: Number
     },
     // 健身房特定设置
-    gym_settings: {
-      offers_meal_plans: {
+    gymSettings: {
+      offersMealPlans: {
         type: Boolean,
         default: false
       },
-      has_nutrition_coaching: {
+      hasNutritionCoaching: {
         type: Boolean,
         default: false
       },
-      nutrition_coaching_fee: Number,
-      membership_required: {
+      nutritionCoachingFee: Number,
+      membershipRequired: {
         type: Boolean,
         default: false
       }
     },
     // 月子中心特定设置
-    maternity_center_settings: {
-      offers_custom_meal_plans: {
+    maternityCenterSettings: {
+      offersCustomMealPlans: {
         type: Boolean,
         default: true
       },
-      offers_nutrition_education: {
+      offersNutritionEducation: {
         type: Boolean,
         default: true
       },
-      has_medical_supervision: {
+      hasMedicalSupervision: {
         type: Boolean,
         default: true
       },
-      medical_staff_available: {
+      medicalStaffAvailable: {
         type: Boolean,
         default: true
       }
     },
     // 学校/企业食堂特定设置
-    school_company_settings: {
-      organization_type: {
+    schoolCompanySettings: {
+      organizationType: {
         type: String,
         enum: ['school', 'university', 'company', 'government', 'other']
       },
-      serves_breakfast: {
+      servesBreakfast: {
         type: Boolean,
         default: false
       },
-      serves_lunch: {
+      servesLunch: {
         type: Boolean,
         default: true
       },
-      serves_dinner: {
+      servesDinner: {
         type: Boolean,
         default: false
       },
-      subscription_available: {
+      subscriptionAvailable: {
         type: Boolean,
         default: false
       },
-      subscription_details: String
+      subscriptionDetails: String
     }
   },
   // 菜单管理
-  menu_settings: {
-    uses_ai_recommendations: {
+  menuSettings: {
+    usesAiRecommendations: {
       type: Boolean,
       default: true
     },
-    personalization_level: {
+    personalizationLevel: {
       type: String,
       enum: ['none', 'basic', 'advanced', 'full'],
       default: 'basic'
     },
-    allows_substitutions: {
+    allowsSubstitutions: {
       type: Boolean,
       default: true
     },
-    auto_generates_nutrition_info: {
+    autoGeneratesNutritionInfo: {
       type: Boolean,
       default: true
     },
-    rotation_frequency: {
+    rotationFrequency: {
       type: String,
       enum: ['daily', 'weekly', 'monthly', 'seasonal', 'none'],
       default: 'none'
@@ -295,45 +295,45 @@ const merchantSchema = new mongoose.Schema({
   },
   // 认证与状态
   verification: {
-    is_verified: {
+    isVerified: {
       type: Boolean,
       default: false,
       sensitivity_level: 3 // 低度敏感数据
     },
-    verification_status: {
+    verificationStatus: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending',
       sensitivity_level: 3 // 低度敏感数据
     },
-    verified_at: {
+    verifiedAt: {
       type: Date,
       sensitivity_level: 3 // 低度敏感数据
     },
-    verified_by: {
+    verifiedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Admin',
       sensitivity_level: 3 // 低度敏感数据
     },
-    verification_notes: {
+    verificationNotes: {
       type: String,
       sensitivity_level: 2 // 中度敏感数据
     },
-    rejection_reason: {
+    rejectionReason: {
       type: String,
       sensitivity_level: 2 // 中度敏感数据
     },
-    verification_documents: [{
-      document_type: {
+    verificationDocuments: [{
+      documentType: {
         type: String,
         enum: ['business_license', 'food_permit', 'tax_certificate', 'health_certificate', 'identity_proof', 'other'],
         sensitivity_level: 2 // 中度敏感数据
       },
-      document_url: {
+      documentUrl: {
         type: String,
         sensitivity_level: 1 // 高度敏感数据
       },
-      uploaded_at: {
+      uploadedAt: {
         type: Date,
         default: Date.now,
         sensitivity_level: 3 // 低度敏感数据
@@ -347,58 +347,58 @@ const merchantSchema = new mongoose.Schema({
     }]
   },
   // 账户状态
-  account_status: {
-    is_active: {
+  accountStatus: {
+    isActive: {
       type: Boolean,
       default: true,
       sensitivity_level: 3 // 低度敏感数据
     },
-    suspension_reason: {
+    suspensionReason: {
       type: String,
       sensitivity_level: 2 // 中度敏感数据
     },
-    suspended_at: {
+    suspendedAt: {
       type: Date,
       sensitivity_level: 3 // 低度敏感数据
     },
-    suspended_by: {
+    suspendedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Admin',
       sensitivity_level: 3 // 低度敏感数据
     },
-    suspension_end_date: {
+    suspensionEndDate: {
       type: Date,
       sensitivity_level: 3 // 低度敏感数据
     }
   },
   // 支付与结算设置
-  payment_settings: {
-    accepted_payment_methods: [{
+  paymentSettings: {
+    acceptedPaymentMethods: [{
       type: String,
       enum: ['cash', 'credit_card', 'debit_card', 'wechat_pay', 'alipay', 'bank_transfer', 'subscription', 'other'],
       sensitivity_level: 3 // 低度敏感数据
     }],
-    bank_account_info: {
-      bank_name: {
+    bankAccountInfo: {
+      bankName: {
         type: String,
         sensitivity_level: 1 // 高度敏感数据
       },
-      account_number: {
+      accountNumber: {
         type: String,
         sensitivity_level: 1 // 高度敏感数据
       },
-      account_name: {
+      accountName: {
         type: String,
         sensitivity_level: 1 // 高度敏感数据
       }
     },
-    settlement_cycle: {
+    settlementCycle: {
       type: String,
       enum: ['daily', 'weekly', 'biweekly', 'monthly'],
       default: 'weekly',
       sensitivity_level: 3 // 低度敏感数据
     },
-    commission_rate: {
+    commissionRate: {
       type: Number,
       default: 0.05,
       sensitivity_level: 2 // 中度敏感数据
@@ -406,32 +406,32 @@ const merchantSchema = new mongoose.Schema({
   },
   // 订单与统计
   stats: {
-    total_orders: {
+    totalOrders: {
       type: Number,
       default: 0,
       sensitivity_level: 3 // 低度敏感数据
     },
-    total_sales: {
+    totalSales: {
       type: Number,
       default: 0,
       sensitivity_level: 2 // 中度敏感数据
     },
-    avg_order_value: {
+    avgOrderValue: {
       type: Number,
       default: 0,
       sensitivity_level: 3 // 低度敏感数据
     },
-    avg_rating: {
+    avgRating: {
       type: Number,
       default: 0,
       sensitivity_level: 3 // 低度敏感数据
     },
-    rating_count: {
+    ratingCount: {
       type: Number,
       default: 0,
       sensitivity_level: 3 // 低度敏感数据
     },
-    health_score: {
+    healthScore: {
       type: Number,
       min: 0,
       max: 100,
@@ -440,63 +440,63 @@ const merchantSchema = new mongoose.Schema({
     }
   },
   // 数据共享与访问权限
-  data_sharing: {
-    share_health_data_with_users: {
+  dataSharing: {
+    shareHealthDataWithUsers: {
       type: Boolean,
       default: false
     },
-    share_menu_items_with_public: {
+    shareMenuItemsWithPublic: {
       type: Boolean,
       default: true
     },
-    share_menu_nutrition_data: {
+    shareMenuNutritionData: {
       type: Boolean,
       default: true
     },
-    allow_nutritionist_reviews: {
+    allowNutritionistReviews: {
       type: Boolean,
       default: true
     }
   },
   // 外部服务集成
-  external_services: [{
-    service_name: {
+  externalServices: [{
+    serviceName: {
       type: String,
       enum: ['delivery_service', 'reservation_system', 'pos_system', 'inventory_management', 'customer_loyalty', 'other'],
       sensitivity_level: 3 // 低度敏感数据
     },
-    service_provider: {
+    serviceProvider: {
       type: String,
       sensitivity_level: 3 // 低度敏感数据
     },
-    integration_details: {
+    integrationDetails: {
       type: String,
       sensitivity_level: 2 // 中度敏感数据
     },
-    is_active: {
+    isActive: {
       type: Boolean,
       default: true,
       sensitivity_level: 3 // 低度敏感数据
     }
   }],
   // 授权记录 - 记录哪些用户或营养师可以访问商家数据
-  access_grants: [{
-    granted_to: {
+  accessGrants: [{
+    grantedTo: {
       type: mongoose.Schema.Types.ObjectId,
-      refPath: 'access_grants.granted_to_type'
+      refPath: 'accessGrants.grantedToType'
     },
-    granted_to_type: {
+    grantedToType: {
       type: String,
       enum: ['User', 'Nutritionist', 'Admin']
     },
-    granted_at: {
+    grantedAt: {
       type: Date,
       default: Date.now
     },
-    valid_until: {
+    validUntil: {
       type: Date
     },
-    access_level: {
+    accessLevel: {
       type: String,
       enum: ['view_menu', 'view_business_info', 'view_orders', 'manage_menu', 'manage_business', 'full_access'],
       default: 'view_menu'
@@ -505,58 +505,58 @@ const merchantSchema = new mongoose.Schema({
       type: Boolean,
       default: false
     },
-    revoked_at: {
+    revokedAt: {
       type: Date
     }
   }],
   // 安全与审计
-  access_log: [{
+  accessLog: [{
     timestamp: {
       type: Date,
       default: Date.now
     },
-    accessed_by: {
+    accessedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      refPath: 'access_log.accessed_by_type'
+      refPath: 'accessLog.accessedByType'
     },
-    accessed_by_type: {
+    accessedByType: {
       type: String,
       enum: ['User', 'Nutritionist', 'Admin', 'System']
     },
-    ip_address: String,
+    ipAddress: String,
     action: {
       type: String,
       enum: ['view_profile', 'view_menu', 'place_order', 'update_menu', 'update_profile', 'view_orders', 'other']
     },
-    resource_id: mongoose.Schema.Types.ObjectId,
+    resourceId: mongoose.Schema.Types.ObjectId,
     details: String
   }],
   // 合规与隐私确认
   compliance: {
-    terms_agreed: {
+    termsAgreed: {
       type: Boolean,
       default: false
     },
-    privacy_policy_agreed: {
+    privacyPolicyAgreed: {
       type: Boolean,
       default: false
     },
-    data_processing_agreed: {
+    dataProcessingAgreed: {
       type: Boolean,
       default: false
     },
-    agreement_date: {
+    agreementDate: {
       type: Date
     },
-    last_policy_update_agreed: {
+    lastPolicyUpdateAgreed: {
       type: Date
     }
   },
-  created_at: {
+  createdAt: {
     type: Date,
     default: Date.now
   },
-  updated_at: {
+  updatedAt: {
     type: Date,
     default: Date.now
   }
@@ -567,30 +567,30 @@ const merchantSchema = new mongoose.Schema({
 });
 
 // 添加索引以优化查询性能
-merchantSchema.index({ user_id: 1 }, { unique: true });
-merchantSchema.index({ business_name: 1 });
-merchantSchema.index({ business_type: 1 });
+merchantSchema.index({ userId: 1 }, { unique: true });
+merchantSchema.index({ businessName: 1 });
+merchantSchema.index({ businessType: 1 });
 merchantSchema.index({ 'address.city': 1, 'address.state': 1 });
 merchantSchema.index({ 'address.coordinates': '2dsphere' }, { sparse: true });
-merchantSchema.index({ 'business_profile.cuisine_types': 1 });
-merchantSchema.index({ 'nutrition_features.specialty_diets': 1 });
-merchantSchema.index({ 'nutrition_features.has_nutritionist': 1 });
-merchantSchema.index({ 'verification_status': 1 });
+merchantSchema.index({ 'businessProfile.cuisineTypes': 1 });
+merchantSchema.index({ 'nutritionFeatures.specialtyDiets': 1 });
+merchantSchema.index({ 'nutritionFeatures.hasNutritionist': 1 });
+merchantSchema.index({ 'verification.verificationStatus': 1 });
 
 // 添加虚拟字段
-merchantSchema.virtual('is_open').get(function() {
+merchantSchema.virtual('isOpen').get(function() {
   const now = new Date();
   const dayOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
   const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
   
-  const todayHours = this.business_profile.operating_hours.find(h => h.day_of_week === dayOfWeek);
-  if (!todayHours || !todayHours.is_open) return false;
+  const todayHours = this.businessProfile.operatingHours.find(h => h.dayOfWeek === dayOfWeek);
+  if (!todayHours || !todayHours.isOpen) return false;
   
   // 检查是否在营业时间内
-  if (currentTime >= todayHours.opening_time && currentTime <= todayHours.closing_time) {
+  if (currentTime >= todayHours.openingTime && currentTime <= todayHours.closingTime) {
     // 检查是否在休息时间
-    if (todayHours.break_start && todayHours.break_end) {
-      if (currentTime >= todayHours.break_start && currentTime <= todayHours.break_end) {
+    if (todayHours.breakStart && todayHours.breakEnd) {
+      if (currentTime >= todayHours.breakStart && currentTime <= todayHours.breakEnd) {
         return false; // 在休息时间
       }
     }
@@ -603,7 +603,7 @@ merchantSchema.virtual('is_open').get(function() {
 // 与用户关联的虚拟字段
 merchantSchema.virtual('user', {
   ref: 'User',
-  localField: 'user_id',
+  localField: 'userId',
   foreignField: '_id',
   justOne: true
 });
@@ -612,15 +612,15 @@ merchantSchema.virtual('user', {
 merchantSchema.virtual('dishes', {
   ref: 'Dish',
   localField: '_id',
-  foreignField: 'merchant_id'
+  foreignField: 'merchantId'
 });
 
 // 实例方法
 merchantSchema.methods.getPublicProfile = function() {
   return {
     id: this._id,
-    business_name: this.business_name,
-    business_type: this.business_type,
+    businessName: this.businessName,
+    businessType: this.businessType,
     contact: {
       email: this.contact.email,
       phone: this.contact.phone,
@@ -632,48 +632,48 @@ merchantSchema.methods.getPublicProfile = function() {
       country: this.address.country,
       coordinates: this.address.coordinates
     },
-    business_profile: {
-      description: this.business_profile.description,
-      establishment_year: this.business_profile.establishment_year,
-      operating_hours: this.business_profile.operating_hours,
-      cuisine_types: this.business_profile.cuisine_types,
-      average_price_range: this.business_profile.average_price_range,
-      facilities: this.business_profile.facilities,
-      images: this.business_profile.images,
-      logo_url: this.business_profile.logo_url
+    businessProfile: {
+      description: this.businessProfile.description,
+      establishmentYear: this.businessProfile.establishmentYear,
+      operatingHours: this.businessProfile.operatingHours,
+      cuisineTypes: this.businessProfile.cuisineTypes,
+      averagePriceRange: this.businessProfile.averagePriceRange,
+      facilities: this.businessProfile.facilities,
+      images: this.businessProfile.images,
+      logoUrl: this.businessProfile.logoUrl
     },
-    nutrition_features: {
-      has_nutritionist: this.nutrition_features.has_nutritionist,
-      nutrition_certified: this.nutrition_features.nutrition_certified,
-      specialty_diets: this.nutrition_features.specialty_diets
+    nutritionFeatures: {
+      hasNutritionist: this.nutritionFeatures.hasNutritionist,
+      nutritionCertified: this.nutritionFeatures.nutritionCertified,
+      specialtyDiets: this.nutritionFeatures.specialtyDiets
     },
-    is_open: this.is_open
+    isOpen: this.isOpen
   };
 };
 
 merchantSchema.methods.supportsSpecialDiet = function(dietType) {
-  return this.nutrition_features && 
-         this.nutrition_features.specialty_diets && 
-         this.nutrition_features.specialty_diets.includes(dietType);
+  return this.nutritionFeatures && 
+         this.nutritionFeatures.specialtyDiets && 
+         this.nutritionFeatures.specialtyDiets.includes(dietType);
 };
 
 merchantSchema.methods.getOperatingHoursForDay = function(dayOfWeek) {
-  if (!this.business_profile || !this.business_profile.operating_hours) {
+  if (!this.businessProfile || !this.businessProfile.operatingHours) {
     return null;
   }
   
-  return this.business_profile.operating_hours.find(
-    hours => hours.day_of_week === dayOfWeek.toLowerCase()
+  return this.businessProfile.operatingHours.find(
+    hours => hours.dayOfWeek === dayOfWeek.toLowerCase()
   );
 };
 
 // 静态方法
 merchantSchema.statics.findByBusinessType = function(businessType) {
-  return this.find({ business_type: businessType });
+  return this.find({ businessType: businessType });
 };
 
 merchantSchema.statics.findBySpecialtyDiet = function(dietType) {
-  return this.find({ 'nutrition_features.specialty_diets': dietType });
+  return this.find({ 'nutritionFeatures.specialtyDiets': dietType });
 };
 
 merchantSchema.statics.findNearby = function(lat, lng, radiusInKm = 5) {
@@ -712,266 +712,67 @@ merchantSchema.methods.getFilteredProfile = function(accessLevel = 'public') {
   if (accessLevel === 'public') {
     const publicProfile = {
       _id: profile._id,
-      business_name: profile.business_name,
-      business_type: profile.business_type,
+      businessName: profile.businessName,
+      businessType: profile.businessType,
       address: {
         city: profile.address.city,
         state: profile.address.state,
         country: profile.address.country,
         coordinates: profile.address.coordinates
       },
-      business_profile: {
-        description: profile.business_profile.description,
-        establishment_year: profile.business_profile.establishment_year,
-        operating_hours: profile.business_profile.operating_hours,
-        cuisine_types: profile.business_profile.cuisine_types,
-        average_price_range: profile.business_profile.average_price_range,
-        facilities: profile.business_profile.facilities,
-        images: profile.business_profile.images,
-        logo_url: profile.business_profile.logo_url
+      businessProfile: {
+        description: profile.businessProfile.description,
+        establishmentYear: profile.businessProfile.establishmentYear,
+        operatingHours: profile.businessProfile.operatingHours,
+        cuisineTypes: profile.businessProfile.cuisineTypes,
+        averagePriceRange: profile.businessProfile.averagePriceRange,
+        facilities: profile.businessProfile.facilities,
+        images: profile.businessProfile.images,
+        logoUrl: profile.businessProfile.logoUrl
       },
-      nutrition_features: {
-        has_nutritionist: profile.nutrition_features.has_nutritionist,
-        nutrition_certified: profile.nutrition_features.nutrition_certified,
-        specialty_diets: profile.nutrition_features.specialty_diets
+      nutritionFeatures: {
+        hasNutritionist: profile.nutritionFeatures.hasNutritionist,
+        nutritionCertified: profile.nutritionFeatures.nutritionCertified,
+        specialtyDiets: profile.nutritionFeatures.specialtyDiets
       },
       verification: {
-        is_verified: profile.verification.is_verified
+        isVerified: profile.verification.isVerified
       },
-      account_status: {
-        is_active: profile.account_status.is_active
+      accountStatus: {
+        isActive: profile.accountStatus.isActive
       },
       stats: {
-        avg_rating: profile.stats.avg_rating,
-        rating_count: profile.stats.rating_count,
-        health_score: profile.stats.health_score
+        avgRating: profile.stats.avgRating,
+        ratingCount: profile.stats.ratingCount,
+        healthScore: profile.stats.healthScore
       },
-      data_sharing: {
-        share_menu_items_with_public: profile.data_sharing.share_menu_items_with_public,
-        share_menu_nutrition_data: profile.data_sharing.share_menu_nutrition_data
-      },
-      created_at: profile.created_at
+      dataSharing: profile.dataSharing
     };
+    
     return publicProfile;
   }
   
-  // 用户订单访问 - 返回订单相关信息
-  if (accessLevel === 'order') {
-    const orderProfile = {
-      _id: profile._id,
-      business_name: profile.business_name,
-      business_type: profile.business_type,
-      contact: {
-        phone: profile.contact.phone,
-        email: profile.contact.email
-      },
-      address: profile.address,
-      business_profile: {
-        operating_hours: profile.business_profile.operating_hours,
-        logo_url: profile.business_profile.logo_url
-      },
-      merchant_settings: this.getMerchantTypeSettings(profile),
-      payment_settings: {
-        accepted_payment_methods: profile.payment_settings.accepted_payment_methods
-      },
-      verification: {
-        is_verified: profile.verification.is_verified
-      },
-      account_status: {
-        is_active: profile.account_status.is_active
-      }
-    };
-    return orderProfile;
-  }
-  
-  // 营养师访问 - 返回有关营养的更详细信息
-  if (accessLevel === 'nutritionist') {
-    const nutritionistProfile = {
-      _id: profile._id,
-      business_name: profile.business_name,
-      business_type: profile.business_type,
-      contact: {
-        phone: profile.contact.phone,
-        email: profile.contact.email,
-        website: profile.contact.website
-      },
-      address: profile.address,
-      business_profile: profile.business_profile,
-      nutrition_features: profile.nutrition_features,
-      merchant_settings: this.getMerchantTypeSettings(profile),
-      menu_settings: profile.menu_settings,
-      verification: {
-        is_verified: profile.verification.is_verified,
-        verification_status: profile.verification.verification_status
-      },
-      account_status: {
-        is_active: profile.account_status.is_active
-      },
-      stats: profile.stats,
-      data_sharing: profile.data_sharing
-    };
-    return nutritionistProfile;
-  }
-  
-  // 管理员访问 - 返回完整信息
-  if (accessLevel === 'admin') {
+  // 用户级别访问 - 返回更多信息，但排除高敏感度数据
+  if (accessLevel === 'user') {
+    // 从profile移除敏感度为1的字段
+    if (profile.registrationNumber) delete profile.registrationNumber;
+    if (profile.taxId) delete profile.taxId;
+    if (profile.paymentSettings && profile.paymentSettings.bankAccountInfo) {
+      delete profile.paymentSettings.bankAccountInfo;
+    }
+    
     return profile;
   }
   
-  // 商家自己访问 - 返回完整信息但排除一些内部审计字段
-  if (accessLevel === 'merchant') {
-    // 移除内部审计信息
-    delete profile.access_log;
+  // 商家自己访问 - 返回所有数据
+  if (accessLevel === 'merchant' || accessLevel === 'admin') {
     return profile;
   }
   
-  // 默认返回公开信息
+  // 默认情况下返回公开信息
   return this.getFilteredProfile('public');
 };
 
-// 辅助方法 - 根据商家类型获取特定设置
-merchantSchema.methods.getMerchantTypeSettings = function(profile) {
-  switch(profile.business_type) {
-    case 'restaurant':
-      return { restaurant_settings: profile.merchant_settings.restaurant_settings };
-    case 'gym':
-      return { gym_settings: profile.merchant_settings.gym_settings };
-    case 'maternity_center':
-      return { maternity_center_settings: profile.merchant_settings.maternity_center_settings };
-    case 'school_company':
-      return { school_company_settings: profile.merchant_settings.school_company_settings };
-    default:
-      return {};
-  }
-};
-
-// 授权访问方法
-merchantSchema.methods.grantAccess = function(granteeId, granteeType, validUntil, accessLevel = 'view_menu') {
-  if (!this.access_grants) {
-    this.access_grants = [];
-  }
-  
-  // 检查是否已存在授权
-  const existingGrant = this.access_grants.find(
-    g => g.granted_to.equals(granteeId) && g.granted_to_type === granteeType && !g.revoked
-  );
-  
-  if (existingGrant) {
-    // 更新现有授权
-    existingGrant.valid_until = validUntil;
-    existingGrant.access_level = accessLevel;
-  } else {
-    // 创建新授权
-    this.access_grants.push({
-      granted_to: granteeId,
-      granted_to_type: granteeType,
-      granted_at: Date.now(),
-      valid_until: validUntil,
-      access_level: accessLevel
-    });
-  }
-};
-
-// 撤销授权方法
-merchantSchema.methods.revokeAccess = function(granteeId, granteeType) {
-  if (!this.access_grants) return false;
-  
-  let found = false;
-  this.access_grants.forEach(grant => {
-    if (grant.granted_to.equals(granteeId) && grant.granted_to_type === granteeType && !g.revoked) {
-      grant.revoked = true;
-      grant.revoked_at = Date.now();
-      found = true;
-    }
-  });
-  
-  return found;
-};
-
-// 检查授权级别
-merchantSchema.methods.checkAccessLevel = function(userId, userType) {
-  if (!this.access_grants) return null;
-  
-  const now = new Date();
-  const grant = this.access_grants.find(g => 
-    g.granted_to.equals(userId) && 
-    g.granted_to_type === userType && 
-    !g.revoked && 
-    (!g.valid_until || g.valid_until > now)
-  );
-  
-  return grant ? grant.access_level : null;
-};
-
-// 记录访问方法
-merchantSchema.methods.logAccess = async function(userId, userType, ipAddress, action, resourceId, details) {
-  if (!this.access_log) {
-    this.access_log = [];
-  }
-  
-  // 保持日志在合理大小范围内，最多保留100条记录
-  if (this.access_log.length >= 100) {
-    this.access_log = this.access_log.slice(-99);
-  }
-  
-  // 添加新的访问记录
-  this.access_log.push({
-    timestamp: Date.now(),
-    accessed_by: userId,
-    accessed_by_type: userType,
-    ip_address: ipAddress,
-    action: action,
-    resource_id: resourceId,
-    details: details
-  });
-  
-  await this.save();
-};
-
-// 安全查询方法 - 考虑访问控制和数据敏感级别
-merchantSchema.statics.findWithPermissionCheck = async function(query = {}, options = {}, user) {
-  // 基础查询 - 只返回验证通过且活跃的商家
-  const baseQuery = {
-    ...query,
-    'verification.is_verified': true,
-    'account_status.is_active': true
-  };
-  
-  // 公开访问(无用户)或普通用户 - 只返回基本公开数据
-  if (!user || user.role === 'user') {
-    return this.find(baseQuery, options).exec();
-  }
-  
-  // 商家查询自己的数据
-  if (user.role === 'merchant' && query.user_id && user._id.equals(query.user_id)) {
-    return this.find(query, options).exec();
-  }
-  
-  // 营养师查询 - 根据授权或公开设置
-  if (user.role === 'nutritionist') {
-    const merchants = await this.find(baseQuery, options).exec();
-    
-    // 过滤掉未授权访问的商家
-    return merchants.filter(merchant => {
-      // 检查是否有明确授权
-      const hasDirectAccess = merchant.checkAccessLevel(user._id, 'Nutritionist');
-      
-      // 检查是否允许营养师审核
-      const allowsNutritionistReview = merchant.data_sharing && merchant.data_sharing.allow_nutritionist_reviews;
-      
-      return hasDirectAccess || allowsNutritionistReview;
-    });
-  }
-  
-  // 管理员访问 - 可以查看所有商家，包括未验证或非活跃的
-  if (user.role === 'admin' || user.role === 'super_admin') {
-    return this.find(query, options).exec();
-  }
-  
-  // 默认返回空结果
-  return [];
-};
-
+// 创建模型并导出
 const Merchant = ModelFactory.createModel('Merchant', merchantSchema);
-
 module.exports = Merchant; 

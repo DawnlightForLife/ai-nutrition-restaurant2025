@@ -63,7 +63,7 @@ const dishSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  image_url: {
+  imageUrl: {
     type: String
   },
   price: {
@@ -71,7 +71,7 @@ const dishSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
-  discounted_price: {
+  discountedPrice: {
     type: Number,
     min: 0
   },
@@ -80,16 +80,39 @@ const dishSchema = new mongoose.Schema({
     enum: ['main_course', 'appetizer', 'soup', 'salad', 'dessert', 'beverage', 'package_meal', 'other'],
     required: true
   },
-  sub_category: {
+  subCategory: {
     type: String
   },
   tags: [{
     type: String
   }],
   // 营养成分
-  nutrition_facts: nutritionFactsSchema,
+  nutritionFacts: nutritionFactsSchema,
+  // 新增营养信息字段，包含基本营养数据
+  nutritionInfo: {
+    calories: {
+      type: Number,
+      default: 0
+    },
+    protein: {
+      type: Number,
+      default: 0
+    },
+    fat: {
+      type: Number,
+      default: 0
+    },
+    carbs: {
+      type: Number,
+      default: 0
+    },
+    sodium: {
+      type: Number,
+      default: 0
+    }
+  },
   // 营养属性（用于快速筛选和推荐）
-  nutrition_attributes: [{
+  nutritionAttributes: [{
     type: String,
     enum: ['high_protein', 'low_fat', 'low_carb', 'high_fiber', 'low_sodium', 'keto_friendly', 'gluten_free', 'dairy_free', 'vegan', 'vegetarian', 'paleo_friendly', 'diabetic_friendly', 'high_calcium', 'high_iron', 'low_calorie', 'high_vitamin']
   }],
@@ -101,13 +124,13 @@ const dishSchema = new mongoose.Schema({
     type: String,
     enum: ['gluten', 'dairy', 'nuts', 'eggs', 'soy', 'fish', 'shellfish', 'peanuts', 'sesame', 'sulphites']
   }],
-  spicy_level: {
+  spicyLevel: {
     type: Number,
     min: 0,
     max: 5,
     default: 0
   },
-  preparation_time: {
+  preparationTime: {
     type: Number, // 分钟
     min: 0
   },
@@ -121,12 +144,12 @@ const dishSchema = new mongoose.Schema({
     enum: ['spring', 'summer', 'autumn', 'winter', 'all_year']
   }],
   // 如果是套餐，包含的菜品
-  is_package: {
+  isPackage: {
     type: Boolean,
     default: false
   },
-  package_dishes: [{
-    dish_id: {
+  packageDishes: [{
+    dishId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Dish'
     },
@@ -137,31 +160,31 @@ const dishSchema = new mongoose.Schema({
     }
   }],
   // 商家类型适应性
-  suitable_merchant_types: [{
+  suitableMerchantTypes: [{
     type: String,
     enum: ['restaurant', 'gym', 'maternity_center', 'school_company', 'all'],
     default: 'all'
   }],
   // 健康特性
-  health_benefits: [{
-    target_condition: {
+  healthBenefits: [{
+    targetCondition: {
       type: String,
       enum: ['weight_loss', 'diabetes', 'heart_health', 'pregnancy', 'muscle_gain', 'immune_support', 'general_health', 'other']
     },
-    benefit_description: String
+    benefitDescription: String
   }],
   // 适合的饮食计划
-  suitable_diets: [{
+  suitableDiets: [{
     type: String,
     enum: ['regular', 'keto', 'low_carb', 'mediterranean', 'dash', 'vegetarian', 'vegan', 'paleo', 'gluten_free', 'diabetic', 'pregnancy']
   }],
   // 适合的活动水平
-  suitable_activity_levels: [{
+  suitableActivityLevels: [{
     type: String,
     enum: ['sedentary', 'light', 'moderate', 'active', 'very_active', 'all']
   }],
   // 适合的年龄段
-  suitable_age_groups: [{
+  suitableAgeGroups: [{
     type: String,
     enum: ['infant', 'child', 'teen', 'adult', 'senior', 'all']
   }],
@@ -172,7 +195,7 @@ const dishSchema = new mongoose.Schema({
     producer: String
   },
   // 统计与评价
-  is_active: {
+  isActive: {
     type: Boolean,
     default: true
   },
@@ -192,42 +215,48 @@ const dishSchema = new mongoose.Schema({
     enum: ['public', 'merchant_only', 'private'],
     default: 'public'
   },
+  // 元数据信息
+  metadata: {
+    version: {
+      type: String,
+      default: '1.0'
+    },
+    revisionHistory: [{
+      version: String,
+      changes: [String],
+      updatedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }]
+  },
   // 审计追踪
-  created_by: {
+  createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  modified_by: [{
-    user_id: {
+  modifiedBy: [{
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     },
-    modified_at: {
+    modifiedAt: {
       type: Date,
       default: Date.now
     },
     changes: [String]
   }],
   // 数据完整性验证
-  verified_nutrition_data: {
+  verifiedNutritionData: {
     type: Boolean,
     default: false
   },
-  nutrition_data_verified_by: {
+  nutritionDataVerifiedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Nutritionist'
   },
-  nutrition_data_verified_at: Date,
-  // 时间戳
-  created_at: {
-    type: Date,
-    default: Date.now
-  },
-  updated_at: {
-    type: Date,
-    default: Date.now
-  }
+  nutritionDataVerifiedAt: Date
 }, { 
   timestamps: true,
   toJSON: { virtuals: true },
@@ -237,52 +266,52 @@ const dishSchema = new mongoose.Schema({
 // 创建索引用于搜索
 dishSchema.index({ name: 'text', description: 'text', tags: 'text', ingredients: 'text' });
 dishSchema.index({ category: 1 });
-dishSchema.index({ 'nutrition_attributes': 1 });
+dishSchema.index({ 'nutritionAttributes': 1 });
 dishSchema.index({ 'allergens': 1 });
 dishSchema.index({ 'regions': 1 });
 dishSchema.index({ 'seasons': 1 });
-dishSchema.index({ 'suitable_merchant_types': 1 });
-dishSchema.index({ 'health_benefits.target_condition': 1 });
-dishSchema.index({ 'suitable_diets': 1 });
-dishSchema.index({ is_active: 1 });
+dishSchema.index({ 'suitableMerchantTypes': 1 });
+dishSchema.index({ 'healthBenefits.targetCondition': 1 });
+dishSchema.index({ 'suitableDiets': 1 });
+dishSchema.index({ isActive: 1 });
 dishSchema.index({ visibility: 1 });
-dishSchema.index({ created_by: 1 });
+dishSchema.index({ createdBy: 1 });
 dishSchema.index({ tags: 1 });
 dishSchema.index({ 'ratings.average': -1 }); // 用于按评分排序
 dishSchema.index({ price: 1 }); // 价格排序
-dishSchema.index({ merchant_id: 1, is_active: 1 }); // 查询特定商家的活跃菜品
+dishSchema.index({ merchantId: 1, isActive: 1 }); // 查询特定商家的活跃菜品
 
 // 添加虚拟字段
-dishSchema.virtual('has_discount').get(function() {
-  return this.discounted_price && this.discounted_price < this.price;
+dishSchema.virtual('hasDiscount').get(function() {
+  return this.discountedPrice && this.discountedPrice < this.price;
 });
 
-dishSchema.virtual('discount_percentage').get(function() {
-  if (!this.has_discount) return 0;
-  return Math.round(((this.price - this.discounted_price) / this.price) * 100);
+dishSchema.virtual('discountPercentage').get(function() {
+  if (!this.hasDiscount) return 0;
+  return Math.round(((this.price - this.discountedPrice) / this.price) * 100);
 });
 
-dishSchema.virtual('final_price').get(function() {
-  if (this.has_discount) return this.discounted_price;
+dishSchema.virtual('finalPrice').get(function() {
+  if (this.hasDiscount) return this.discountedPrice;
   return this.price;
 });
 
-dishSchema.virtual('calories_per_price').get(function() {
-  if (!this.nutrition_facts || !this.nutrition_facts.calories) return 0;
-  const effectivePrice = this.final_price || 1; // 避免除以零
-  return Math.round(this.nutrition_facts.calories / effectivePrice);
+dishSchema.virtual('caloriesPerPrice').get(function() {
+  if (!this.nutritionFacts || !this.nutritionFacts.calories) return 0;
+  const effectivePrice = this.finalPrice || 1; // 避免除以零
+  return Math.round(this.nutritionFacts.calories / effectivePrice);
 });
 
-dishSchema.virtual('protein_per_price').get(function() {
-  if (!this.nutrition_facts || !this.nutrition_facts.protein) return 0;
-  const effectivePrice = this.final_price || 1; // 避免除以零
-  return Math.round(this.nutrition_facts.protein / effectivePrice);
+dishSchema.virtual('proteinPerPrice').get(function() {
+  if (!this.nutritionFacts || !this.nutritionFacts.protein) return 0;
+  const effectivePrice = this.finalPrice || 1; // 避免除以零
+  return Math.round(this.nutritionFacts.protein / effectivePrice);
 });
 
 // 商家关联
 dishSchema.virtual('merchant', {
   ref: 'Merchant',
-  localField: 'merchant_id',
+  localField: 'merchantId',
   foreignField: '_id',
   justOne: true
 });
@@ -296,17 +325,17 @@ dishSchema.methods.isAllergicFor = function(allergens) {
 };
 
 dishSchema.methods.isSuitableFor = function(diet) {
-  if (!this.suitable_diets) return false;
-  return this.suitable_diets.includes(diet);
+  if (!this.suitableDiets) return false;
+  return this.suitableDiets.includes(diet);
 };
 
 dishSchema.methods.isSuitableForHealthCondition = function(condition) {
-  if (!this.health_benefits) return false;
-  return this.health_benefits.some(benefit => benefit.target_condition === condition);
+  if (!this.healthBenefits) return false;
+  return this.healthBenefits.some(benefit => benefit.targetCondition === condition);
 };
 
 dishSchema.methods.getNutritionalValue = function() {
-  const nutrition = this.nutrition_facts || {};
+  const nutrition = this.nutritionFacts || {};
   
   // 计算宏量素百分比
   let totalMacros = (nutrition.protein || 0) + (nutrition.fat || 0) + (nutrition.carbohydrates || 0);
@@ -333,60 +362,57 @@ dishSchema.methods.getNutritionalValue = function() {
 
 // 静态方法
 dishSchema.statics.findByNutritionAttribute = function(attribute) {
-  return this.find({ nutrition_attributes: attribute, is_active: true });
+  return this.find({ nutritionAttributes: attribute, isActive: true });
 };
 
 dishSchema.statics.findBySuitableDiet = function(diet) {
-  return this.find({ suitable_diets: diet, is_active: true });
+  return this.find({ suitableDiets: diet, isActive: true });
 };
 
 dishSchema.statics.findByHealthCondition = function(condition) {
   return this.find({ 
-    'health_benefits.target_condition': condition,
-    is_active: true 
+    'healthBenefits.targetCondition': condition,
+    isActive: true 
   });
 };
 
 dishSchema.statics.findHighProtein = function(proteinThreshold = 20) {
   return this.find({ 
-    'nutrition_facts.protein': { $gte: proteinThreshold },
-    is_active: true 
+    'nutritionFacts.protein': { $gte: proteinThreshold },
+    isActive: true 
   });
 };
 
 dishSchema.statics.getTopRated = function(limit = 10) {
-  return this.find({ is_active: true })
+  return this.find({ isActive: true })
     .sort({ 'ratings.average': -1 })
     .limit(limit);
 };
 
-// 更新前自动更新时间
+// 更新前钩子
 dishSchema.pre('save', function(next) {
-  // 更新时间
-  this.updated_at = Date.now();
-  
   // 如果不是新文档且有当前用户ID，记录修改信息
   if (!this.isNew && this._current_user_id) {
     const changedFields = this.modifiedPaths().filter(
-      path => !path.startsWith('updated_at') && !path.startsWith('modified_by')
+      path => !path.startsWith('updatedAt') && !path.startsWith('modifiedBy')
     );
     
     if (changedFields.length > 0) {
-      if (!this.modified_by) {
-        this.modified_by = [];
+      if (!this.modifiedBy) {
+        this.modifiedBy = [];
       }
       
-      this.modified_by.push({
-        user_id: this._current_user_id,
-        modified_at: Date.now(),
+      this.modifiedBy.push({
+        userId: this._current_user_id,
+        modifiedAt: Date.now(),
         changes: changedFields
       });
     }
   }
   
   // 自动判断并更新营养属性标签
-  const nutrition = this.nutrition_facts || {};
-  const attributes = new Set(this.nutrition_attributes || []);
+  const nutrition = this.nutritionFacts || {};
+  const attributes = new Set(this.nutritionAttributes || []);
   
   // 高蛋白质检查 (>20g)
   if (nutrition.protein >= 20) {
@@ -431,14 +457,25 @@ dishSchema.pre('save', function(next) {
   }
   
   // 更新营养属性
-  this.nutrition_attributes = Array.from(attributes);
+  this.nutritionAttributes = Array.from(attributes);
+  
+  // 同步更新nutritionInfo字段
+  if (this.nutritionFacts) {
+    this.nutritionInfo = {
+      calories: this.nutritionFacts.calories || 0,
+      protein: this.nutritionFacts.protein || 0,
+      fat: this.nutritionFacts.fat || 0,
+      carbs: this.nutritionFacts.carbohydrates || 0,
+      sodium: this.nutritionFacts.sodium || 0
+    };
+  }
   
   next();
 });
 
 // 计算并更新菜品的营养属性
 dishSchema.methods.calculateNutritionAttributes = function() {
-  const nutrition = this.nutrition_facts;
+  const nutrition = this.nutritionFacts;
   const attributes = [];
   
   if (!nutrition) return attributes;
@@ -474,32 +511,32 @@ dishSchema.methods.calculateNutritionAttributes = function() {
   }
   
   // 更新营养属性
-  this.nutrition_attributes = attributes;
+  this.nutritionAttributes = attributes;
   
   return attributes;
 };
 
 // 验证菜品是否适合特定商家类型
 dishSchema.methods.isSuitableForMerchantType = function(merchantType) {
-  if (!this.suitable_merchant_types || this.suitable_merchant_types.length === 0) {
+  if (!this.suitableMerchantTypes || this.suitableMerchantTypes.length === 0) {
     return true; // 如果未设置，默认适合所有商家类型
   }
   
-  return this.suitable_merchant_types.includes(merchantType) || 
-         this.suitable_merchant_types.includes('all');
+  return this.suitableMerchantTypes.includes(merchantType) || 
+         this.suitableMerchantTypes.includes('all');
 };
 
 // 获取套餐总价格
 dishSchema.methods.getPackageTotalPrice = async function() {
-  if (!this.is_package || !this.package_dishes || this.package_dishes.length === 0) {
+  if (!this.isPackage || !this.packageDishes || this.packageDishes.length === 0) {
     return this.price;
   }
   
   let totalPrice = 0;
   
   // 计算组成菜品的总价
-  for (const item of this.package_dishes) {
-    const dish = await this.model('Dish').findById(item.dish_id);
+  for (const item of this.packageDishes) {
+    const dish = await this.model('Dish').findById(item.dishId);
     if (dish) {
       totalPrice += (dish.price * item.quantity);
     }
@@ -510,23 +547,23 @@ dishSchema.methods.getPackageTotalPrice = async function() {
 
 // 添加营养专家验证
 dishSchema.methods.verifyNutritionData = function(nutritionistId) {
-  this.verified_nutrition_data = true;
-  this.nutrition_data_verified_by = nutritionistId;
-  this.nutrition_data_verified_at = Date.now();
+  this.verifiedNutritionData = true;
+  this.nutritionDataVerifiedBy = nutritionistId;
+  this.nutritionDataVerifiedAt = Date.now();
 };
 
 // 适合特定用户的静态方法
 dishSchema.statics.findSuitableForUser = async function(user, nutritionProfile, options = {}) {
   if (!user || !nutritionProfile) {
-    return this.find({ is_active: true, visibility: 'public' }).exec();
+    return this.find({ isActive: true, visibility: 'public' }).exec();
   }
   
   // 基础查询条件
   const query = { 
-    is_active: true,
+    isActive: true,
     $or: [
       { visibility: 'public' },
-      { created_by: user._id }
+      { createdBy: user._id }
     ]
   };
   
@@ -534,25 +571,25 @@ dishSchema.statics.findSuitableForUser = async function(user, nutritionProfile, 
   const filterConditions = [];
   
   // 1. 考虑饮食偏好
-  if (nutritionProfile.dietary_preferences) {
+  if (nutritionProfile.dietaryPreferences) {
     // 排除用户过敏食材
-    if (nutritionProfile.dietary_preferences.allergies && 
-        nutritionProfile.dietary_preferences.allergies.length > 0) {
-      query.allergens = { $nin: nutritionProfile.dietary_preferences.allergies };
+    if (nutritionProfile.dietaryPreferences.allergies && 
+        nutritionProfile.dietaryPreferences.allergies.length > 0) {
+      query.allergens = { $nin: nutritionProfile.dietaryPreferences.allergies };
     }
     
     // 排除用户避免的食材
-    if (nutritionProfile.dietary_preferences.avoided_ingredients && 
-        nutritionProfile.dietary_preferences.avoided_ingredients.length > 0) {
-      query.ingredients = { $nin: nutritionProfile.dietary_preferences.avoided_ingredients };
+    if (nutritionProfile.dietaryPreferences.avoidedIngredients && 
+        nutritionProfile.dietaryPreferences.avoidedIngredients.length > 0) {
+      query.ingredients = { $nin: nutritionProfile.dietaryPreferences.avoidedIngredients };
     }
     
     // 考虑用户的菜系偏好
-    if (nutritionProfile.dietary_preferences.cuisine_preference && 
-        nutritionProfile.dietary_preferences.cuisine_preference !== 'other') {
+    if (nutritionProfile.dietaryPreferences.cuisinePreference && 
+        nutritionProfile.dietaryPreferences.cuisinePreference !== 'other') {
       // 将用户菜系偏好映射到区域
       let regionPreference;
-      switch(nutritionProfile.dietary_preferences.cuisine_preference) {
+      switch(nutritionProfile.dietaryPreferences.cuisinePreference) {
         case 'north': regionPreference = ['north', 'northeast', 'northwest']; break;
         case 'south': regionPreference = ['south', 'southeast', 'southwest']; break;
         case 'east': regionPreference = ['east', 'southeast', 'northeast']; break;
@@ -569,9 +606,9 @@ dishSchema.statics.findSuitableForUser = async function(user, nutritionProfile, 
     }
     
     // 考虑用户的辣度偏好
-    if (nutritionProfile.dietary_preferences.spicy_preference) {
+    if (nutritionProfile.dietaryPreferences.spicyPreference) {
       let spicyLevel;
-      switch(nutritionProfile.dietary_preferences.spicy_preference) {
+      switch(nutritionProfile.dietaryPreferences.spicyPreference) {
         case 'none': spicyLevel = 0; break;
         case 'mild': spicyLevel = { $lte: 2 }; break;
         case 'medium': spicyLevel = { $lte: 3 }; break;
@@ -581,7 +618,7 @@ dishSchema.statics.findSuitableForUser = async function(user, nutritionProfile, 
       }
       
       if (spicyLevel !== null) {
-        query.spicy_level = spicyLevel;
+        query.spicyLevel = spicyLevel;
       }
     }
   }
@@ -599,17 +636,17 @@ dishSchema.statics.findSuitableForUser = async function(user, nutritionProfile, 
     
     if (targetCondition) {
       filterConditions.push({
-        'health_benefits.target_condition': targetCondition
+        'healthBenefits.targetCondition': targetCondition
       });
     }
   }
   
   // 3. 考虑活动水平
-  if (nutritionProfile.activity_level) {
+  if (nutritionProfile.activityLevel) {
     filterConditions.push({
       $or: [
-        { suitable_activity_levels: nutritionProfile.activity_level },
-        { suitable_activity_levels: 'all' }
+        { suitableActivityLevels: nutritionProfile.activityLevel },
+        { suitableActivityLevels: 'all' }
       ]
     });
   }
@@ -628,8 +665,8 @@ dishSchema.statics.findSuitableForUser = async function(user, nutritionProfile, 
   
   filterConditions.push({
     $or: [
-      { suitable_age_groups: ageGroup },
-      { suitable_age_groups: 'all' }
+      { suitableAgeGroups: ageGroup },
+      { suitableAgeGroups: 'all' }
     ]
   });
   
@@ -647,6 +684,6 @@ dishSchema.statics.findSuitableForUser = async function(user, nutritionProfile, 
 };
 
 // 使用ModelFactory创建支持读写分离的菜品模型
-const Dish = ModelFactory.createModel('Dish', dishSchema);
+const ProductDish = ModelFactory.createModel('Dish', dishSchema);
 
-module.exports = Dish; 
+module.exports = ProductDish; 

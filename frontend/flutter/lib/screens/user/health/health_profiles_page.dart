@@ -27,29 +27,30 @@ class _HealthProfilesPageState extends State<HealthProfilesPage> {
     super.initState();
     Future.microtask(() => _loadProfiles());
   }
-  
+
   Future<void> _loadProfiles() async {
     if (!mounted) return;
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-    
+
     try {
-      final provider = Provider.of<HealthProfileProvider>(context, listen: false);
+      final provider =
+          Provider.of<HealthProfileProvider>(context, listen: false);
       debugPrint('开始获取健康档案列表...');
       await provider.fetchProfiles();
       debugPrint('健康档案列表获取成功，档案数量: ${provider.profiles.length}');
-      
+
       if (!mounted) return;
-      
+
       setState(() {
         _isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
-      
+
       setState(() {
         _isLoading = false;
         _errorMessage = e.toString();
@@ -97,7 +98,7 @@ class _HealthProfilesPageState extends State<HealthProfilesPage> {
             ),
           );
         }
-        
+
         if (provider.profiles.isEmpty) {
           return Center(
             child: Column(
@@ -113,7 +114,7 @@ class _HealthProfilesPageState extends State<HealthProfilesPage> {
             ),
           );
         }
-        
+
         return RefreshIndicator(
           onRefresh: _loadProfiles,
           child: ListView.builder(
@@ -130,19 +131,19 @@ class _HealthProfilesPageState extends State<HealthProfilesPage> {
   }
 
   Widget _buildProfileCard(
-    BuildContext context, 
+    BuildContext context,
     NutritionProfile profile,
     HealthProfileProvider provider,
   ) {
     final theme = Theme.of(context);
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: profile.isPrimary ? 4 : 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: profile.isPrimary 
-            ? BorderSide(color: theme.colorScheme.primary, width: 2) 
+        side: profile.isPrimary
+            ? BorderSide(color: theme.colorScheme.primary, width: 2)
             : BorderSide.none,
       ),
       child: InkWell(
@@ -231,7 +232,8 @@ class _HealthProfilesPageState extends State<HealthProfilesPage> {
                       const SizedBox(width: 8),
                       _buildInfoChip(
                         icon: Icons.speed,
-                        label: 'BMI: ${profile.calculateBMI().toStringAsFixed(1)}',
+                        label:
+                            'BMI: ${profile.calculateBMI().toStringAsFixed(1)}',
                         color: _getBmiColor(profile.calculateBMI(), theme),
                       ),
                     ],
@@ -245,7 +247,8 @@ class _HealthProfilesPageState extends State<HealthProfilesPage> {
                       OutlinedButton.icon(
                         icon: const Icon(Icons.edit_outlined, size: 18),
                         label: const Text('编辑'),
-                        onPressed: () => _navigateToForm(context, profile: profile),
+                        onPressed: () =>
+                            _navigateToForm(context, profile: profile),
                       ),
                       const SizedBox(width: 12),
                       OutlinedButton.icon(
@@ -254,7 +257,8 @@ class _HealthProfilesPageState extends State<HealthProfilesPage> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.red,
                         ),
-                        onPressed: () => _confirmDelete(context, profile, provider),
+                        onPressed: () =>
+                            _showDeleteProfileDialog(context, profile),
                       ),
                     ],
                   ),
@@ -266,7 +270,7 @@ class _HealthProfilesPageState extends State<HealthProfilesPage> {
       ),
     );
   }
-  
+
   // 获取BMI颜色指示
   Color _getBmiColor(double bmi, ThemeData theme) {
     if (bmi < 18.5) {
@@ -279,7 +283,7 @@ class _HealthProfilesPageState extends State<HealthProfilesPage> {
       return Colors.red; // 肥胖
     }
   }
-  
+
   // 构建信息芯片
   Widget _buildInfoChip({
     required IconData icon,
@@ -311,15 +315,15 @@ class _HealthProfilesPageState extends State<HealthProfilesPage> {
       ),
     );
   }
-  
+
   // 构建健康标签
   Widget _buildHealthTags(NutritionProfile profile, ThemeData theme) {
     final healthGoals = profile.nutritionGoalsText;
-    
+
     if (healthGoals.isEmpty) {
       return const SizedBox.shrink();
     }
-    
+
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -344,9 +348,10 @@ class _HealthProfilesPageState extends State<HealthProfilesPage> {
       }).toList(),
     );
   }
-  
+
   // 导航到表单页面
-  Future<void> _navigateToForm(BuildContext context, {NutritionProfile? profile, bool viewOnly = false}) async {
+  Future<void> _navigateToForm(BuildContext context,
+      {NutritionProfile? profile, bool viewOnly = false}) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -356,75 +361,62 @@ class _HealthProfilesPageState extends State<HealthProfilesPage> {
         ),
       ),
     );
-    
+
     if (result == true) {
       _loadProfiles();
     }
   }
 
-  void _confirmDelete(
-    BuildContext context, 
-    NutritionProfile profile, 
-    HealthProfileProvider provider,
-  ) {
-    showDialog(
+  Future<void> _showDeleteProfileDialog(
+      BuildContext context, NutritionProfile profile) async {
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('确认删除'),
-        content: Text('确定要删除 ${profile.profileName} 的健康档案吗？'),
+      builder: (context) => AlertDialog(
+        title: const Text('删除档案'),
+        content: Text('确定要删除档案"${profile.profileName}"吗？此操作不可恢复。'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
+            onPressed: () => Navigator.of(context).pop(false),
             child: const Text('取消'),
           ),
           TextButton(
-            onPressed: () async {
-              Navigator.of(ctx).pop();
-              setState(() {
-                _isLoading = true;
-              });
-              
-              try {
-                final success = await provider.deleteProfile(profile.id);
-                
-                setState(() {
-                  _isLoading = false;
-                });
-                
-                if (success && mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('健康档案已删除'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                } else if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('删除失败: ${provider.errorMessage ?? "未知错误"}'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              } catch (e) {
-                setState(() {
-                  _isLoading = false;
-                });
-                
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('删除失败: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
+            onPressed: () => Navigator.of(context).pop(true),
             child: const Text('删除'),
           ),
         ],
       ),
     );
+
+    if (confirmed == true) {
+      try {
+        final success = await context
+            .read<HealthProfileProvider>()
+            .deleteProfile(profile.id);
+        if (success) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('档案已删除')),
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  context.read<HealthProfileProvider>().errorMessage ??
+                      '删除档案失败',
+                ),
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('删除档案时出错: $e')),
+          );
+        }
+      }
+    }
   }
 }

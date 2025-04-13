@@ -35,7 +35,7 @@ class ConsultationService {
   Future<Consultation> getConsultationDetail(String consultationId) async {
     try {
       final response = await _apiService.get(
-        '${ApiConstants.consultation}/$consultationId',
+        '${ApiConstants.consultations}/$consultationId',
       );
       
       return Consultation.fromJson(response['data']);
@@ -69,7 +69,7 @@ class ConsultationService {
       };
       
       final response = await _apiService.post(
-        ApiConstants.consultation,
+        ApiConstants.consultations,
         data: payload,
       );
       
@@ -86,7 +86,7 @@ class ConsultationService {
   Future<bool> cancelConsultation(String consultationId) async {
     try {
       final response = await _apiService.put(
-        '${ApiConstants.consultation}/$consultationId/cancel',
+        '${ApiConstants.consultations}/$consultationId/cancel',
       );
       
       return response['success'] == true;
@@ -113,7 +113,7 @@ class ConsultationService {
       };
       
       final response = await _apiService.put(
-        '${ApiConstants.consultation}/$consultationId/review',
+        '${ApiConstants.consultations}/$consultationId/review',
         data: payload,
       );
       

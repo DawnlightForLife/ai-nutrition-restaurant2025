@@ -8,18 +8,18 @@ const Nutritionist = require('../nutrition/nutritionistModel');
 const NutritionProfile = require('../health/nutritionProfileModel');
 
 const consultationSchema = new mongoose.Schema({
-  user_id: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  nutritionist_id: {
+  nutritionistId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Nutritionist',
     required: true
   },
   // 咨询类型
-  consultation_type: {
+  consultationType: {
     type: String,
     enum: ['text', 'voice', 'video', 'in_person'],
     default: 'text'
@@ -31,15 +31,15 @@ const consultationSchema = new mongoose.Schema({
     default: 'pending'
   },
   // 预约时间
-  scheduled_time: {
+  scheduledTime: {
     type: Date
   },
   // 实际开始时间
-  start_time: {
+  startTime: {
     type: Date
   },
   // 实际结束时间
-  end_time: {
+  endTime: {
     type: Date
   },
   // 咨询主题
@@ -48,16 +48,16 @@ const consultationSchema = new mongoose.Schema({
   },
   // 咨询内容记录
   messages: [{
-    sender_type: {
+    senderType: {
       type: String,
       enum: ['user', 'nutritionist'],
       required: true
     },
-    sender_id: {
+    senderId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true
     },
-    message_type: {
+    messageType: {
       type: String,
       enum: ['text', 'image', 'document', 'audio'],
       default: 'text'
@@ -66,38 +66,38 @@ const consultationSchema = new mongoose.Schema({
       type: String,
       required: true
     },
-    media_url: {
+    mediaUrl: {
       type: String
     },
-    sent_at: {
+    sentAt: {
       type: Date,
       default: Date.now
     },
-    is_read: {
+    isRead: {
       type: Boolean,
       default: false
     }
   }],
   // 相关AI推荐
-  ai_recommendation_id: {
+  aiRecommendationId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'AiRecommendation'
   },
   // 营养师的专业反馈
-  professional_feedback: {
+  professionalFeedback: {
     type: String
   },
   // 后续建议
-  follow_up_recommendations: {
+  followUpRecommendations: {
     type: String
   },
   // 是否需要后续咨询
-  requires_follow_up: {
+  requiresFollowUp: {
     type: Boolean,
     default: false
   },
   // 用户评价
-  user_rating: {
+  userRating: {
     rating: {
       type: Number,
       min: 1,
@@ -106,7 +106,7 @@ const consultationSchema = new mongoose.Schema({
     comments: {
       type: String
     },
-    rated_at: {
+    ratedAt: {
       type: Date
     }
   },
@@ -121,75 +121,75 @@ const consultationSchema = new mongoose.Schema({
       enum: ['pending', 'paid', 'refunded', 'free'],
       default: 'free'
     },
-    payment_id: {
+    paymentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Payment'
     }
   },
-  created_at: {
+  createdAt: {
     type: Date,
     default: Date.now
   },
-  updated_at: {
+  updatedAt: {
     type: Date,
     default: Date.now
   },
   // 敏感度级别，标记用于数据保护
-  sensitivity_level: {
+  sensitivityLevel: {
     type: Number,
     default: 2, // 默认为中度敏感
     enum: [1, 2, 3] // 1: 高度敏感, 2: 中度敏感, 3: 低度敏感
   }
 }, {
-  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+  timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' },
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
 
 // 创建索引用于快速查找咨询记录
-consultationSchema.index({ user_id: 1, created_at: -1 });
-consultationSchema.index({ nutritionist_id: 1, created_at: -1 });
+consultationSchema.index({ userId: 1, createdAt: -1 });
+consultationSchema.index({ nutritionistId: 1, createdAt: -1 });
 consultationSchema.index({ status: 1 });
 // 添加排期索引，便于查询特定时间段的咨询
-consultationSchema.index({ scheduled_time: 1, status: 1 });
+consultationSchema.index({ scheduledTime: 1, status: 1 });
 // 添加按评分索引，便于查询高评分咨询
-consultationSchema.index({ 'user_rating.rating': -1 });
+consultationSchema.index({ 'userRating.rating': -1 });
 // 添加按咨询类型索引，便于统计不同类型咨询
-consultationSchema.index({ consultation_type: 1, status: 1 });
+consultationSchema.index({ consultationType: 1, status: 1 });
 // 添加用户和营养师复合索引，便于查询特定用户和营养师之间的咨询历史
-consultationSchema.index({ user_id: 1, nutritionist_id: 1, created_at: -1 });
+consultationSchema.index({ userId: 1, nutritionistId: 1, createdAt: -1 });
 
 // 添加虚拟字段
-consultationSchema.virtual('duration_minutes').get(function() {
-  if (!this.start_time || !this.end_time) return 0;
-  return Math.floor((this.end_time - this.start_time) / (1000 * 60));
+consultationSchema.virtual('durationMinutes').get(function() {
+  if (!this.startTime || !this.endTime) return 0;
+  return Math.floor((this.endTime - this.startTime) / (1000 * 60));
 });
 
-consultationSchema.virtual('is_ongoing').get(function() {
+consultationSchema.virtual('isOngoing').get(function() {
   return this.status === 'in_progress';
 });
 
-consultationSchema.virtual('is_upcoming').get(function() {
+consultationSchema.virtual('isUpcoming').get(function() {
   return this.status === 'scheduled' && 
-         this.scheduled_time && 
-         this.scheduled_time > new Date();
+         this.scheduledTime && 
+         this.scheduledTime > new Date();
 });
 
-consultationSchema.virtual('is_past_due').get(function() {
+consultationSchema.virtual('isPastDue').get(function() {
   return this.status === 'scheduled' && 
-         this.scheduled_time && 
-         this.scheduled_time < new Date() &&
-         !this.start_time;
+         this.scheduledTime && 
+         this.scheduledTime < new Date() &&
+         !this.startTime;
 });
 
-consultationSchema.virtual('unread_message_count').get(function() {
-  return this.messages.filter(msg => !msg.is_read).length;
+consultationSchema.virtual('unreadMessageCount').get(function() {
+  return this.messages.filter(msg => !msg.isRead).length;
 });
 
 // 用户信息的虚拟关联
 consultationSchema.virtual('user', {
   ref: 'User',
-  localField: 'user_id',
+  localField: 'userId',
   foreignField: '_id',
   justOne: true
 });
@@ -197,7 +197,7 @@ consultationSchema.virtual('user', {
 // 营养师信息的虚拟关联
 consultationSchema.virtual('nutritionist', {
   ref: 'Nutritionist',
-  localField: 'nutritionist_id',
+  localField: 'nutritionistId',
   foreignField: '_id',
   justOne: true
 });
@@ -207,19 +207,19 @@ consultationSchema.methods.addMessage = async function(senderType, senderId, con
   const { messageType = 'text', mediaUrl = null } = options;
   
   this.messages.push({
-    sender_type: senderType,
-    sender_id: senderId,
-    message_type: messageType,
+    senderType: senderType,
+    senderId: senderId,
+    messageType: messageType,
     content: content,
-    media_url: mediaUrl,
-    sent_at: new Date(),
-    is_read: false
+    mediaUrl: mediaUrl,
+    sentAt: new Date(),
+    isRead: false
   });
   
   // 如果状态是pending，自动更新为in_progress
   if (this.status === 'pending') {
     this.status = 'in_progress';
-    this.start_time = new Date();
+    this.startTime = new Date();
   }
   
   return await this.save();
@@ -230,8 +230,8 @@ consultationSchema.methods.markMessagesAsRead = async function(receiverType, rec
   let hasUnread = false;
   
   this.messages.forEach(msg => {
-    if (msg.sender_type !== receiverType && !msg.is_read) {
-      msg.is_read = true;
+    if (msg.senderType !== receiverType && !msg.isRead) {
+      msg.isRead = true;
       hasUnread = true;
     }
   });
@@ -250,10 +250,10 @@ consultationSchema.methods.complete = async function(feedback, recommendations, 
   }
   
   this.status = 'completed';
-  this.end_time = new Date();
-  this.professional_feedback = feedback;
-  this.follow_up_recommendations = recommendations;
-  this.requires_follow_up = requiresFollowUp;
+  this.endTime = new Date();
+  this.professionalFeedback = feedback;
+  this.followUpRecommendations = recommendations;
+  this.requiresFollowUp = requiresFollowUp;
   
   return await this.save();
 };
@@ -267,16 +267,16 @@ consultationSchema.methods.cancel = async function(cancellationReason) {
   const wasInProgress = this.status === 'in_progress';
   
   this.status = 'cancelled';
-  this.end_time = new Date();
+  this.endTime = new Date();
   
   // 添加取消消息
   this.messages.push({
-    sender_type: 'system',
-    sender_id: mongoose.Types.ObjectId(),
-    message_type: 'text',
+    senderType: 'system',
+    senderId: mongoose.Types.ObjectId(),
+    messageType: 'text',
     content: `咨询已取消。原因: ${cancellationReason || '无'}`,
-    sent_at: new Date(),
-    is_read: false
+    sentAt: new Date(),
+    isRead: false
   });
   
   // 如果有支付，尝试处理退款（通过回调方式处理，避免循环依赖）
@@ -287,7 +287,7 @@ consultationSchema.methods.cancel = async function(cancellationReason) {
     global.eventEmitter.emit('consultation:cancelled', {
       consultationId: this._id,
       wasInProgress,
-      paymentId: this.payment?.payment_id,
+      paymentId: this.payment?.paymentId,
       status: this.payment?.status
     });
   }
@@ -301,10 +301,10 @@ consultationSchema.methods.submitRating = async function(rating, comments) {
     throw new Error('只有已完成的咨询才能被评价');
   }
   
-  this.user_rating = {
+  this.userRating = {
     rating,
     comments,
-    rated_at: new Date()
+    ratedAt: new Date()
   };
   
   return await this.save();
@@ -317,18 +317,18 @@ consultationSchema.methods.reschedule = async function(newScheduledTime) {
   }
   
   // 记录原始安排的时间用于审计
-  const originalTime = this.scheduled_time;
-  this.scheduled_time = newScheduledTime;
+  const originalTime = this.scheduledTime;
+  this.scheduledTime = newScheduledTime;
   this.status = 'scheduled';
   
   // 添加系统消息
   this.messages.push({
-    sender_type: 'system',
-    sender_id: mongoose.Types.ObjectId(),
-    message_type: 'text',
+    senderType: 'system',
+    senderId: mongoose.Types.ObjectId(),
+    messageType: 'text',
     content: `咨询时间已更改。原始时间: ${originalTime ? originalTime.toISOString() : '无'}, 新时间: ${newScheduledTime.toISOString()}`,
-    sent_at: new Date(),
-    is_read: false
+    sentAt: new Date(),
+    isRead: false
   });
   
   return await this.save();
@@ -353,18 +353,18 @@ consultationSchema.statics.getAvailableTimeSlots = async function(nutritionistId
   const todaySchedule = nutritionist.availability[dayNames[dayOfWeek]];
   
   if (!todaySchedule || !todaySchedule.available) {
-    return { available: false, message: '营养师今日不工作', time_slots: [] };
+    return { available: false, message: '营养师今日不工作', timeSlots: [] };
   }
   
   // 找到当天已经被预约的时间段
   const bookedConsultations = await this.find({
-    nutritionist_id: nutritionistId,
-    scheduled_time: { $gte: startOfDay, $lte: endOfDay },
+    nutritionistId: nutritionistId,
+    scheduledTime: { $gte: startOfDay, $lte: endOfDay },
     status: { $in: ['scheduled', 'in_progress'] }
   });
   
   const bookedTimeSlots = bookedConsultations.map(consultation => {
-    const startTime = new Date(consultation.scheduled_time);
+    const startTime = new Date(consultation.scheduledTime);
     const endTime = new Date(startTime);
     // 假设每次咨询为30分钟，可以从营养师配置中获取
     endTime.setMinutes(startTime.getMinutes() + 30);
@@ -378,9 +378,9 @@ consultationSchema.statics.getAvailableTimeSlots = async function(nutritionistId
   // 生成当天的可用时间段
   const availableTimeSlots = [];
   
-  if (todaySchedule.start_time && todaySchedule.end_time) {
-    const [startHour, startMinute] = todaySchedule.start_time.split(':').map(Number);
-    const [endHour, endMinute] = todaySchedule.end_time.split(':').map(Number);
+  if (todaySchedule.startTime && todaySchedule.endTime) {
+    const [startHour, startMinute] = todaySchedule.startTime.split(':').map(Number);
+    const [endHour, endMinute] = todaySchedule.endTime.split(':').map(Number);
     
     const workStart = new Date(startOfDay);
     workStart.setHours(startHour, startMinute, 0, 0);
@@ -421,7 +421,7 @@ consultationSchema.statics.getAvailableTimeSlots = async function(nutritionistId
   return {
     available: availableTimeSlots.length > 0,
     message: availableTimeSlots.length > 0 ? '有可用的时间段' : '今日所有时间段已被预约',
-    time_slots: availableTimeSlots
+    timeSlots: availableTimeSlots
   };
 };
 
@@ -432,17 +432,17 @@ consultationSchema.statics.getUserConsultationHistory = async function(userId, o
     nutritionistId = null, 
     limit = 10, 
     skip = 0, 
-    sort = { created_at: -1 } 
+    sort = { createdAt: -1 } 
   } = options;
   
-  const query = { user_id: userId };
+  const query = { userId: userId };
   
   if (status) {
     query.status = status;
   }
   
   if (nutritionistId) {
-    query.nutritionist_id = nutritionistId;
+    query.nutritionistId = nutritionistId;
   }
   
   const total = await this.countDocuments(query);
@@ -451,8 +451,8 @@ consultationSchema.statics.getUserConsultationHistory = async function(userId, o
     .sort(sort)
     .skip(skip)
     .limit(limit)
-    .populate('nutritionist', 'username full_name profile_image qualifications')
-    .populate('ai_recommendation_id');
+    .populate('nutritionist', 'username fullName profileImage qualifications')
+    .populate('aiRecommendationId');
   
   return {
     consultations,
@@ -468,19 +468,19 @@ consultationSchema.statics.getUserConsultationHistory = async function(userId, o
 // 静态方法：获取营养师的咨询日程
 consultationSchema.statics.getNutritionistSchedule = async function(nutritionistId, startDate, endDate) {
   const query = {
-    nutritionist_id: nutritionistId,
+    nutritionistId: nutritionistId,
     status: { $in: ['scheduled', 'in_progress'] }
   };
   
   if (startDate || endDate) {
-    query.scheduled_time = {};
-    if (startDate) query.scheduled_time.$gte = new Date(startDate);
-    if (endDate) query.scheduled_time.$lte = new Date(endDate);
+    query.scheduledTime = {};
+    if (startDate) query.scheduledTime.$gte = new Date(startDate);
+    if (endDate) query.scheduledTime.$lte = new Date(endDate);
   }
   
   return await this.find(query)
-    .sort({ scheduled_time: 1 })
-    .populate('user', 'username full_name profile_image');
+    .sort({ scheduledTime: 1 })
+    .populate('user', 'username fullName profileImage');
 };
 
 // 静态方法：创建咨询会话
@@ -503,20 +503,20 @@ consultationSchema.statics.createConsultation = async function(userId, nutrition
   
   // 创建咨询记录
   const consultation = new this({
-    user_id: userId,
-    nutritionist_id: nutritionistId,
-    consultation_type: consultationType,
+    userId: userId,
+    nutritionistId: nutritionistId,
+    consultationType: consultationType,
     status: scheduledTime ? 'scheduled' : 'pending',
-    scheduled_time: scheduledTime,
+    scheduledTime: scheduledTime,
     topic,
-    ai_recommendation_id: aiRecommendationId,
+    aiRecommendationId: aiRecommendationId,
     messages: [{
-      sender_type: 'system',
-      sender_id: mongoose.Types.ObjectId(),
-      message_type: 'text',
+      senderType: 'system',
+      senderId: mongoose.Types.ObjectId(),
+      messageType: 'text',
       content: `咨询已创建。类型: ${consultationType}${scheduledTime ? `, 预约时间: ${scheduledTime.toISOString()}` : ''}`,
-      sent_at: new Date(),
-      is_read: false
+      sentAt: new Date(),
+      isRead: false
     }]
   });
   
@@ -525,7 +525,7 @@ consultationSchema.statics.createConsultation = async function(userId, nutrition
     consultation.payment = {
       amount: paymentInfo.amount,
       status: paymentInfo.status || 'pending',
-      payment_id: paymentInfo.payment_id
+      paymentId: paymentInfo.paymentId
     };
   }
   
@@ -552,7 +552,7 @@ consultationSchema.statics.getPopularTopics = async function(limit = 10) {
     { $group: { 
       _id: '$topic', 
       count: { $sum: 1 },
-      avg_rating: { $avg: '$user_rating.rating' }
+      avgRating: { $avg: '$userRating.rating' }
     }},
     { $match: { count: { $gte: 3 } } }, // 至少有3次咨询
     { $sort: { count: -1 } },
@@ -569,24 +569,24 @@ consultationSchema.statics.recommendNutritionists = async function(userId, healt
   if (!user) throw new Error('未找到用户');
   
   const userHealthProfile = healthData || 
-    await NutritionProfile.findOne({ user_id: userId });
+    await NutritionProfile.findOne({ userId: userId });
   
   if (!userHealthProfile) {
     // 如果没有健康数据，返回评分最高的营养师
     return await Nutritionist
       .find({})
-      .sort({ 'ratings.average_rating': -1 })
+      .sort({ 'ratings.averageRating': -1 })
       .limit(3);
   }
   
   // 从用户健康档案中提取关键健康目标和需求
-  const healthGoals = userHealthProfile.health_goals || [];
-  const dietaryPreferences = userHealthProfile.dietary_preferences || [];
-  const healthConditions = userHealthProfile.health_conditions || [];
+  const healthGoals = userHealthProfile.healthGoals || [];
+  const dietaryPreferences = userHealthProfile.dietaryPreferences || [];
+  const healthConditions = userHealthProfile.healthConditions || [];
   
   // 构建查询条件，匹配专业领域
   const matchQuery = {
-    'professional_info.specializations': { 
+    'professionalInfo.specializations': { 
       $in: [...healthGoals, ...dietaryPreferences, ...healthConditions]
     }
   };
@@ -594,14 +594,14 @@ consultationSchema.statics.recommendNutritionists = async function(userId, healt
   // 查询匹配的营养师
   const matchedNutritionists = await Nutritionist
     .find(matchQuery)
-    .sort({ 'ratings.average_rating': -1 })
+    .sort({ 'ratings.averageRating': -1 })
     .limit(5);
   
   if (matchedNutritionists.length === 0) {
     // 如果没有精确匹配，返回评分最高的营养师
     return await Nutritionist
       .find({})
-      .sort({ 'ratings.average_rating': -1 })
+      .sort({ 'ratings.averageRating': -1 })
       .limit(3);
   }
   
@@ -611,14 +611,14 @@ consultationSchema.statics.recommendNutritionists = async function(userId, healt
 // 移除不需要的中间件，由timestamps处理
 consultationSchema.pre('save', function(next) {
   // 增强的保存前钩子
-  // 如果状态变为completed，自动设置end_time（如果尚未设置）
-  if (this.status === 'completed' && !this.end_time) {
-    this.end_time = new Date();
+  // 如果状态变为completed，自动设置endTime（如果尚未设置）
+  if (this.status === 'completed' && !this.endTime) {
+    this.endTime = new Date();
   }
   
-  // 如果状态变为in_progress，自动设置start_time（如果尚未设置）
-  if (this.status === 'in_progress' && !this.start_time) {
-    this.start_time = new Date();
+  // 如果状态变为in_progress，自动设置startTime（如果尚未设置）
+  if (this.status === 'in_progress' && !this.startTime) {
+    this.startTime = new Date();
   }
   
   next();
@@ -630,13 +630,13 @@ const Consultation = ModelFactory.createModel('Consultation', consultationSchema
 // 添加分片支持
 Consultation.getShardKey = function(doc) {
   // 三个月前的记录按时间分片
-  if (doc.created_at && doc.created_at.getTime() < Date.now() - (90 * 24 * 60 * 60 * 1000)) {
-    const date = doc.created_at;
+  if (doc.createdAt && doc.createdAt.getTime() < Date.now() - (90 * 24 * 60 * 60 * 1000)) {
+    const date = doc.createdAt;
     return `archive-${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
   }
   
   // 新记录按用户分片
-  return doc.user_id.toString();
+  return doc.userId.toString();
 };
 
 // 获取营养师详情
@@ -653,7 +653,7 @@ const getNutritionistDetails = async (nutritionistId) => {
 const checkUserHealthDataCompleteness = async (userId) => {
   try {
     const user = await User.findById(userId);
-    const nutritionProfile = await NutritionProfile.findOne({ user_id: userId });
+    const nutritionProfile = await NutritionProfile.findOne({ userId: userId });
     // ... existing code ...
   } catch (error) {
     // ... existing code ...

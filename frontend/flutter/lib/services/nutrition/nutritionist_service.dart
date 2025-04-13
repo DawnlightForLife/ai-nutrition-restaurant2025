@@ -122,7 +122,7 @@ class NutritionistService {
 
     // 发送POST请求创建咨询预约
     final response = await _apiService.post(
-      ApiConstants.consultation,
+      ApiConstants.consultations,
       data: data,
       token: token,
     );
@@ -183,7 +183,7 @@ class NutritionistService {
 
     // 发送PUT请求取消咨询预约
     await _apiService.put(
-      '${ApiConstants.consultation}/$consultationId/cancel',
+      '${ApiConstants.consultations}/$consultationId/cancel',
       data: data,
       token: token,
     );
@@ -223,7 +223,7 @@ class NutritionistService {
 
     // 发送POST请求提交评价
     await _apiService.post(
-      '${ApiConstants.consultation}/$consultationId/review',
+      '${ApiConstants.consultations}/$consultationId/review',
       data: data,
       token: token,
     );

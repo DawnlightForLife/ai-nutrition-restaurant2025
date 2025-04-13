@@ -43,7 +43,7 @@ const orderSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  user_id: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
@@ -60,7 +60,7 @@ const orderSchema = new mongoose.Schema({
   },
   items: [orderItemSchema],
   // 使用的营养档案（可选）
-  nutrition_profile_id: {
+  nutritionProfileId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'NutritionProfile'
   },
@@ -303,7 +303,7 @@ const orderSchema = new mongoose.Schema({
 
 // 添加索引以优化查询性能
 orderSchema.index({ order_number: 1 }, { unique: true });
-orderSchema.index({ user_id: 1 });
+orderSchema.index({ userId: 1 });
 orderSchema.index({ merchant_id: 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });
@@ -311,7 +311,7 @@ orderSchema.index({ 'payment.status': 1 });
 orderSchema.index({ order_type: 1 });
 orderSchema.index({ 'payment.transaction_id': 1 });
 orderSchema.index({ 'delivery.estimated_delivery_time': 1 });
-orderSchema.index({ 'nutrition_profile_id': 1 });
+orderSchema.index({ 'nutritionProfileId': 1 });
 orderSchema.index({ 'ai_recommendation_id': 1 });
 
 // 添加虚拟字段
@@ -350,7 +350,7 @@ orderSchema.virtual('delivery_time_remaining').get(function() {
 // 关联
 orderSchema.virtual('user', {
   ref: 'User',
-  localField: 'user_id',
+  localField: 'userId',
   foreignField: '_id',
   justOne: true
 });
@@ -362,9 +362,9 @@ orderSchema.virtual('merchant', {
   justOne: true
 });
 
-orderSchema.virtual('nutrition_profile', {
+orderSchema.virtual('nutritionProfile', {
   ref: 'NutritionProfile',
-  localField: 'nutrition_profile_id',
+  localField: 'nutritionProfileId',
   foreignField: '_id',
   justOne: true
 });
@@ -492,7 +492,7 @@ orderSchema.statics.findByOrderNumber = function(orderNumber) {
 };
 
 orderSchema.statics.findByUserAndStatus = function(userId, status) {
-  return this.find({ user_id: userId, status });
+  return this.find({ userId: userId, status });
 };
 
 orderSchema.statics.findPendingDeliveries = function() {
@@ -504,9 +504,9 @@ orderSchema.statics.findPendingDeliveries = function() {
 
 orderSchema.statics.getUserOrderStats = async function(userId) {
   return this.aggregate([
-    { $match: { user_id: mongoose.Types.ObjectId(userId) } },
+    { $match: { userId: mongoose.Types.ObjectId(userId) } },
     { $group: {
-      _id: "$user_id",
+      _id: "$userId",
       total_orders: { $sum: 1 },
       total_spent: { $sum: "$price_details.total" },
       average_order_value: { $avg: "$price_details.total" },

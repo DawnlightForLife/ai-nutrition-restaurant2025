@@ -8,6 +8,9 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const config = require('../../config');
 
+// 临时存储验证码的映射 (仅在开发环境使用)
+const tempVerificationCodes = new Map();
+
 /**
  * 用户注册
  * @async
@@ -23,6 +26,11 @@ const register = async (userData) => {
       const error = new Error('该手机号已注册');
       error.statusCode = 400;
       throw error;
+    }
+    
+    // 如果未提供昵称，使用默认值
+    if (!userData.nickname) {
+      userData.nickname = `用户${userData.phone.substring(userData.phone.length - 4)}`;
     }
     
     // 创建新用户
@@ -109,41 +117,153 @@ const login = async (phone, password) => {
 };
 
 /**
- * 发送验证码（用于登录或注册）
- * @async
+ * 使用验证码登录
  * @param {string} phone - 用户手机号
- * @returns {Promise<boolean>} 是否成功发送验证码
- * @throws {Error} 如果发送失败
+ * @param {string} code - 验证码
+ * @returns {Promise<Object>} - 返回用户信息和token
+ */
+const loginWithCode = async (phone, code) => {
+  try {
+    console.log(`尝试使用验证码登录: 手机号=${phone}, 验证码=${code}`);
+    
+    // 开发环境测试码处理
+    if (process.env.NODE_ENV === 'development' && code === '123456') {
+      console.log('开发环境中使用测试验证码登录');
+      const user = await User.findOne({ phone });
+      
+      if (user) {
+        const token = generateToken(user);
+        return { user, token };
+      } else {
+        // 创建新用户
+        const newUser = await User.create({
+          phone,
+          username: `user_${phone.slice(-4)}`,
+          role: 'user'
+        });
+        
+        const token = generateToken(newUser);
+        return { user: newUser, token };
+      }
+    }
+
+    // 查找用户
+    let user = await User.findOne({ phone });
+    console.log(`用户查找结果: ${user ? '已找到' : '未找到'}`);
+
+    // 检查验证码
+    let isValidCode = false;
+    
+    // 检查数据库中的验证码
+    if (user && user.verification && user.verification.code) {
+      console.log(`数据库中的验证码: ${user.verification.code}, 过期时间: ${user.verification.expiresAt}`);
+      // 验证码是否过期
+      const isExpired = user.verification.expiresAt < new Date();
+      console.log(`验证码是否过期: ${isExpired}`);
+      
+      // 验证码是否匹配
+      isValidCode = !isExpired && user.verification.code === code;
+      console.log(`验证码是否匹配: ${isValidCode}`);
+    }
+    
+    // 检查临时存储的验证码
+    if (!isValidCode) {
+      const tempCodeData = tempVerificationCodes.get(phone);
+      if (tempCodeData && tempCodeData.code === code) {
+        const isExpired = tempCodeData.expiresAt < new Date();
+        console.log(`临时验证码是否过期: ${isExpired}`);
+        
+        if (!isExpired) {
+          isValidCode = true;
+          console.log('使用临时存储的验证码验证成功');
+          
+          // 如果用户不存在，创建新用户
+          if (!user) {
+            user = await User.create({
+              phone,
+              username: `user_${phone.slice(-4)}`,
+              role: 'user'
+            });
+            console.log(`创建了新用户: ${user._id}`);
+          }
+        }
+      }
+    }
+
+    // 验证码无效
+    if (!isValidCode) {
+      console.log('验证码无效或已过期');
+      throw new AppError('验证码无效或已过期', 401);
+    }
+
+    // 验证码验证成功，清除验证码
+    if (user.verification) {
+      user.verification.code = null;
+      user.verification.expiresAt = null;
+      await user.save();
+    }
+    
+    // 清除临时验证码
+    tempVerificationCodes.delete(phone);
+    
+    console.log(`验证成功，生成token`);
+    const token = generateToken(user);
+    return { user, token };
+  } catch (error) {
+    console.error('验证码登录失败:', error);
+    throw error;
+  }
+};
+
+/**
+ * 发送手机验证码
+ * @param {string} phone - 用户手机号
+ * @returns {Promise<Object>} - 返回发送结果
  */
 const sendVerificationCode = async (phone) => {
   try {
-    // 查找用户（对于注册场景，用户可能不存在）
-    const user = await User.findByPhone(phone);
-    
     // 生成6位随机验证码
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10分钟后过期
     
+    console.log(`为手机号 ${phone} 生成验证码: ${code}`);
+
+    // 查找用户
+    let user = await User.findOne({ phone });
+    
+    // 存储验证码到临时Map中
+    tempVerificationCodes.set(phone, {
+      code,
+      expiresAt
+    });
+    console.log(`临时存储验证码: ${code} 到 ${phone}`);
+
     if (user) {
-      // 如果用户存在，更新用户的验证码字段
-      user.verification_code = verificationCode;
-      user.verification_code_expires = Date.now() + 15 * 60 * 1000; // 15分钟有效期
+      // 更新用户的验证码信息
+      user.verification = {
+        code,
+        expiresAt
+      };
       await user.save();
+      console.log(`更新用户 ${user._id} 的验证码信息`);
+    }
+
+    // 在真实环境中，这里会调用短信服务发送验证码
+    if (process.env.NODE_ENV === 'production') {
+      // TODO: 集成SMS服务
+      console.log(`生产环境: 应该发送短信到 ${phone} 验证码: ${code}`);
     } else {
-      // 如果用户不存在（注册场景），可以临时存储在缓存或其他地方
-      // 在实际项目中，可以使用Redis缓存或其他临时存储
-      // 这里简化处理，仅打印日志
-      console.log(`为新用户 ${phone} 生成验证码: ${verificationCode}`);
+      console.log(`开发环境: 模拟发送验证码到 ${phone}: ${code}`);
     }
-    
-    // TODO: 集成短信服务发送验证码
-    console.log(`发送验证码到 ${phone}: ${verificationCode}`);
-    
-    return true;
+
+    return {
+      success: true,
+      message: '验证码已发送',
+      // 仅在开发环境返回验证码
+      ...(process.env.NODE_ENV === 'development' && { code })
+    };
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500;
-      error.message = '发送验证码失败';
-    }
+    console.error('发送验证码失败:', error);
     throw error;
   }
 };
@@ -209,9 +329,12 @@ const resetPassword = async (phone, code, newPassword) => {
     if (!user.reset_code || 
         user.reset_code !== code || 
         user.reset_code_expires < Date.now()) {
-      const error = new Error('验证码无效或已过期');
-      error.statusCode = 400;
-      throw error;
+      // 开发环境下，接受测试验证码"123456"
+      if (!(process.env.NODE_ENV === 'development' && code === '123456')) {
+        const error = new Error('验证码无效或已过期');
+        error.statusCode = 400;
+        throw error;
+      }
     }
     
     // 更新密码
@@ -255,6 +378,7 @@ const verifyToken = (token) => {
 const generateToken = (user) => {
   const payload = {
     id: user._id,
+    userId: user._id,
     role: user.role,
     phone: user.phone
   };
@@ -269,6 +393,7 @@ const generateToken = (user) => {
 module.exports = {
   register,
   login,
+  loginWithCode,
   sendVerificationCode,
   sendPasswordResetCode,
   resetPassword,

@@ -97,7 +97,13 @@ const startServer = async () => {
       }
     }
     
-    // 导入路由和其他服务
+    // 导入主路由文件，此文件包含所有子路由的注册
+    const allRoutes = require('./routes/index');
+    
+    // 注册主路由
+    app.use('/api', allRoutes);
+    
+    // 导入其他需要单独注册的路由和服务
     const userRoutes = require('./routes/core/userRoutes');
     const authRoutes = require('./routes/core/authRoutes');
     const adminRoutes = require('./routes/core/adminRoutes');
@@ -113,7 +119,8 @@ const startServer = async () => {
     const { shardingConfig, shardingService } = require('./config/shardingConfig');
     const ScheduledTasks = require('./utils/scheduledTasks');
 
-    // 设置路由
+    // 设置其他路由（可选，因为大部分路由已经通过routes/index.js注册）
+    // 如果这些路由在index.js中已注册，则可以考虑移除这些冗余项
     app.use('/api/users', userRoutes);
     app.use('/api/auth', authRoutes);
     app.use('/api/admin', adminRoutes);

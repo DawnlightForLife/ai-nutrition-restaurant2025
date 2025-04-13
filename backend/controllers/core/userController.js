@@ -5,7 +5,8 @@
  */
 const User = require('../../models/core/userModel');
 const { validateUser } = require('../../utils/validators/userValidator');
-const { handleError } = require('../../utils/errorHandler');
+const logger = require('../../utils/logger');
+const { handleError, handleValidationError, handleNotFound } = require('../../utils/errorHandler');
 
 /**
  * 创建新用户
@@ -19,13 +20,16 @@ exports.createUser = async (req, res) => {
     // 验证请求数据
     const { error } = validateUser(req.body);
     if (error) {
-      return res.status(400).json({ error: error.details[0].message });
+      return handleValidationError(res, error);
     }
 
     // 检查邮箱是否已存在
     const existingUser = await User.findOne({ email: req.body.email });
     if (existingUser) {
-      return res.status(400).json({ error: '该邮箱已被注册' });
+      return res.status(400).json({ 
+        success: false,
+        message: '该邮箱已被注册' 
+      });
     }
 
     // 创建新用户
@@ -37,7 +41,11 @@ exports.createUser = async (req, res) => {
     delete userResponse.password;
     delete userResponse.__v;
 
-    res.status(201).json(userResponse);
+    res.status(201).json({
+      success: true,
+      message: '用户创建成功',
+      data: userResponse
+    });
   } catch (error) {
     handleError(res, error);
   }
@@ -52,7 +60,7 @@ exports.createUser = async (req, res) => {
  */
 exports.getUserList = async (req, res) => {
   try {
-    const { page = 1, limit = 10, sort = '-created_at' } = req.query;
+    const { page = 1, limit = 10, sort = '-createdAt' } = req.query;
     
     // 构建查询条件
     const query = {};
@@ -71,10 +79,13 @@ exports.getUserList = async (req, res) => {
     const total = await User.countDocuments(query);
 
     res.json({
-      users,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      total
+      success: true,
+      data: {
+        users,
+        totalPages: Math.ceil(total / limit),
+        currentPage: Number(page),
+        total
+      }
     });
   } catch (error) {
     handleError(res, error);
@@ -94,10 +105,13 @@ exports.getUserById = async (req, res) => {
       .select('-password -__v');
 
     if (!user) {
-      return res.status(404).json({ error: '用户不存在' });
+      return handleNotFound(res, '用户不存在');
     }
 
-    res.json(user);
+    res.json({
+      success: true,
+      data: user
+    });
   } catch (error) {
     handleError(res, error);
   }
@@ -115,20 +129,23 @@ exports.updateUser = async (req, res) => {
     // 验证请求数据
     const { error } = validateUser(req.body, true);
     if (error) {
-      return res.status(400).json({ error: error.details[0].message });
+      return handleValidationError(res, error);
     }
 
     // 检查用户是否存在
     const user = await User.findById(req.params.id);
     if (!user) {
-      return res.status(404).json({ error: '用户不存在' });
+      return handleNotFound(res, '用户不存在');
     }
 
     // 如果更新邮箱，检查新邮箱是否已被使用
     if (req.body.email && req.body.email !== user.email) {
       const existingUser = await User.findOne({ email: req.body.email });
       if (existingUser) {
-        return res.status(400).json({ error: '该邮箱已被使用' });
+        return res.status(400).json({ 
+          success: false,
+          message: '该邮箱已被使用' 
+        });
       }
     }
 
@@ -139,7 +156,11 @@ exports.updateUser = async (req, res) => {
       { new: true, runValidators: true }
     ).select('-password -__v');
 
-    res.json(updatedUser);
+    res.json({
+      success: true,
+      message: '用户信息更新成功',
+      data: updatedUser
+    });
   } catch (error) {
     handleError(res, error);
   }
@@ -156,19 +177,25 @@ exports.deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
-      return res.status(404).json({ error: '用户不存在' });
+      return handleNotFound(res, '用户不存在');
     }
 
     // 检查是否是最后一个管理员
     if (user.role === 'admin') {
       const adminCount = await User.countDocuments({ role: 'admin' });
       if (adminCount <= 1) {
-        return res.status(400).json({ error: '不能删除最后一个管理员账户' });
+        return res.status(400).json({ 
+          success: false,
+          message: '不能删除最后一个管理员账户' 
+        });
       }
     }
 
     await User.findByIdAndDelete(req.params.id);
-    res.json({ message: '用户已删除' });
+    res.json({ 
+      success: true,
+      message: '用户已删除' 
+    });
   } catch (error) {
     handleError(res, error);
   }

@@ -9,29 +9,29 @@ const User = require('../core/userModel');
 const Store = require('../merchant/storeModel');
 
 const userFavoriteSchema = new mongoose.Schema({
-  user_id: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  item_type: {
+  itemType: {
     type: String,
     enum: ['dish', 'post', 'nutritionist', 'store'],
     required: true
   },
-  item_id: {
+  itemId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    // 根据item_type动态引用不同模型
-    refPath: 'item_type_ref'
+    // 根据itemType动态引用不同模型
+    refPath: 'itemTypeRef'
   },
-  item_type_ref: {
+  itemTypeRef: {
     type: String,
     required: true,
     enum: ['Dish', 'ForumPost', 'User', 'Store'],
-    // 根据item_type自动设置
+    // 根据itemType自动设置
     default: function() {
-      switch(this.item_type) {
+      switch(this.itemType) {
         case 'dish': return 'Dish';
         case 'post': return 'ForumPost';
         case 'nutritionist': return 'User';
@@ -41,43 +41,36 @@ const userFavoriteSchema = new mongoose.Schema({
     }
   },
   notes: {
-    type: String
+    type: String,
+    maxlength: 300
   },
   tags: [{
     type: String
   }],
-  created_at: {
-    type: Date,
-    default: Date.now
-  },
-  updated_at: {
-    type: Date,
-    default: Date.now
-  }
+  // 移除手动的created_at和updated_at字段，使用mongoose的timestamps
 }, {
-  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+  timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
 
 // 创建复合索引确保用户对同一项目只有一条收藏记录
-userFavoriteSchema.index({ user_id: 1, item_type: 1, item_id: 1 }, { unique: true });
+userFavoriteSchema.index({ userId: 1, itemType: 1, itemId: 1 }, { unique: true });
 // 按照用户ID和创建时间建立索引，便于查询用户收藏列表
-userFavoriteSchema.index({ user_id: 1, created_at: -1 });
+userFavoriteSchema.index({ userId: 1, createdAt: -1 });
 // 按照内容类型和ID建立索引，便于统计某个内容的收藏数
-userFavoriteSchema.index({ item_type: 1, item_id: 1 });
-
+userFavoriteSchema.index({ itemType: 1, itemId: 1 });
 // 添加索引按照标签和用户ID
-userFavoriteSchema.index({ user_id: 1, tags: 1 });
+userFavoriteSchema.index({ userId: 1, tags: 1 });
 
 // 添加虚拟字段
-userFavoriteSchema.virtual('favorite_age').get(function() {
-  return Math.floor((Date.now() - this.created_at) / (1000 * 60 * 60 * 24));
+userFavoriteSchema.virtual('favoriteAge').get(function() {
+  return Math.floor((Date.now() - this.createdAt) / (1000 * 60 * 60 * 24));
 });
 
-userFavoriteSchema.virtual('item_details', {
-  refPath: 'item_type_ref',
-  localField: 'item_id',
+userFavoriteSchema.virtual('itemDetails', {
+  refPath: 'itemTypeRef',
+  localField: 'itemId',
   foreignField: '_id',
   justOne: true
 });
@@ -109,9 +102,9 @@ userFavoriteSchema.methods.updateNotes = async function(notes) {
 // 静态方法：检查是否已收藏
 userFavoriteSchema.statics.isFavorited = async function(userId, itemType, itemId) {
   const count = await this.countDocuments({
-    user_id: userId,
-    item_type: itemType,
-    item_id: itemId
+    userId: userId,
+    itemType: itemType,
+    itemId: itemId
   });
   return count > 0;
 };
@@ -121,16 +114,16 @@ userFavoriteSchema.statics.getUserFavorites = async function(userId, options = {
   const { 
     itemType = null, 
     tags = null, 
-    sort = { created_at: -1 }, 
+    sort = { createdAt: -1 }, 
     limit = 20, 
     skip = 0,
     populate = true 
   } = options;
   
-  const query = { user_id: userId };
+  const query = { userId: userId };
   
   if (itemType) {
-    query.item_type = itemType;
+    query.itemType = itemType;
   }
   
   if (tags && Array.isArray(tags) && tags.length > 0) {
@@ -144,17 +137,17 @@ userFavoriteSchema.statics.getUserFavorites = async function(userId, options = {
   
   if (populate) {
     favoritesQuery = favoritesQuery.populate({
-      path: 'item_details',
+      path: 'itemDetails',
       select: function(itemType) {
         switch(itemType) {
           case 'dish':
-            return 'name price images nutrition_info merchant_id';
+            return 'name price images nutritionInfo merchantId';
           case 'post':
-            return 'title content created_at author tags';
+            return 'title content createdAt author tags';
           case 'nutritionist':
-            return 'username full_name profile_image qualifications.specializations';
+            return 'username fullName profileImage qualifications.specializations';
           case 'store':
-            return 'name address business_hours merchant_id average_rating';
+            return 'name address businessHours merchantId averageRating';
           default:
             return '';
         }
@@ -182,9 +175,9 @@ userFavoriteSchema.statics.toggleFavorite = async function(userId, itemType, ite
   
   // 查找是否已收藏
   const existingFavorite = await this.findOne({
-    user_id: userId,
-    item_type: itemType,
-    item_id: itemId
+    userId: userId,
+    itemType: itemType,
+    itemId: itemId
   });
   
   // 如果已收藏，则取消收藏
@@ -199,9 +192,9 @@ userFavoriteSchema.statics.toggleFavorite = async function(userId, itemType, ite
   
   // 如果未收藏，则添加收藏
   const favorite = new this({
-    user_id: userId,
-    item_type: itemType,
-    item_id: itemId,
+    userId: userId,
+    itemType: itemType,
+    itemId: itemId,
     notes,
     tags
   });
@@ -234,15 +227,15 @@ userFavoriteSchema.statics.batchAddFavorites = async function(userId, items) {
     try {
       // 检查是否已存在
       const existing = await this.findOne({
-        user_id: userId,
-        item_type: item.itemType,
-        item_id: item.itemId
+        userId: userId,
+        itemType: item.itemType,
+        itemId: item.itemId
       });
       
       if (existing) {
         results.duplicates.push({
-          item_type: item.itemType,
-          item_id: item.itemId,
+          itemType: item.itemType,
+          itemId: item.itemId,
           message: '已收藏此项目'
         });
         continue;
@@ -250,9 +243,9 @@ userFavoriteSchema.statics.batchAddFavorites = async function(userId, items) {
       
       // 创建新收藏
       const favorite = new this({
-        user_id: userId,
-        item_type: item.itemType,
-        item_id: item.itemId,
+        userId: userId,
+        itemType: item.itemType,
+        itemId: item.itemId,
         notes: item.notes || '',
         tags: item.tags || []
       });
@@ -260,14 +253,14 @@ userFavoriteSchema.statics.batchAddFavorites = async function(userId, items) {
       await favorite.save();
       
       results.success.push({
-        item_type: item.itemType,
-        item_id: item.itemId,
-        favorite_id: favorite._id
+        itemType: item.itemType,
+        itemId: item.itemId,
+        favoriteId: favorite._id
       });
     } catch (error) {
       results.failed.push({
-        item_type: item.itemType,
-        item_id: item.itemId,
+        itemType: item.itemType,
+        itemId: item.itemId,
         error: error.message
       });
     }
@@ -288,24 +281,24 @@ userFavoriteSchema.statics.getMostFavorited = async function(options = {}) {
   const match = {};
   
   if (itemType) {
-    match.item_type = itemType;
+    match.itemType = itemType;
   }
   
   // 如果指定时间段，添加时间条件
   if (period > 0) {
     const periodDate = new Date();
     periodDate.setDate(periodDate.getDate() - period);
-    match.created_at = { $gte: periodDate };
+    match.createdAt = { $gte: periodDate };
   }
   
   const aggregation = [
     { $match: match },
     { 
       $group: { 
-        _id: { item_type: '$item_type', item_id: '$item_id' },
+        _id: { itemType: '$itemType', itemId: '$itemId' },
         count: { $sum: 1 },
-        first_favorited: { $min: '$created_at' },
-        last_favorited: { $max: '$created_at' }
+        firstFavorited: { $min: '$createdAt' },
+        lastFavorited: { $max: '$createdAt' }
       } 
     },
     { $match: { count: { $gte: minCount } } },
@@ -319,35 +312,35 @@ userFavoriteSchema.statics.getMostFavorited = async function(options = {}) {
   const detailedResults = [];
   
   for (const result of results) {
-    const { item_type, item_id } = result._id;
+    const { itemType, itemId } = result._id;
     let itemDetails = null;
     
     // 查询项目详情
     try {
       let model;
-      if (item_type === 'dish') {
+      if (itemType === 'dish') {
         model = Dish;
-      } else if (item_type === 'post') {
+      } else if (itemType === 'post') {
         model = ForumPost;
-      } else if (item_type === 'nutritionist') {
+      } else if (itemType === 'nutritionist') {
         model = User;
-      } else if (item_type === 'store') {
+      } else if (itemType === 'store') {
         model = Store;
       }
       
       if (model) {
-        itemDetails = await model.findById(item_id);
+        itemDetails = await model.findById(itemId);
       }
     } catch (error) {
-      console.error(`Error fetching details for ${item_type} ${item_id}:`, error);
+      console.error(`Error fetching details for ${itemType} ${itemId}:`, error);
     }
     
     detailedResults.push({
-      item_type,
-      item_id,
-      favorites_count: result.count,
-      first_favorited: result.first_favorited,
-      last_favorited: result.last_favorited,
+      itemType,
+      itemId,
+      favoritesCount: result.count,
+      firstFavorited: result.firstFavorited,
+      lastFavorited: result.lastFavorited,
       details: itemDetails
     });
   }
@@ -355,17 +348,12 @@ userFavoriteSchema.statics.getMostFavorited = async function(options = {}) {
   return detailedResults;
 };
 
-// 移除不需要的中间件，由timestamps处理
-userFavoriteSchema.pre('save', function(next) {
-  next();
-});
-
 // 使用ModelFactory创建支持读写分离的模型
 const UserFavorite = ModelFactory.createModel('UserFavorite', userFavoriteSchema);
 
 // 添加分片支持
 UserFavorite.getShardKey = function(doc) {
-  return doc.user_id.toString();
+  return doc.userId.toString();
 };
 
 module.exports = UserFavorite; 

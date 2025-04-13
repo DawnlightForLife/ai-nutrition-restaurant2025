@@ -181,7 +181,8 @@ const shardingService = {
   _getUserShardName(collection, key, strategy) {
     if (!key) return collection;
     
-    const userId = typeof key === 'object' ? key.user_id || key.userId : key;
+    // 支持新的camelCase命名（userId）和旧的snake_case命名（user_id）以保持兼容性
+    const userId = typeof key === 'object' ? key.userId || key.user_id : key;
     
     // 检查是否在VIP用户组
     if (strategy.userGroups?.vip?.includes(userId)) {

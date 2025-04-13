@@ -3,38 +3,56 @@ const ModelFactory = require('../modelFactory');
 
 const nutritionistSchema = new mongoose.Schema({
   // 关联到用户
-  user_id: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
     index: true
   },
-  // 专业资质
-  qualifications: {
-    license_number: {
+  // 个人信息
+  personalInfo: {
+    realName: {
       type: String,
       required: true
     },
-    license_image_url: String,
-    certification_level: {
+    idCardNumber: {
+      type: String,
+      required: true
+    }
+  },
+  // 专业资质
+  qualifications: {
+    licenseNumber: {
+      type: String,
+      required: true
+    },
+    licenseImageUrl: String,
+    certificationImages: [{
+      type: String // URL references to certification documents
+    }],
+    professionalTitle: {
+      type: String,
+      enum: ['初级营养师', '中级营养师', '高级营养师', '营养顾问']
+    },
+    certificationLevel: {
       type: String,
       enum: ['junior', 'intermediate', 'senior', 'expert']
     },
-    issuing_authority: String,
-    issue_date: Date,
-    expiry_date: Date,
+    issuingAuthority: String,
+    issueDate: Date,
+    expiryDate: Date,
     verified: {
       type: Boolean,
       default: false
     }
   },
   // 专业信息
-  professional_info: {
+  professionalInfo: {
     specializations: [{
       type: String,
-      enum: ['weight_management', 'sports_nutrition', 'diabetes', 'prenatal', 'pediatric', 'geriatric', 'eating_disorders', 'heart_health', 'digestive_health', 'food_allergies']
+      enum: ['weightManagement', 'sportsNutrition', 'diabetes', 'prenatal', 'pediatric', 'geriatric', 'eatingDisorders', 'heartHealth', 'digestiveHealth', 'foodAllergies']
     }],
-    experience_years: {
+    experienceYears: {
       type: Number,
       min: 0
     },
@@ -53,24 +71,24 @@ const nutritionistSchema = new mongoose.Schema({
     }
   },
   // 服务信息
-  service_info: {
-    consultation_fee: {
+  serviceInfo: {
+    consultationFee: {
       type: Number,
       min: 0
     },
-    consultation_duration: {
+    consultationDuration: {
       type: Number, // 分钟
       default: 60
     },
-    available_online: {
+    availableOnline: {
       type: Boolean,
       default: true
     },
-    available_in_person: {
+    availableInPerson: {
       type: Boolean,
       default: false
     },
-    in_person_locations: [{
+    inPersonLocations: [{
       name: String,
       address: String,
       city: String,
@@ -78,17 +96,30 @@ const nutritionistSchema = new mongoose.Schema({
         latitude: Number,
         longitude: Number
       }
+    }],
+    serviceTags: [{
+      type: String
+    }],
+    availableTimeSlots: [{
+      day: {
+        type: String,
+        enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+      },
+      slots: [{
+        startTime: String, // format: "HH:MM"
+        endTime: String     // format: "HH:MM"
+      }]
     }]
   },
   // 营养师评价
   ratings: {
-    average_rating: {
+    averageRating: {
       type: Number,
       min: 0,
       max: 5,
       default: 0
     },
-    total_reviews: {
+    totalReviews: {
       type: Number,
       default: 0
     }
@@ -96,23 +127,37 @@ const nutritionistSchema = new mongoose.Schema({
   // 营养师状态
   status: {
     type: String,
-    enum: ['active', 'inactive', 'suspended', 'pending_verification'],
-    default: 'pending_verification'
+    enum: ['active', 'inactive', 'suspended', 'pendingVerification'],
+    default: 'pendingVerification'
+  },
+  // 审核信息
+  verification: {
+    verificationStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending'
+    },
+    rejectedReason: String,
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Admin'
+    },
+    reviewedAt: Date
   },
   // 工作关联
   affiliations: [{
-    organization_type: {
+    organizationType: {
       type: String,
       enum: ['hospital', 'clinic', 'gym', 'restaurant', 'school', 'university', 'company', 'independent']
     },
-    organization_name: String,
-    organization_id: {
+    organizationName: String,
+    organizationId: {
       type: mongoose.Schema.Types.ObjectId,
-      refPath: 'affiliations.organization_type'
+      refPath: 'affiliations.organizationType'
     },
     position: String,
-    start_date: Date,
-    end_date: Date,
+    startDate: Date,
+    endDate: Date,
     current: {
       type: Boolean,
       default: true
@@ -125,23 +170,26 @@ const nutritionistSchema = new mongoose.Schema({
 });
 
 // 添加索引
-nutritionistSchema.index({ user_id: 1 }, { unique: true });
-nutritionistSchema.index({ 'qualifications.license_number': 1 }, { unique: true });
-nutritionistSchema.index({ 'professional_info.specializations': 1 });
-nutritionistSchema.index({ 'service_info.consultation_fee': 1 });
-nutritionistSchema.index({ 'ratings.average_rating': -1 });
+nutritionistSchema.index({ userId: 1 }, { unique: true });
+nutritionistSchema.index({ 'qualifications.licenseNumber': 1 }, { unique: true });
+nutritionistSchema.index({ 'personalInfo.idCardNumber': 1 }, { unique: true });
+nutritionistSchema.index({ 'professionalInfo.specializations': 1 });
+nutritionistSchema.index({ 'serviceInfo.consultationFee': 1 });
+nutritionistSchema.index({ 'serviceInfo.serviceTags': 1 });
+nutritionistSchema.index({ 'ratings.averageRating': -1 });
 nutritionistSchema.index({ status: 1 });
-nutritionistSchema.index({ 'service_info.in_person_locations.city': 1 });
+nutritionistSchema.index({ 'verification.verificationStatus': 1 });
+nutritionistSchema.index({ 'serviceInfo.inPersonLocations.city': 1 });
 
 // 虚拟字段
-nutritionistSchema.virtual('is_license_valid').get(function() {
-  if (!this.qualifications.expiry_date) return null;
-  return new Date(this.qualifications.expiry_date) > new Date();
+nutritionistSchema.virtual('isLicenseValid').get(function() {
+  if (!this.qualifications.expiryDate) return null;
+  return new Date(this.qualifications.expiryDate) > new Date();
 });
 
 nutritionistSchema.virtual('user', {
   ref: 'User',
-  localField: 'user_id',
+  localField: 'userId',
   foreignField: '_id',
   justOne: true
 });
@@ -150,43 +198,45 @@ nutritionistSchema.virtual('user', {
 nutritionistSchema.methods.getPublicProfile = function() {
   return {
     id: this._id,
-    user_id: this.user_id,
-    specializations: this.professional_info.specializations,
-    experience_years: this.professional_info.experience_years,
-    bio: this.professional_info.bio,
-    languages: this.professional_info.languages,
-    consultation_fee: this.service_info.consultation_fee,
-    consultation_duration: this.service_info.consultation_duration,
-    available_online: this.service_info.available_online,
-    available_in_person: this.service_info.available_in_person,
-    average_rating: this.ratings.average_rating,
-    total_reviews: this.ratings.total_reviews
+    userId: this.userId,
+    specializations: this.professionalInfo.specializations,
+    experienceYears: this.professionalInfo.experienceYears,
+    bio: this.professionalInfo.bio,
+    languages: this.professionalInfo.languages,
+    consultationFee: this.serviceInfo.consultationFee,
+    consultationDuration: this.serviceInfo.consultationDuration,
+    availableOnline: this.serviceInfo.availableOnline,
+    availableInPerson: this.serviceInfo.availableInPerson,
+    serviceTags: this.serviceInfo.serviceTags || [],
+    averageRating: this.ratings.averageRating,
+    totalReviews: this.ratings.totalReviews,
+    certifications: this.qualifications.certificationImages || []
   };
 };
 
 nutritionistSchema.methods.isQualifiedFor = function(specialization) {
-  return this.professional_info.specializations.includes(specialization);
+  return this.professionalInfo.specializations.includes(specialization);
 };
 
 // 静态方法
 nutritionistSchema.statics.findBySpecialization = function(specialization) {
   return this.find({
-    'professional_info.specializations': specialization,
+    'professionalInfo.specializations': specialization,
     status: 'active'
   });
 };
 
 nutritionistSchema.statics.findTopRated = function(limit = 10) {
   return this.find({ status: 'active' })
-    .sort({ 'ratings.average_rating': -1 })
+    .sort({ 'ratings.averageRating': -1 })
     .limit(limit);
 };
 
 // 中间件
 nutritionistSchema.pre('save', function(next) {
   // 验证资质有效性
-  if (this.qualifications.expiry_date && 
-      new Date(this.qualifications.expiry_date) < new Date()) {
+  if (this.qualifications.expiryDate && 
+      new Date(this.qualifications.expiryDate) < new Date()) {
     this.status = 'inactive';
   }
   next();

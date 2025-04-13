@@ -10,10 +10,10 @@ const AuditLog = require('../../models/misc/auditLogModel');
  * @async
  * @param {Object} logData - 日志数据
  * @param {string} logData.action - 操作类型
- * @param {string} logData.entity_type - 实体类型
- * @param {string} logData.entity_id - 实体ID
- * @param {string} logData.user_id - 用户ID
- * @param {string} [logData.admin_id] - 管理员ID（如果适用）
+ * @param {string} logData.entityType - 实体类型
+ * @param {string} logData.entityId - 实体ID
+ * @param {string} logData.userId - 用户ID
+ * @param {string} [logData.adminId] - 管理员ID（如果适用）
  * @param {Object} [logData.details] - 详细信息
  * @param {string} [logData.ip_address] - IP地址
  * @returns {Promise<Object>} 创建的日志对象
@@ -22,7 +22,7 @@ const AuditLog = require('../../models/misc/auditLogModel');
 const createLog = async (logData) => {
   try {
     // 验证必填字段
-    const requiredFields = ['action', 'entity_type', 'entity_id'];
+    const requiredFields = ['action', 'entityType', 'entityId'];
     for (const field of requiredFields) {
       if (!logData[field]) {
         const error = new Error(`缺少必填字段: ${field}`);
@@ -31,9 +31,9 @@ const createLog = async (logData) => {
       }
     }
     
-    // 确保至少有user_id或admin_id
-    if (!logData.user_id && !logData.admin_id) {
-      const error = new Error('必须提供user_id或admin_id');
+    // 确保至少有userId或adminId
+    if (!logData.userId && !logData.adminId) {
+      const error = new Error('必须提供userId或adminId');
       error.statusCode = 400;
       throw error;
     }
@@ -74,19 +74,19 @@ const getLogs = async (filters = {}, pagination = {}) => {
     const query = {};
     
     if (filters.action) query.action = filters.action;
-    if (filters.entity_type) query.entity_type = filters.entity_type;
-    if (filters.entity_id) query.entity_id = filters.entity_id;
-    if (filters.user_id) query.user_id = filters.user_id;
-    if (filters.admin_id) query.admin_id = filters.admin_id;
+    if (filters.entityType) query.entityType = filters.entityType;
+    if (filters.entityId) query.entityId = filters.entityId;
+    if (filters.userId) query.userId = filters.userId;
+    if (filters.adminId) query.adminId = filters.adminId;
     
     // 时间范围筛选
-    if (filters.start_date || filters.end_date) {
+    if (filters.startDate || filters.endDate) {
       query.timestamp = {};
-      if (filters.start_date) {
-        query.timestamp.$gte = new Date(filters.start_date);
+      if (filters.startDate) {
+        query.timestamp.$gte = new Date(filters.startDate);
       }
-      if (filters.end_date) {
-        const endDate = new Date(filters.end_date);
+      if (filters.endDate) {
+        const endDate = new Date(filters.endDate);
         endDate.setDate(endDate.getDate() + 1); // 包含结束日期当天
         query.timestamp.$lt = endDate;
       }
@@ -98,8 +98,8 @@ const getLogs = async (filters = {}, pagination = {}) => {
       .skip(skip)
       .limit(limit)
       .populate([
-        { path: 'user_id', select: 'nickname phone email role' },
-        { path: 'admin_id', select: 'nickname phone email role' }
+        { path: 'userId', select: 'nickname phone email role' },
+        { path: 'adminId', select: 'nickname phone email role' }
       ]);
     
     const total = await AuditLog.countDocuments(query);
@@ -137,8 +137,8 @@ const getUserActivityHistory = async (userId, pagination = {}) => {
     // 查询条件：用户ID或管理员ID匹配
     const query = {
       $or: [
-        { user_id: userId },
-        { admin_id: userId }
+        { userId: userId },
+        { adminId: userId }
       ]
     };
     
@@ -183,8 +183,8 @@ const getEntityHistory = async (entityType, entityId, pagination = {}) => {
     
     // 查询条件：实体类型和ID
     const query = {
-      entity_type: entityType,
-      entity_id: entityId
+      entityType: entityType,
+      entityId: entityId
     };
     
     // 执行查询
@@ -193,8 +193,8 @@ const getEntityHistory = async (entityType, entityId, pagination = {}) => {
       .skip(skip)
       .limit(limit)
       .populate([
-        { path: 'user_id', select: 'nickname phone email role' },
-        { path: 'admin_id', select: 'nickname phone email role' }
+        { path: 'userId', select: 'nickname phone email role' },
+        { path: 'adminId', select: 'nickname phone email role' }
       ]);
     
     const total = await AuditLog.countDocuments(query);
@@ -253,21 +253,21 @@ const getActionStats = async (filters = {}) => {
     const matchStage = {};
     
     // 应用时间范围筛选
-    if (filters.start_date || filters.end_date) {
+    if (filters.startDate || filters.endDate) {
       matchStage.timestamp = {};
-      if (filters.start_date) {
-        matchStage.timestamp.$gte = new Date(filters.start_date);
+      if (filters.startDate) {
+        matchStage.timestamp.$gte = new Date(filters.startDate);
       }
-      if (filters.end_date) {
-        const endDate = new Date(filters.end_date);
+      if (filters.endDate) {
+        const endDate = new Date(filters.endDate);
         endDate.setDate(endDate.getDate() + 1);
         matchStage.timestamp.$lt = endDate;
       }
     }
     
     // 应用用户筛选
-    if (filters.user_id) matchStage.user_id = filters.user_id;
-    if (filters.admin_id) matchStage.admin_id = filters.admin_id;
+    if (filters.userId) matchStage.userId = filters.userId;
+    if (filters.adminId) matchStage.adminId = filters.adminId;
     
     // 执行聚合查询
     const actionStats = await AuditLog.aggregate([
@@ -283,7 +283,7 @@ const getActionStats = async (filters = {}) => {
     const entityStats = await AuditLog.aggregate([
       { $match: matchStage },
       { $group: {
-          _id: '$entity_type',
+          _id: '$entityType',
           count: { $sum: 1 }
         }
       },

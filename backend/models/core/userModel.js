@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
     default: 'user'
   },
   // 当前活跃角色
-  active_role: {
+  currentRole: {
     type: String,
     enum: ['user', 'nutritionist', 'merchant'],
     default: 'user'
@@ -42,7 +42,7 @@ const userSchema = new mongoose.Schema({
     default: '',
     sensitivity_level: 3 // 低度敏感数据
   },
-  real_name: {
+  realName: {
     type: String,
     default: '',
     sensitivity_level: 2 // 中度敏感数据
@@ -60,7 +60,7 @@ const userSchema = new mongoose.Schema({
     },
     sensitivity_level: 2 // 中度敏感数据
   },
-  avatar_url: {
+  avatarUrl: {
     type: String,
     default: '',
     sensitivity_level: 3 // 低度敏感数据
@@ -86,7 +86,7 @@ const userSchema = new mongoose.Schema({
     default: 'other',
     sensitivity_level: 2 // 中度敏感数据
   },
-  activity_level: {
+  activityLevel: {
     type: String,
     enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'],
     default: 'moderate',
@@ -106,8 +106,8 @@ const userSchema = new mongoose.Schema({
     }
   },
   // 饮食偏好
-  dietary_preferences: {
-    cuisine_preference: {
+  dietaryPreferences: {
+    cuisinePreference: {
       type: String,
       enum: ['north', 'south', 'east', 'west', 'sichuan', 'cantonese', 'hunan', 'other'],
       default: 'other',
@@ -117,11 +117,11 @@ const userSchema = new mongoose.Schema({
       type: String,
       sensitivity_level: 2 // 中度敏感数据
     }],
-    avoided_ingredients: [{
+    avoidedIngredients: [{
       type: String,
       sensitivity_level: 3 // 低度敏感数据
     }],
-    spicy_preference: {
+    spicyPreference: {
       type: String,
       enum: ['none', 'mild', 'medium', 'hot', 'extra_hot'],
       default: 'medium',
@@ -129,186 +129,186 @@ const userSchema = new mongoose.Schema({
     }
   },
   // 健康数据
-  health_data: {
-    has_recent_medical_report: {
+  healthData: {
+    hasRecentMedicalReport: {
       type: Boolean,
       default: false,
       sensitivity_level: 2 // 中度敏感数据
     },
-    medical_report_url: {
+    medicalReportUrl: {
       type: String,
       default: '',
       sensitivity_level: 1 // 高度敏感数据
     },
-    health_issues: [{
+    healthIssues: [{
       type: String,
       sensitivity_level: 1 // 高度敏感数据
     }]
   },
   // 营养师认证信息
-  nutritionist_verification: {
-    is_verified: {
+  nutritionistVerification: {
+    isVerified: {
       type: Boolean,
       default: false
     },
-    verification_status: {
+    verificationStatus: {
       type: String,
       enum: ['pending', 'approved', 'rejected', ''],
       default: ''
     },
-    rejection_reason: {
+    rejectionReason: {
       type: String,
       default: ''
     }
   },
   // 商家认证信息
-  merchant_verification: {
-    is_verified: {
+  merchantVerification: {
+    isVerified: {
       type: Boolean,
       default: false
     },
-    verification_status: {
+    verificationStatus: {
       type: String,
       enum: ['pending', 'approved', 'rejected', ''],
       default: ''
     },
-    rejection_reason: {
+    rejectionReason: {
       type: String,
       default: ''
     }
   },
   // 微信相关
-  wechat_openid: {
+  wechatOpenid: {
     type: String,
     sparse: true,
     unique: true,
     sensitivity_level: 2 // 中度敏感数据
   },
   // 支付宝相关
-  alipay_userid: {
+  alipayUserid: {
     type: String,
     sparse: true,
     unique: true,
     sensitivity_level: 2 // 中度敏感数据
   },
   // 隐私设置
-  privacy_settings: {
-    share_health_data_with_nutritionist: {
+  privacySettings: {
+    shareHealthDataWithNutritionist: {
       type: Boolean,
       default: false
     },
-    share_order_history_with_merchant: {
+    shareOrderHistoryWithMerchant: {
       type: Boolean,
       default: false
     },
-    share_profile_in_community: {
+    shareProfileInCommunity: {
       type: Boolean,
       default: true
     },
-    allow_recommendation_based_on_history: {
+    allowRecommendationBasedOnHistory: {
       type: Boolean,
       default: true
     },
-    data_deletion_requested: {
+    dataDeletionRequested: {
       type: Boolean,
       default: false
     }
   },
   // 数据可访问性控制
-  data_access_controls: [{
-    granted_to_role: {
+  dataAccessControls: [{
+    grantedToRole: {
       type: String,
       enum: ['nutritionist', 'merchant', 'admin']
     },
-    granted_to_id: {
+    grantedToId: {
       type: mongoose.Schema.Types.ObjectId,
-      refPath: 'data_access_controls.granted_to_role'
+      refPath: 'dataAccessControls.grantedToRole'
     },
-    resource_type: {
+    resourceType: {
       type: String,
-      enum: ['health_data', 'nutrition_profile', 'order_history', 'all']
+      enum: ['healthData', 'nutritionProfile', 'orderHistory', 'all']
     },
-    allowed_operations: [{
+    allowedOperations: [{
       type: String,
       enum: ['read', 'write', 'delete', 'recommend']
     }],
-    valid_until: {
+    validUntil: {
       type: Date
     },
-    created_at: {
+    createdAt: {
       type: Date,
       default: Date.now
     }
   }],
   // 账户状态
-  account_status: {
+  accountStatus: {
     type: String,
-    enum: ['active', 'suspended', 'deactivated', 'pending_deletion'],
+    enum: ['active', 'suspended', 'deactivated', 'pendingDeletion'],
     default: 'active'
   },
   // 用户同意的服务条款版本
-  terms_agreed_version: {
+  termsVersion: {
     type: String,
     default: '1.0'
   },
-  terms_agreed_at: {
+  termsAgreedAt: {
     type: Date,
     default: Date.now
   },
   // 创建和更新时间
-  created_at: {
+  createdAt: {
     type: Date,
     default: Date.now
   },
-  updated_at: {
+  updatedAt: {
     type: Date,
     default: Date.now
   },
   // 最后登录时间和IP
-  last_login: {
+  lastLogin: {
     time: Date,
     ip: String,
     device: String
   },
   // 反规范化缓存字段 - 减少关联查询
-  cached_data: {
+  cachedData: {
     // 订单统计 - 用于快速展示用户订单概况
-    order_stats: {
-      total_orders: { type: Number, default: 0 },
-      total_spent: { type: Number, default: 0 },
-      last_order_date: Date,
-      favorite_merchant_id: mongoose.Schema.Types.ObjectId,
-      favorite_merchant_name: String,
-      last_updated: Date
+    orderStats: {
+      totalOrders: { type: Number, default: 0 },
+      totalSpent: { type: Number, default: 0 },
+      lastOrderDate: Date,
+      favoriteMerchantId: mongoose.Schema.Types.ObjectId,
+      favoriteMerchantName: String,
+      lastUpdated: Date
     },
     // 健康数据概览 - 用于快速获取用户健康状态
-    health_overview: {
-      current_bmi: Number,
-      health_score: Number,
-      health_tags: [String],
-      last_updated: Date
+    healthOverview: {
+      currentBmi: Number,
+      healthScore: Number,
+      healthTags: [String],
+      lastUpdated: Date
     },
     // 营养师互动 - 缓存用户与营养师的互动信息
-    nutritionist_interaction: {
-      has_active_nutritionist: Boolean,
-      active_nutritionist_id: mongoose.Schema.Types.ObjectId,
-      active_nutritionist_name: String,
-      last_consultation_date: Date,
-      last_updated: Date
+    nutritionistInteraction: {
+      hasActiveNutritionist: Boolean,
+      activeNutritionistId: mongoose.Schema.Types.ObjectId,
+      activeNutritionistName: String,
+      lastConsultationDate: Date,
+      lastUpdated: Date
     },
     // 推荐统计 - 用于快速查看用户的推荐使用情况
-    recommendation_stats: {
-      total_recommendations_received: { type: Number, default: 0 },
-      recommendations_followed: { type: Number, default: 0 },
-      conversion_rate: { type: Number, default: 0 },
-      last_updated: Date
+    recommendationStats: {
+      totalRecommendationsReceived: { type: Number, default: 0 },
+      recommendationsFollowed: { type: Number, default: 0 },
+      conversionRate: { type: Number, default: 0 },
+      lastUpdated: Date
     },
     // 积分和奖励 - 用于快速查看用户的积分和奖励情况
     rewards: {
       points: { type: Number, default: 0 },
       level: { type: String, default: 'bronze' },
-      available_coupons: { type: Number, default: 0 },
-      last_updated: Date
+      availableCoupons: { type: Number, default: 0 },
+      lastUpdated: Date
     }
   }
 }, {
@@ -322,14 +322,14 @@ const userSchema = new mongoose.Schema({
 userSchema.index({ phone: 1 }, { unique: true });
 userSchema.index({ email: 1 }, { sparse: true, unique: true });
 userSchema.index({ role: 1 });
-userSchema.index({ wechat_openid: 1 }, { sparse: true, unique: true });
-userSchema.index({ alipay_userid: 1 }, { sparse: true, unique: true });
-userSchema.index({ account_status: 1 });
+userSchema.index({ wechatOpenid: 1 }, { sparse: true, unique: true });
+userSchema.index({ alipayUserid: 1 }, { sparse: true, unique: true });
+userSchema.index({ accountStatus: 1 });
 userSchema.index({ 'region.province': 1, 'region.city': 1 });
 
 // 添加虚拟字段
-userSchema.virtual('full_name').get(function() {
-  return this.real_name || this.nickname || '';
+userSchema.virtual('fullName').get(function() {
+  return this.realName || this.nickname || '';
 });
 
 userSchema.virtual('bmi').get(function() {
@@ -338,11 +338,11 @@ userSchema.virtual('bmi').get(function() {
   return (this.weight / (heightInMeters * heightInMeters)).toFixed(1);
 });
 
-userSchema.virtual('age_group').get(function() {
+userSchema.virtual('ageGroup').get(function() {
   if (!this.age) return null;
   if (this.age < 18) return 'child';
-  if (this.age < 30) return 'young_adult';
-  if (this.age < 50) return 'middle_adult';
+  if (this.age < 30) return 'youngAdult';
+  if (this.age < 50) return 'middleAdult';
   return 'senior';
 });
 
@@ -373,9 +373,9 @@ userSchema.methods.getBasicProfile = function() {
   return {
     id: this._id,
     nickname: this.nickname,
-    avatar_url: this.avatar_url,
+    avatarUrl: this.avatarUrl,
     role: this.role,
-    active_role: this.active_role
+    currentRole: this.currentRole
   };
 };
 
@@ -389,30 +389,30 @@ userSchema.statics.findByEmail = function(email) {
 };
 
 userSchema.statics.findByWechatOpenId = function(wechatOpenId) {
-  return this.findOne({ wechat_openid: wechatOpenId });
+  return this.findOne({ wechatOpenid: wechatOpenId });
 };
 
 // 创建索引
 userSchema.index({ email: 1 }, { unique: true, sparse: true }); // 唯一索引，防止重复注册，但允许为空
-userSchema.index({ phone_number: 1 }, { unique: true, sparse: true }); // 唯一索引，允许为空
+userSchema.index({ phoneNumber: 1 }, { unique: true, sparse: true }); // 唯一索引，允许为空
 userSchema.index({ username: 1 }); // 用户名索引，加快查询
 userSchema.index({ 'roles.role': 1 }); // 角色索引，加快查询管理员、营养师、商家等
-userSchema.index({ created_at: -1 }); // 让最近创建的用户查询更快
-userSchema.index({ last_login_at: -1 }); // 登录时间索引，用于分析用户活跃度
-userSchema.index({ 'account_status.is_active': 1 }); // 账号状态索引，快速筛选活跃/非活跃用户
+userSchema.index({ createdAt: -1 }); // 让最近创建的用户查询更快
+userSchema.index({ lastLoginAt: -1 }); // 登录时间索引，用于分析用户活跃度
+userSchema.index({ 'accountStatus.isActive': 1 }); // 账号状态索引，快速筛选活跃/非活跃用户
 
 // 复合索引，支持按角色和活跃度的组合查询
-userSchema.index({ 'roles.role': 1, 'account_status.is_active': 1, created_at: -1 });
+userSchema.index({ 'roles.role': 1, 'accountStatus.isActive': 1, createdAt: -1 });
 
 // 部分索引，只为活跃用户创建索引，提高查询效率
 userSchema.index(
-  { last_active_at: -1 },
-  { partialFilterExpression: { 'account_status.is_active': true } }
+  { lastActiveAt: -1 },
+  { partialFilterExpression: { 'accountStatus.isActive': true } }
 );
 
-// 更新前自动更新 updated_at 字段
+// 更新前自动更新 updatedAt 字段
 userSchema.pre('save', function(next) {
-  this.updated_at = Date.now();
+  this.updatedAt = Date.now();
   next();
 });
 
@@ -428,11 +428,11 @@ userSchema.set('toJSON', {
 userSchema.methods.hasValidAccessFor = function(roleId, resourceType, operation) {
   const now = new Date();
   
-  const accessControl = this.data_access_controls.find(control => {
-    return control.granted_to_id.equals(roleId) && 
-           (control.resource_type === resourceType || control.resource_type === 'all') && 
-           control.allowed_operations.includes(operation) && 
-           (control.valid_until === null || control.valid_until > now);
+  const accessControl = this.dataAccessControls.find(control => {
+    return control.grantedToId.equals(roleId) && 
+           (control.resourceType === resourceType || control.resourceType === 'all') && 
+           control.allowedOperations.includes(operation) && 
+           (control.validUntil === null || control.validUntil > now);
   });
   
   return !!accessControl;
@@ -440,9 +440,9 @@ userSchema.methods.hasValidAccessFor = function(roleId, resourceType, operation)
 
 // 添加撤销权限的方法
 userSchema.methods.revokeAccess = function(roleId, resourceType) {
-  this.data_access_controls = this.data_access_controls.filter(control => {
-    return !(control.granted_to_id.equals(roleId) && 
-            (control.resource_type === resourceType || resourceType === 'all'));
+  this.dataAccessControls = this.dataAccessControls.filter(control => {
+    return !(control.grantedToId.equals(roleId) && 
+            (control.resourceType === resourceType || resourceType === 'all'));
   });
 };
 
@@ -450,14 +450,14 @@ userSchema.methods.revokeAccess = function(roleId, resourceType) {
 userSchema.statics.findActiveByRole = function(role, options = {}) {
   return this.find({ 
     'roles.role': role, 
-    'account_status.is_active': true 
+    'accountStatus.isActive': true 
   }, options).lean();
 };
 
 // 获取用户基本信息（只返回必要字段，优化查询性能）
 userSchema.statics.getBasicInfo = function(userId) {
   return this.findById(userId)
-    .select('username email profile.display_name profile.avatar roles')
+    .select('username email profile.displayName profile.avatar roles')
     .lean();
 };
 
@@ -468,50 +468,50 @@ userSchema.methods.updateOrderStats = async function() {
     if (!Order) Order = require('./orderModel');
     const orderAggregation = await Order.aggregate([
       { $match: { 
-        user_id: this._id, 
+        userId: this._id, 
         status: { $in: ['completed', 'delivered'] } 
       }},
       { $group: {
         _id: null,
-        total_orders: { $sum: 1 },
-        total_spent: { $sum: '$price_details.total' },
-        last_order_date: { $max: '$created_at' }
+        totalOrders: { $sum: 1 },
+        totalSpent: { $sum: '$priceDetails.total' },
+        lastOrderDate: { $max: '$createdAt' }
       }}
     ]);
     
     const orderStats = orderAggregation[0] || {
-      total_orders: 0,
-      total_spent: 0,
-      last_order_date: null
+      totalOrders: 0,
+      totalSpent: 0,
+      lastOrderDate: null
     };
     
     // 获取最常光顾的商家
     const favoriteMerchantAgg = await Order.aggregate([
-      { $match: { user_id: this._id } },
+      { $match: { userId: this._id } },
       { $group: {
         _id: { 
-          merchant_id: '$merchant_id',
-          merchant_name: '$merchant_name' // 假设订单中有merchant_name字段
+          merchantId: '$merchantId',
+          merchantName: '$merchantName' // 假设订单中有merchantName字段
         },
-        order_count: { $sum: 1 }
+        orderCount: { $sum: 1 }
       }},
-      { $sort: { order_count: -1 } },
+      { $sort: { orderCount: -1 } },
       { $limit: 1 }
     ]);
     
     // 更新订单统计缓存
-    this.cached_data = this.cached_data || {};
-    this.cached_data.order_stats = {
-      total_orders: orderStats.total_orders,
-      total_spent: orderStats.total_spent,
-      last_order_date: orderStats.last_order_date,
-      favorite_merchant_id: favoriteMerchantAgg[0]?._id.merchant_id || null,
-      favorite_merchant_name: favoriteMerchantAgg[0]?._id.merchant_name || null,
-      last_updated: new Date()
+    this.cachedData = this.cachedData || {};
+    this.cachedData.orderStats = {
+      totalOrders: orderStats.totalOrders,
+      totalSpent: orderStats.totalSpent,
+      lastOrderDate: orderStats.lastOrderDate,
+      favoriteMerchantId: favoriteMerchantAgg[0]?._id.merchantId || null,
+      favoriteMerchantName: favoriteMerchantAgg[0]?._id.merchantName || null,
+      lastUpdated: new Date()
     };
     
     await this.save();
-    return this.cached_data.order_stats;
+    return this.cachedData.orderStats;
   } catch (error) {
     console.error('更新用户订单统计数据时出错:', error);
     throw error;
@@ -524,16 +524,16 @@ userSchema.methods.updateHealthOverview = async function() {
     // 获取最新的健康数据
     if (!HealthData) HealthData = require('../health/healthDataModel');
     const latestHealthData = await HealthData.findOne({ 
-      user_id: this._id 
-    }).sort({ created_at: -1 });
+      userId: this._id 
+    }).sort({ createdAt: -1 });
     
     if (!latestHealthData) return null;
     
     // 计算BMI
     let bmi = null;
-    if (latestHealthData.basic_metrics?.height && latestHealthData.basic_metrics?.weight) {
-      const heightInMeters = latestHealthData.basic_metrics.height / 100;
-      bmi = latestHealthData.basic_metrics.weight / (heightInMeters * heightInMeters);
+    if (latestHealthData.basicMetrics?.height && latestHealthData.basicMetrics?.weight) {
+      const heightInMeters = latestHealthData.basicMetrics.height / 100;
+      bmi = latestHealthData.basicMetrics.weight / (heightInMeters * heightInMeters);
     }
     
     // 创建健康标签
@@ -542,20 +542,20 @@ userSchema.methods.updateHealthOverview = async function() {
     // 根据BMI分类
     if (bmi !== null) {
       if (bmi < 18.5) healthTags.push('underweight');
-      else if (bmi < 24.9) healthTags.push('normal_weight');
+      else if (bmi < 24.9) healthTags.push('normalWeight');
       else if (bmi < 29.9) healthTags.push('overweight');
       else healthTags.push('obese');
     }
     
     // 根据血压分类
-    if (latestHealthData.basic_metrics?.blood_pressure) {
-      const systolic = latestHealthData.basic_metrics.blood_pressure.systolic;
-      const diastolic = latestHealthData.basic_metrics.blood_pressure.diastolic;
+    if (latestHealthData.basicMetrics?.bloodPressure) {
+      const systolic = latestHealthData.basicMetrics.bloodPressure.systolic;
+      const diastolic = latestHealthData.basicMetrics.bloodPressure.diastolic;
       
-      if (systolic < 120 && diastolic < 80) healthTags.push('normal_bp');
-      else if (systolic < 130 && diastolic < 80) healthTags.push('elevated_bp');
-      else if (systolic < 140 || diastolic < 90) healthTags.push('hypertension_stage1');
-      else healthTags.push('hypertension_stage2');
+      if (systolic < 120 && diastolic < 80) healthTags.push('normalBp');
+      else if (systolic < 130 && diastolic < 80) healthTags.push('elevatedBp');
+      else if (systolic < 140 || diastolic < 90) healthTags.push('hypertensionStage1');
+      else healthTags.push('hypertensionStage2');
     }
     
     // 计算健康得分 (简化版 0-100)
@@ -569,9 +569,9 @@ userSchema.methods.updateHealthOverview = async function() {
     }
     
     // 基于血压调整
-    if (latestHealthData.basic_metrics?.blood_pressure) {
-      const systolic = latestHealthData.basic_metrics.blood_pressure.systolic;
-      const diastolic = latestHealthData.basic_metrics.blood_pressure.diastolic;
+    if (latestHealthData.basicMetrics?.bloodPressure) {
+      const systolic = latestHealthData.basicMetrics.bloodPressure.systolic;
+      const diastolic = latestHealthData.basicMetrics.bloodPressure.diastolic;
       
       if (systolic < 120 && diastolic < 80) healthScore += 10; // 理想血压
       else if (systolic >= 140 || diastolic >= 90) healthScore -= 10; // 高血压
@@ -581,16 +581,16 @@ userSchema.methods.updateHealthOverview = async function() {
     healthScore = Math.max(0, Math.min(100, healthScore));
     
     // 更新健康数据缓存
-    this.cached_data = this.cached_data || {};
-    this.cached_data.health_overview = {
-      current_bmi: bmi,
-      health_score: healthScore,
-      health_tags: healthTags,
-      last_updated: new Date()
+    this.cachedData = this.cachedData || {};
+    this.cachedData.healthOverview = {
+      currentBmi: bmi,
+      healthScore: healthScore,
+      healthTags: healthTags,
+      lastUpdated: new Date()
     };
     
     await this.save();
-    return this.cached_data.health_overview;
+    return this.cachedData.healthOverview;
   } catch (error) {
     console.error('更新用户健康概览数据时出错:', error);
     throw error;
@@ -603,39 +603,39 @@ userSchema.methods.updateRecommendationStats = async function() {
     // 获取推荐统计数据
     if (!AiRecommendation) AiRecommendation = require('./aiRecommendationModel');
     const recommendationAgg = await AiRecommendation.aggregate([
-      { $match: { user_id: this._id } },
+      { $match: { userId: this._id } },
       { $group: {
         _id: null,
-        total_recommendations: { $sum: 1 },
-        followed_recommendations: { 
+        totalRecommendations: { $sum: 1 },
+        followedRecommendations: { 
           $sum: { 
-            $cond: [{ $eq: ['$feedback.follow_through', 'ordered'] }, 1, 0] 
+            $cond: [{ $eq: ['$feedback.followThrough', 'ordered'] }, 1, 0] 
           }
         }
       }}
     ]);
     
     const stats = recommendationAgg[0] || {
-      total_recommendations: 0,
-      followed_recommendations: 0
+      totalRecommendations: 0,
+      followedRecommendations: 0
     };
     
     // 计算转化率
-    const conversionRate = stats.total_recommendations > 0 
-      ? (stats.followed_recommendations / stats.total_recommendations) 
+    const conversionRate = stats.totalRecommendations > 0 
+      ? (stats.followedRecommendations / stats.totalRecommendations) 
       : 0;
     
     // 更新推荐统计缓存
-    this.cached_data = this.cached_data || {};
-    this.cached_data.recommendation_stats = {
-      total_recommendations_received: stats.total_recommendations,
-      recommendations_followed: stats.followed_recommendations,
-      conversion_rate: conversionRate,
-      last_updated: new Date()
+    this.cachedData = this.cachedData || {};
+    this.cachedData.recommendationStats = {
+      totalRecommendationsReceived: stats.totalRecommendations,
+      recommendationsFollowed: stats.followedRecommendations,
+      conversionRate: conversionRate,
+      lastUpdated: new Date()
     };
     
     await this.save();
-    return this.cached_data.recommendation_stats;
+    return this.cachedData.recommendationStats;
   } catch (error) {
     console.error('更新用户推荐统计数据时出错:', error);
     throw error;
@@ -648,15 +648,15 @@ userSchema.methods.updateNutritionistInteraction = async function() {
     // 查找最新的咨询记录
     if (!Consultation) Consultation = require('./consultationModel');
     const latestConsultation = await Consultation.findOne({
-      user_id: this._id
-    }).sort({ created_at: -1 })
-      .populate('nutritionist_id', 'real_name');
+      userId: this._id
+    }).sort({ createdAt: -1 })
+      .populate('nutritionistId', 'realName');
     
     // 查询是否有活跃的营养师
-    const hasActiveNutritionist = this.data_access_controls.some(control => 
-      control.granted_to_type === 'Nutritionist' && 
+    const hasActiveNutritionist = this.dataAccessControls.some(control => 
+      control.grantedToType === 'Nutritionist' && 
       !control.revoked && 
-      (!control.valid_until || control.valid_until > new Date())
+      (!control.validUntil || control.validUntil > new Date())
     );
     
     let activeNutritionistId = null;
@@ -664,41 +664,44 @@ userSchema.methods.updateNutritionistInteraction = async function() {
     
     if (hasActiveNutritionist) {
       // 获取有效期最长的营养师授权
-      const activeGrant = this.data_access_controls
+      const activeGrant = this.dataAccessControls
         .filter(control => 
-          control.granted_to_type === 'Nutritionist' && 
+          control.grantedToType === 'Nutritionist' && 
           !control.revoked && 
-          (!control.valid_until || control.valid_until > new Date())
+          (!control.validUntil || control.validUntil > new Date())
         )
         .sort((a, b) => 
-          (!b.valid_until ? Infinity : b.valid_until.getTime()) - 
-          (!a.valid_until ? Infinity : a.valid_until.getTime())
+          (!b.validUntil ? Infinity : b.validUntil.getTime()) - 
+          (!a.validUntil ? Infinity : a.validUntil.getTime())
         )[0];
       
       if (activeGrant) {
-        activeNutritionistId = activeGrant.granted_to_id;
+        activeNutritionistId = activeGrant.grantedToId;
         
         // 获取营养师名称
-        if (!Nutritionist) Nutritionist = require('./nutritionistModel');
+        if (!Nutritionist) Nutritionist = require('../nutrition/nutritionistModel');
         const nutritionist = await Nutritionist.findById(activeNutritionistId);
         if (nutritionist) {
-          activeNutritionistName = nutritionist.real_name;
+          // 改用用户真实姓名或者从professional_info中获取的信息
+          activeNutritionistName = nutritionist.getPublicProfile().bio ? 
+            `营养师 (${nutritionist.getPublicProfile().bio.substring(0, 10)}...)` :
+            `营养师 #${activeNutritionistId.toString().substring(0, 6)}`;
         }
       }
     }
     
     // 更新营养师互动缓存
-    this.cached_data = this.cached_data || {};
-    this.cached_data.nutritionist_interaction = {
-      has_active_nutritionist: hasActiveNutritionist,
-      active_nutritionist_id: activeNutritionistId,
-      active_nutritionist_name: activeNutritionistName,
-      last_consultation_date: latestConsultation?.created_at || null,
-      last_updated: new Date()
+    this.cachedData = this.cachedData || {};
+    this.cachedData.nutritionistInteraction = {
+      hasActiveNutritionist: hasActiveNutritionist,
+      activeNutritionistId: activeNutritionistId,
+      activeNutritionistName: activeNutritionistName,
+      lastConsultationDate: latestConsultation?.createdAt || null,
+      lastUpdated: new Date()
     };
     
     await this.save();
-    return this.cached_data.nutritionist_interaction;
+    return this.cachedData.nutritionistInteraction;
   } catch (error) {
     console.error('更新用户营养师互动数据时出错:', error);
     throw error;
@@ -715,7 +718,7 @@ userSchema.methods.refreshAllCachedData = async function() {
       this.updateNutritionistInteraction()
     ]);
     
-    return this.cached_data;
+    return this.cachedData;
   } catch (error) {
     console.error('刷新用户缓存数据时出错:', error);
     throw error;
@@ -871,36 +874,119 @@ const User = mongoose.model('User', userSchema);
 // 查询用户的订单历史
 userSchema.methods.getOrderHistory = async function() {
   if (!Order) Order = require('./orderModel');
-  return await Order.find({ user_id: this._id }).sort({ created_at: -1 });
+  return await Order.find({ userId: this._id }).sort({ createdAt: -1 });
 };
 
 // 获取用户的健康数据
 userSchema.methods.getHealthData = async function() {
   if (!HealthData) HealthData = require('../health/healthDataModel');
-  return await HealthData.find({ user_id: this._id }).sort({ recorded_at: -1 });
+  return await HealthData.find({ userId: this._id }).sort({ recordedAt: -1 });
 };
 
 // 获取用户的AI推荐历史
 userSchema.methods.getAiRecommendations = async function(limit = 10) {
   if (!AiRecommendation) AiRecommendation = require('./aiRecommendationModel');
-  return await AiRecommendation.find({ user_id: this._id })
-    .sort({ created_at: -1 })
+  return await AiRecommendation.find({ userId: this._id })
+    .sort({ createdAt: -1 })
     .limit(limit);
 };
 
 // 获取用户的咨询记录
 userSchema.methods.getConsultations = async function() {
   if (!Consultation) Consultation = require('./consultationModel');
-  return await Consultation.find({ user_id: this._id }).sort({ scheduled_at: -1 });
+  return await Consultation.find({ userId: this._id }).sort({ scheduledAt: -1 });
 };
 
 // 获取用户咨询过的营养师
 userSchema.methods.getConsultedNutritionists = async function() {
   if (!Consultation) Consultation = require('./consultationModel');
   if (!Nutritionist) Nutritionist = require('./nutritionistModel');
-  const consultations = await Consultation.find({ user_id: this._id });
-  const nutritionistIds = [...new Set(consultations.map(c => c.nutritionist_id))];
+  const consultations = await Consultation.find({ userId: this._id });
+  const nutritionistIds = [...new Set(consultations.map(c => c.nutritionistId))];
   return await Nutritionist.find({ _id: { $in: nutritionistIds } });
+};
+
+/**
+ * 检查用户是否拥有指定的权限
+ * @param {string} permission - 权限名称
+ * @returns {boolean} 是否拥有权限
+ */
+userSchema.methods.hasPermission = function(permission) {
+  if (!this.role) return false;
+  if (this.role === 'admin') return true;
+  
+  // 检查用户角色是否有此权限
+  return this.permissions && this.permissions.includes(permission);
+};
+
+/**
+ * 将用户数据转换为安全的公开格式
+ * 移除敏感字段，返回适合前端显示的用户数据
+ * 
+ * @returns {Object} 公开的用户资料
+ */
+userSchema.methods.toPublicProfile = function() {
+  const profile = {
+    id: this._id,
+    username: this.username,
+    email: this.email,
+    firstName: this.firstName,
+    lastName: this.lastName,
+    avatar: this.avatar,
+    phoneVerified: !!this.phoneVerified,
+    emailVerified: !!this.emailVerified,
+    role: this.role,
+    createdAt: this.createdAt,
+    bio: this.bio || '',
+    location: this.location || '',
+    preferences: this.preferences || {}
+  };
+  
+  // 如果有缓存数据，加入缓存数据
+  if (this.cachedData) {
+    profile.stats = {
+      ordersCount: this.cachedData.ordersCount || 0,
+      recommCount: this.cachedData.recommCount || 0,
+      favoritesCount: this.cachedData.favoritesCount || 0,
+      lastActiveAt: this.cachedData.lastActiveAt
+    };
+    
+    // 健康数据概览（如已授权）
+    if (this.settings?.shareHealthData) {
+      profile.healthOverview = this.cachedData.healthOverview || {};
+    }
+  }
+  
+  return profile;
+};
+
+/**
+ * 生成用户通知配置
+ * 合并默认配置和用户自定义配置
+ * 
+ * @returns {Object} 通知配置
+ */
+userSchema.methods.getNotificationConfig = function() {
+  // 默认通知配置
+  const defaultConfig = {
+    email: {
+      marketing: false,
+      orderUpdates: true,
+      accountSecurity: true,
+      recommendations: true
+    },
+    push: {
+      orderUpdates: true,
+      chats: true,
+      recommendations: true,
+      healthAlerts: true
+    }
+  };
+  
+  // 合并默认配置和用户自定义配置
+  const userConfig = { ...defaultConfig, ...this.notificationSettings };
+  
+  return userConfig;
 };
 
 module.exports = User;

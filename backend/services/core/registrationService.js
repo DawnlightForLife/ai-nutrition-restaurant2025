@@ -1,7 +1,7 @@
 const User = require('../../models/core/userModel');
 const NutritionProfile = require('../../models/health/nutritionProfileModel');
 const { validateUser } = require('../../utils/validators/userValidator');
-const { handleError } = require('../../utils/errorHandler');
+const logger = require('../../utils/logger');
 
 /**
  * 注册服务 - 处理用户注册相关的所有操作
@@ -34,7 +34,8 @@ const registrationService = {
 
       return { isValid: true };
     } catch (error) {
-      handleError(error);
+      logger.error(`Error validating registration: ${error.message}`, { error });
+      throw error;
     }
   },
 
@@ -81,7 +82,8 @@ const registrationService = {
         nutritionProfile: nutritionProfile
       };
     } catch (error) {
-      handleError(error);
+      logger.error(`Error creating user: ${error.message}`, { error });
+      throw error;
     }
   },
 
@@ -130,7 +132,8 @@ const registrationService = {
 
       return updatedUser;
     } catch (error) {
-      handleError(error);
+      logger.error(`Error completing registration: ${error.message}`, { error });
+      throw error;
     }
   }
 };

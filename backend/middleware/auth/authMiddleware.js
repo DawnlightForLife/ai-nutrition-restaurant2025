@@ -9,7 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'smart_nutrition_restaurant_secret'
  * 用于保护需要登录访问的接口
  * 验证并解析JWT令牌，将用户信息附加到请求对象
  */
-const authMiddleware = (req, res, next) => {
+const authenticateUser = (req, res, next) => {
   console.log('[AUTH DEBUG] 开始处理令牌验证');
   // 从请求头获取token
   const authHeader = req.headers.authorization;
@@ -28,9 +28,13 @@ const authMiddleware = (req, res, next) => {
     console.log('[AUTH DEBUG] 使用密钥验证令牌:', JWT_SECRET.substring(0, 3) + '...');
     const decoded = jwt.verify(token, JWT_SECRET);
     
-    // 将用户信息附加到请求对象
-    console.log('[AUTH DEBUG] 令牌验证成功，用户ID:', decoded.userId);
-    req.user = decoded;
+    // 将用户信息附加到请求对象，并确保id字段可以被正确读取
+    console.log('[AUTH DEBUG] 令牌验证成功，用户ID:', decoded.id);
+    req.user = {
+      ...decoded,
+      // 确保兼容前端期望的userId字段
+      userId: decoded.id
+    };
     
     // 继续下一步处理
     next();
@@ -45,4 +49,10 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-module.exports = authMiddleware; 
+// 兼容性别名
+const authenticate = authenticateUser;
+
+module.exports = { 
+  authenticateUser,
+  authenticate
+}; 

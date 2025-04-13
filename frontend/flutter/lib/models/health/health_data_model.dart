@@ -10,40 +10,40 @@ import 'dart:convert';
 class HealthData {
   /// 健康数据唯一标识符
   final String? id;
-  
+
   /// 关联的用户ID
   final String? userId;
-  
+
   /// 基础健康指标，包括身高、体重、BMI等
   final Map<String, dynamic>? basicMetrics;
-  
+
   /// 血液健康指标，包括血糖、胆固醇等
   final Map<String, dynamic>? bloodMetrics;
-  
+
   /// 个人基本信息，包括昵称、性别、年龄段等
   final Map<String, dynamic>? profileInfo;
-  
+
   /// 健康状况信息，包括疾病史、过敏史等
   final Map<String, dynamic>? healthStatus;
-  
+
   /// 饮食偏好信息，包括饮食习惯、口味偏好等
   final Map<String, dynamic>? dietaryPreferences;
-  
+
   /// 生活方式信息，包括运动习惯、睡眠情况等
   final Map<String, dynamic>? lifestyle;
-  
+
   /// 营养目标列表，如减肥、增肌、控制血糖等
   final List<String>? nutritionGoals;
-  
+
   /// 关联的营养档案ID
   final String? nutritionProfileId;
-  
+
   /// 是否已同步到营养档案
   final bool? syncedToProfile;
-  
+
   /// 数据创建时间
   final DateTime? createdAt;
-  
+
   /// 数据最后更新时间
   final DateTime? updatedAt;
 
@@ -93,39 +93,37 @@ class HealthData {
    */
   factory HealthData.fromJson(Map<String, dynamic> json) {
     debugPrint('解析健康数据: $json');
-    
+
     return HealthData(
       id: json['_id'] ?? json['id'],
-      userId: json['user_id'],
-      basicMetrics: json['basic_metrics'] != null
-          ? Map<String, dynamic>.from(json['basic_metrics'])
+      userId: json['userId'],
+      basicMetrics: json['basicMetrics'] != null
+          ? Map<String, dynamic>.from(json['basicMetrics'])
           : null,
-      bloodMetrics: json['blood_metrics'] != null
-          ? Map<String, dynamic>.from(json['blood_metrics'])
+      bloodMetrics: json['bloodMetrics'] != null
+          ? Map<String, dynamic>.from(json['bloodMetrics'])
           : null,
-      profileInfo: json['profile_info'] != null
-          ? Map<String, dynamic>.from(json['profile_info'])
+      profileInfo: json['profileInfo'] != null
+          ? Map<String, dynamic>.from(json['profileInfo'])
           : null,
-      healthStatus: json['health_status'] != null
-          ? Map<String, dynamic>.from(json['health_status'])
+      healthStatus: json['healthStatus'] != null
+          ? Map<String, dynamic>.from(json['healthStatus'])
           : null,
-      dietaryPreferences: json['dietary_preferences'] != null
-          ? Map<String, dynamic>.from(json['dietary_preferences'])
+      dietaryPreferences: json['dietaryPreferences'] != null
+          ? Map<String, dynamic>.from(json['dietaryPreferences'])
           : null,
       lifestyle: json['lifestyle'] != null
           ? Map<String, dynamic>.from(json['lifestyle'])
           : null,
-      nutritionGoals: json['nutrition_goals'] != null
-          ? List<String>.from(json['nutrition_goals'])
+      nutritionGoals: json['nutritionGoals'] != null
+          ? List<String>.from(json['nutritionGoals'])
           : null,
-      nutritionProfileId: json['nutrition_profile_id'],
-      syncedToProfile: json['synced_to_profile'],
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
-          : null,
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
-          : null,
+      nutritionProfileId: json['nutritionProfileId'],
+      syncedToProfile: json['syncedToProfile'],
+      createdAt:
+          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      updatedAt:
+          json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
     );
   }
 
@@ -140,19 +138,21 @@ class HealthData {
    */
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
-    
+
     if (id != null) data['id'] = id;
-    if (userId != null) data['user_id'] = userId;
-    if (basicMetrics != null) data['basic_metrics'] = basicMetrics;
-    if (bloodMetrics != null) data['blood_metrics'] = bloodMetrics;
-    if (profileInfo != null) data['profile_info'] = profileInfo;
-    if (healthStatus != null) data['health_status'] = healthStatus;
-    if (dietaryPreferences != null) data['dietary_preferences'] = dietaryPreferences;
+    if (userId != null) data['userId'] = userId;
+    if (basicMetrics != null) data['basicMetrics'] = basicMetrics;
+    if (bloodMetrics != null) data['bloodMetrics'] = bloodMetrics;
+    if (profileInfo != null) data['profileInfo'] = profileInfo;
+    if (healthStatus != null) data['healthStatus'] = healthStatus;
+    if (dietaryPreferences != null)
+      data['dietaryPreferences'] = dietaryPreferences;
     if (lifestyle != null) data['lifestyle'] = lifestyle;
-    if (nutritionGoals != null) data['nutrition_goals'] = nutritionGoals;
-    if (nutritionProfileId != null) data['nutrition_profile_id'] = nutritionProfileId;
-    if (syncedToProfile != null) data['synced_to_profile'] = syncedToProfile;
-    
+    if (nutritionGoals != null) data['nutritionGoals'] = nutritionGoals;
+    if (nutritionProfileId != null)
+      data['nutritionProfileId'] = nutritionProfileId;
+    if (syncedToProfile != null) data['syncedToProfile'] = syncedToProfile;
+
     return data;
   }
 
@@ -220,19 +220,18 @@ class HealthData {
    */
   double? get bmi {
     if (basicMetrics == null) return null;
-    
+
     if (basicMetrics!.containsKey('bmi') && basicMetrics!['bmi'] != null) {
       return double.tryParse(basicMetrics!['bmi'].toString());
     }
-    
-    if (basicMetrics!.containsKey('height') && 
-        basicMetrics!.containsKey('weight') && 
-        basicMetrics!['height'] != null && 
+
+    if (basicMetrics!.containsKey('height') &&
+        basicMetrics!.containsKey('weight') &&
+        basicMetrics!['height'] != null &&
         basicMetrics!['weight'] != null) {
-      
       final height = double.tryParse(basicMetrics!['height'].toString());
       final weight = double.tryParse(basicMetrics!['weight'].toString());
-      
+
       if (height != null && weight != null && height > 0) {
         // 将身高从厘米转换为米
         final heightInMeters = height / 100;
@@ -240,7 +239,7 @@ class HealthData {
         return weight / (heightInMeters * heightInMeters);
       }
     }
-    
+
     return null;
   }
 
@@ -257,9 +256,9 @@ class HealthData {
    */
   String get bmiCategory {
     final bmiValue = bmi;
-    
+
     if (bmiValue == null) return '未知';
-    
+
     if (bmiValue < 18.5) {
       return '偏瘦';
     } else if (bmiValue < 24.9) {
@@ -282,64 +281,81 @@ class HealthData {
   int get completenessScore {
     int score = 0;
     int totalFields = 0;
-    
+
     // 检查基本指标
     if (basicMetrics != null) {
       totalFields += 3;
-      if (basicMetrics!.containsKey('height') && basicMetrics!['height'] != null) score++;
-      if (basicMetrics!.containsKey('weight') && basicMetrics!['weight'] != null) score++;
-      if (basicMetrics!.containsKey('bmi') && basicMetrics!['bmi'] != null) score++;
+      if (basicMetrics!.containsKey('height') &&
+          basicMetrics!['height'] != null) score++;
+      if (basicMetrics!.containsKey('weight') &&
+          basicMetrics!['weight'] != null) score++;
+      if (basicMetrics!.containsKey('bmi') && basicMetrics!['bmi'] != null)
+        score++;
     }
-    
+
     // 检查血液指标
     if (bloodMetrics != null) {
       totalFields += 2;
-      if (bloodMetrics!.containsKey('glucose') && bloodMetrics!['glucose'] != null) score++;
-      if (bloodMetrics!.containsKey('cholesterol') && bloodMetrics!['cholesterol'] != null) score++;
+      if (bloodMetrics!.containsKey('glucose') &&
+          bloodMetrics!['glucose'] != null) score++;
+      if (bloodMetrics!.containsKey('cholesterol') &&
+          bloodMetrics!['cholesterol'] != null) score++;
     }
-    
+
     // 检查个人信息
     if (profileInfo != null) {
       totalFields += 3;
-      if (profileInfo!.containsKey('nickname') && profileInfo!['nickname'] != null) score++;
-      if (profileInfo!.containsKey('gender') && profileInfo!['gender'] != null) score++;
-      if (profileInfo!.containsKey('age_group') && profileInfo!['age_group'] != null) score++;
+      if (profileInfo!.containsKey('nickname') &&
+          profileInfo!['nickname'] != null) score++;
+      if (profileInfo!.containsKey('gender') && profileInfo!['gender'] != null)
+        score++;
+      if (profileInfo!.containsKey('ageGroup') &&
+          profileInfo!['ageGroup'] != null) score++;
     }
-    
+
     // 检查健康状况
     if (healthStatus != null) {
       totalFields += 2;
-      if (healthStatus!.containsKey('chronic_diseases') && healthStatus!['chronic_diseases'] != null) score++;
-      if (healthStatus!.containsKey('special_conditions') && healthStatus!['special_conditions'] != null) score++;
+      if (healthStatus!.containsKey('chronicDiseases') &&
+          healthStatus!['chronicDiseases'] != null) score++;
+      if (healthStatus!.containsKey('specialConditions') &&
+          healthStatus!['specialConditions'] != null) score++;
     }
-    
+
     // 检查饮食偏好
     if (dietaryPreferences != null) {
       totalFields += 3;
-      if (dietaryPreferences!.containsKey('is_vegetarian') && dietaryPreferences!['is_vegetarian'] != null) score++;
-      if (dietaryPreferences!.containsKey('taste_preference') && dietaryPreferences!['taste_preference'] != null) score++;
-      if (dietaryPreferences!.containsKey('taboos') && dietaryPreferences!['taboos'] != null) score++;
+      if (dietaryPreferences!.containsKey('isVegetarian') &&
+          dietaryPreferences!['isVegetarian'] != null) score++;
+      if (dietaryPreferences!.containsKey('tastePreference') &&
+          dietaryPreferences!['tastePreference'] != null) score++;
+      if (dietaryPreferences!.containsKey('taboos') &&
+          dietaryPreferences!['taboos'] != null) score++;
     }
-    
+
     // 检查生活方式
     if (lifestyle != null) {
       totalFields += 4;
-      if (lifestyle!.containsKey('smoking') && lifestyle!['smoking'] != null) score++;
-      if (lifestyle!.containsKey('drinking') && lifestyle!['drinking'] != null) score++;
-      if (lifestyle!.containsKey('sleep_duration') && lifestyle!['sleep_duration'] != null) score++;
-      if (lifestyle!.containsKey('exercise_frequency') && lifestyle!['exercise_frequency'] != null) score++;
+      if (lifestyle!.containsKey('smoking') && lifestyle!['smoking'] != null)
+        score++;
+      if (lifestyle!.containsKey('drinking') && lifestyle!['drinking'] != null)
+        score++;
+      if (lifestyle!.containsKey('sleepDuration') &&
+          lifestyle!['sleepDuration'] != null) score++;
+      if (lifestyle!.containsKey('exerciseFrequency') &&
+          lifestyle!['exerciseFrequency'] != null) score++;
     }
-    
+
     // 检查营养目标
     if (nutritionGoals != null && nutritionGoals!.isNotEmpty) {
       totalFields += 1;
       score += 1;
     }
-    
+
     // 计算百分比
     return totalFields > 0 ? ((score / totalFields) * 100).round() : 0;
   }
-  
+
   /**
    * 创建空的健康数据对象
    * 
@@ -360,7 +376,7 @@ class HealthData {
       syncedToProfile: false,
     );
   }
-  
+
   /**
    * 将HealthData对象转换为字符串表示
    * 
@@ -372,4 +388,4 @@ class HealthData {
   String toString() {
     return jsonEncode(toJson());
   }
-} 
+}
