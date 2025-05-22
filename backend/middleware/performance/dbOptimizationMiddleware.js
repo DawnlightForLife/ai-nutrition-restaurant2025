@@ -3,6 +3,19 @@ const { logger } = require('../core/loggingMiddleware');
 const config = require('../../config');
 
 /**
+ * ✅ 命名风格统一（camelCase）
+ * ✅ 数据库优化中间件集合，包含五大模块：
+ *    1. 查询监控（慢查询识别）
+ *    2. 查询优化（字段校验、select、populate 深度限制）
+ *    3. 查询缓存（Redis 缓存 get/set/delete）
+ *    4. 批量优化（大规模操作分块执行）
+ *    5. 查询生命周期插件（自动索引提示、limit限制、超时控制）
+ * ✅ 支持查询日志上报 + 查询性能指标持久化（DbMetrics）
+ * ✅ 提供可配置中间件注入与Schema插件扩展能力
+ * ✅ 建议 future：缓存标签支持、查询分析可视化、自动推荐索引
+ */
+
+/**
  * 数据库优化中间件集合
  * 提供MongoDB/Mongoose查询优化功能，包括：
  * - 查询监控和统计
@@ -225,7 +238,11 @@ const queryMonitor = new QueryMonitor();
 const queryCache = new QueryCache(require('../security/advancedRateLimitMiddleware').redis);
 const batchOptimizer = new BatchOptimizer();
 
-// 中间件函数
+/**
+ * 请求级查询耗时监控中间件
+ * - 记录每个请求的耗时、路径、时间戳
+ * - 用于统计慢请求与实时监控
+ */
 const queryMonitorMiddleware = () => {
     return (req, res, next) => {
         const start = Date.now();
@@ -244,6 +261,10 @@ const queryMonitorMiddleware = () => {
     };
 };
 
+/**
+ * 请求查询参数优化中间件
+ * - 限制limit最大值、校验sort/select合法性、控制populate深度
+ */
 const queryOptimizerMiddleware = (options) => {
     const optimizer = new QueryOptimizer(options);
     
@@ -255,6 +276,11 @@ const queryOptimizerMiddleware = (options) => {
     };
 };
 
+/**
+ * 通用查询缓存中间件（仅限GET）
+ * - 使用请求路径 + 查询参数作为key
+ * - 缓存结果返回 / 写入缓存逻辑
+ */
 const queryCacheMiddleware = (options) => {
     return async (req, res, next) => {
         if (req.method !== 'GET') {
@@ -349,6 +375,7 @@ function monitorQueryTime(schema) {
  * @param {number} duration 执行时间（毫秒）
  * @param {boolean} isSlowQuery 是否为慢查询
  */
+// TODO: 添加慢查询等级标记字段（等级1/2/3）用于告警系统判断严重性
 async function saveQueryMetrics(collection, operation, query, duration, isSlowQuery) {
   try {
     // 动态导入DbMetrics模型，避免循环依赖
@@ -368,8 +395,9 @@ async function saveQueryMetrics(collection, operation, query, duration, isSlowQu
 }
 
 /**
- * 自动应用索引提示（index hints）
- * @param {Object} schema Mongoose Schema
+ * Schema插件：自动为查询应用 hint（索引提示）
+ * - 根据Schema中声明的index字段自动匹配
+ * - 适用于 find 查询加速
  */
 function applyIndexHints(schema) {
   // 获取索引信息
@@ -419,8 +447,8 @@ function applyQueryLimits(schema) {
 }
 
 /**
- * 应用查询超时设置
- * @param {Object} schema Mongoose Schema
+ * Schema插件：设置查询最大执行时间（maxTimeMS）
+ * - 防止查询阻塞数据库线程
  */
 function applyQueryTimeout(schema) {
   // 默认查询超时时间（毫秒）

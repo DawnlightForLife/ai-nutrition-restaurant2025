@@ -1,0 +1,10 @@
+
+
+integrations:
+  - path: lib/app/main.widgetbook.dart
+    name: WidgetbookMain
+directories:
+  - path: lib/modules
+    name: Modules
+  - path: lib/common/widgets
+    name: Common Widgets

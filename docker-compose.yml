@@ -14,6 +14,7 @@ services:
       - "8080:3000"
     volumes:
       - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
     depends_on:
       mongo:
         condition: service_healthy

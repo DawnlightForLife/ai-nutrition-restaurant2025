@@ -6,42 +6,79 @@ const recommendedDishSchema = new mongoose.Schema({
   dishId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Dish',
-    required: true
+    required: true,
+    description: '菜品ID'
   },
   dishName: {
     type: String,
-    required: true
+    required: true,
+    description: '菜品名称'
   },
   merchantId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Merchant'
+    ref: 'Merchant',
+    description: '商家ID'
   },
-  merchantName: String,
+  merchantName: {
+    type: String,
+    description: '商家名称'
+  },
   confidenceScore: {
     type: Number,
     min: 0,
     max: 1,
-    default: 0.5
+    default: 0.5,
+    description: '推荐置信度（0-1）'
   },
   matchReason: {
-    type: String
+    type: String,
+    description: '匹配原因'
   },
   nutritionBenefit: {
-    type: String
+    type: String,
+    description: '营养益处'
   },
   healthBenefit: {
-    type: String
+    type: String,
+    description: '健康益处'
   },
-  price: Number,
-  calories: Number,
-  protein: Number,
-  carbs: Number,
-  fat: Number,
+  price: {
+    type: Number,
+    description: '价格'
+  },
+  calories: {
+    type: Number,
+    description: '卡路里'
+  },
+  protein: {
+    type: Number,
+    description: '蛋白质(g)'
+  },
+  carbs: {
+    type: Number,
+    description: '碳水化合物(g)'
+  },
+  fat: {
+    type: Number,
+    description: '脂肪(g)'
+  },
   keyNutrients: [{
-    name: String,
-    amount: Number,
-    unit: String,
-    dailyValuePercentage: Number
+    name: {
+      type: String,
+      description: '营养素名称'
+    },
+    amount: {
+      type: Number,
+      description: '含量'
+    },
+    unit: {
+      type: String,
+      description: '单位'
+    },
+    dailyValuePercentage: {
+      type: Number,
+      description: '每日推荐值百分比'
+    }
   }]
 });
 
@@ -49,23 +86,44 @@ const recommendedDishSchema = new mongoose.Schema({
 const recommendedMealPlanSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true
+    required: true,
+    description: '套餐名称'
   },
-  description: String,
+  description: {
+    type: String,
+    description: '套餐描述'
+  },
   durationDays: {
     type: Number,
-    default: 1
+    default: 1,
+    description: '持续天数'
   },
-  targetCaloriesPerDay: Number,
-  targetProteinPerDay: Number,
-  targetCarbsPerDay: Number,
-  targetFatPerDay: Number,
+  targetCaloriesPerDay: {
+    type: Number,
+    description: '每日目标卡路里'
+  },
+  targetProteinPerDay: {
+    type: Number,
+    description: '每日目标蛋白质(g)'
+  },
+  targetCarbsPerDay: {
+    type: Number,
+    description: '每日目标碳水化合物(g)'
+  },
+  targetFatPerDay: {
+    type: Number,
+    description: '每日目标脂肪(g)'
+  },
   dailyPlans: [{
-    day: Number,
+    day: {
+      type: Number,
+      description: '第几天'
+    },
     meals: [{
       mealType: {
         type: String,
-        enum: ['breakfast', 'lunch', 'dinner', 'snack']
+        enum: ['breakfast', 'lunch', 'dinner', 'snack'],
+        description: '餐点类型'
       },
       dishes: [recommendedDishSchema]
     }]
@@ -77,67 +135,72 @@ const aiRecommendationSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-    index: true
+    index: true,
+    description: '所属用户ID'
   },
   profileId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'NutritionProfile',
     required: true,
-    index: true
+    index: true,
+    description: '对应的营养档案ID'
   },
   // 推荐类型
   recommendationType: {
     type: String,
     enum: ['meal_plan', 'nutrition_goal', 'alert', 'custom', 'dish', 'meal', 'diet_suggestion'],
-    required: true
+    required: true,
+    description: '推荐类型'
   },
   // 推荐时间点
   recommendationTime: {
     type: String,
     enum: ['breakfast', 'lunch', 'dinner', 'snack', 'any'],
-    default: 'any'
+    default: 'any',
+    description: '推荐时间点'
   },
   // 推荐环境背景
   context: {
     location: {
       type: String,
       enum: ['home', 'work', 'restaurant', 'gym', 'travel', 'other'],
-      default: 'any'
+      default: 'any',
+      description: '位置类型'
     },
-    weather: String,
-    season: String,
-    specialOccasion: String,
+    weather: {
+      type: String,
+      description: '天气'
+    },
+    season: {
+      type: String,
+      description: '季节'
+    },
+    specialOccasion: {
+      type: String,
+      description: '特殊场合'
+    },
     timeConstraint: {
       type: String,
       enum: ['quick', 'normal', 'leisurely', 'any'],
-      default: 'any'
+      default: 'any',
+      description: '时间限制'
     }
-  },
-  // 筛选条件
-  filters: {
-    cuisinePreferences: [String],
-    maxPrice: Number,
-    merchantTypes: [String],
-    excludedIngredients: [String],
-    requiredIngredients: [String],
-    distanceLimit: Number, // 公里
-    healthFocus: [String],
-    calorieRange: {
-      min: Number,
-      max: Number
-    },
-    specificNutrients: [{
-      nutrient: String,
-      min: Number,
-      max: Number
-    }]
   },
   // 位置信息（用于基于位置的推荐）
   location: {
-    city: String,
+    city: {
+      type: String,
+      description: '城市'
+    },
     coordinates: {
-      latitude: Number,
-      longitude: Number
+      latitude: {
+        type: Number,
+        description: '纬度'
+      },
+      longitude: {
+        type: Number,
+        description: '经度'
+      }
     }
   },
   // 推荐结果数据结构化
@@ -148,49 +211,107 @@ const aiRecommendationSchema = new mongoose.Schema({
     meal: {
       mealType: {
         type: String,
-        enum: ['breakfast', 'lunch', 'dinner', 'snack']
+        enum: ['breakfast', 'lunch', 'dinner', 'snack'],
+        description: '餐点类型'
       },
       dishes: [recommendedDishSchema],
       combinedNutrition: {
-        calories: Number,
-        protein: Number,
-        carbs: Number,
-        fat: Number,
+        calories: {
+          type: Number,
+          description: '总卡路里'
+        },
+        protein: {
+          type: Number,
+          description: '总蛋白质(g)'
+        },
+        carbs: {
+          type: Number,
+          description: '总碳水化合物(g)'
+        },
+        fat: {
+          type: Number,
+          description: '总脂肪(g)'
+        },
         keyNutrients: [{
-          name: String,
-          amount: Number,
-          unit: String,
-          dailyValuePercentage: Number
+          name: {
+            type: String,
+            description: '营养素名称'
+          },
+          amount: {
+            type: Number,
+            description: '含量'
+          },
+          unit: {
+            type: String,
+            description: '单位'
+          },
+          dailyValuePercentage: {
+            type: Number,
+            description: '每日推荐值百分比'
+          }
         }]
       },
-      estimatedPrice: Number,
+      estimatedPrice: {
+        type: Number,
+        description: '估计价格'
+      },
       matchingScore: {
         type: Number,
         min: 0,
-        max: 100
+        max: 100,
+        description: '匹配得分(0-100)'
       }
     },
     // 膳食计划推荐
     mealPlan: recommendedMealPlanSchema,
     // 饮食建议（文本）
     dietSuggestions: [{
-      suggestion: String,
-      reasoning: String,
-      scientificBasis: String,
+      suggestion: {
+        type: String,
+        description: '建议内容'
+      },
+      reasoning: {
+        type: String,
+        description: '建议理由'
+      },
+      scientificBasis: {
+        type: String,
+        description: '科学依据'
+      },
       priority: {
         type: Number,
         min: 1,
-        max: 5
+        max: 5,
+        default: 3,
+        description: '优先级(1-5)'
       }
     }],
     // 摘要信息
     summary: {
-      dailyCalories: Number,
-      proteinPercentage: Number,
-      carbsPercentage: Number,
-      fatPercentage: Number,
-      keyBenefits: [String],
-      estimatedTotalCost: Number
+      dailyCalories: {
+        type: Number,
+        description: '每日卡路里'
+      },
+      proteinPercentage: {
+        type: Number,
+        description: '蛋白质百分比'
+      },
+      carbsPercentage: {
+        type: Number,
+        description: '碳水化合物百分比'
+      },
+      fatPercentage: {
+        type: Number,
+        description: '脂肪百分比'
+      },
+      keyBenefits: {
+        type: [String],
+        description: '关键益处'
+      },
+      estimatedTotalCost: {
+        type: Number,
+        description: '预计总成本'
+      }
     }
   },
   // 兼容之前的字段（为了保持兼容性）
@@ -198,171 +319,278 @@ const aiRecommendationSchema = new mongoose.Schema({
   recommendedMeal: {
     mealType: {
       type: String,
-      enum: ['breakfast', 'lunch', 'dinner', 'snack']
+      enum: ['breakfast', 'lunch', 'dinner', 'snack'],
+      description: '餐点类型'
     },
     dishes: [recommendedDishSchema],
     combinedNutrition: {
-      calories: Number,
-      protein: Number,
-      carbs: Number,
-      fat: Number,
+      calories: {
+        type: Number,
+        description: '总卡路里'
+      },
+      protein: {
+        type: Number,
+        description: '总蛋白质(g)'
+      },
+      carbs: {
+        type: Number,
+        description: '总碳水化合物(g)'
+      },
+      fat: {
+        type: Number,
+        description: '总脂肪(g)'
+      },
       keyNutrients: [{
-        name: String,
-        amount: Number,
-        unit: String,
-        dailyValuePercentage: Number
+        name: {
+          type: String,
+          description: '营养素名称'
+        },
+        amount: {
+          type: Number,
+          description: '含量'
+        },
+        unit: {
+          type: String,
+          description: '单位'
+        },
+        dailyValuePercentage: {
+          type: Number,
+          description: '每日推荐值百分比'
+        }
       }]
     },
-    estimatedPrice: Number,
+    estimatedPrice: {
+      type: Number,
+      description: '估计价格'
+    },
     matchingScore: {
       type: Number,
       min: 0,
-      max: 100
+      max: 100,
+      description: '匹配得分(0-100)'
     }
   },
   recommendedMealPlan: recommendedMealPlanSchema,
   // AI 分析
   analysis: {
-    currentDietAnalysis: String,
-    nutritionGaps: [String],
-    healthInsights: [String],
-    improvementAreas: [String],
-    achievementRecognitions: [String]
+    currentDietAnalysis: {
+      type: String,
+      description: '当前饮食分析'
+    },
+    nutritionGaps: {
+      type: [String],
+      description: '营养缺口'
+    },
+    healthInsights: {
+      type: [String],
+      description: '健康洞察'
+    },
+    improvementAreas: {
+      type: [String],
+      description: '需改进领域'
+    },
+    achievementRecognitions: {
+      type: [String],
+      description: '已取得成就'
+    }
   },
   // AI 推荐的总体得分
   overallScore: {
     type: Number,
     min: 0,
-    max: 100
+    max: 100,
+    description: '总体得分(0-100)'
   },
   // 推荐算法信息
   algorithmInfo: {
-    version: String,
-    modelUsed: String,
-    featuresConsidered: [String],
+    version: {
+      type: String,
+      description: '算法版本'
+    },
+    modelUsed: {
+      type: String,
+      description: '使用的模型'
+    },
+    featuresConsidered: {
+      type: [String],
+      description: '考虑的特征'
+    },
     confidence: {
       type: Number,
       min: 0,
-      max: 1
+      max: 1,
+      description: '置信度(0-1)'
     }
   },
   // 推荐状态
   status: {
     type: String,
     enum: ['pending', 'processing', 'generated', 'completed', 'failed', 'rejected', 'archived'],
-    default: 'pending'
+    default: 'pending',
+    description: '推荐状态'
   },
-  errorMessage: String,
+  errorMessage: {
+    type: String,
+    description: '错误信息'
+  },
   // 用户反馈结构化
   feedback: {
-    liked: Boolean,
+    liked: {
+      type: Boolean,
+      description: '是否喜欢'
+    },
     rating: {
       type: Number,
       min: 1,
-      max: 5
+      max: 5,
+      default: null,
+      description: '评分(1-5)'
     },
-    comment: String,
+    comment: {
+      type: String,
+      description: '评论'
+    },
     submittedAt: {
       type: Date,
-      default: null
+      default: null,
+      description: '提交时间'
     },
     followThrough: {
       type: String,
       enum: ['ordered', 'saved', 'ignored', 'unknown'],
-      default: 'unknown'
+      default: 'unknown',
+      description: '后续行动'
     },
-    followedAt: Date
+    followedAt: {
+      type: Date,
+      description: '行动时间'
+    }
   },
   // 反馈状态
   feedbackStatus: {
     type: String,
     enum: ['pending', 'accepted', 'rejected', 'ignored'],
-    default: 'pending'
+    default: 'pending',
+    description: '反馈状态'
   },
   // 关联的订单（如果用户根据推荐进行了订购）
   relatedOrders: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Order'
+    ref: 'Order',
+    description: '关联订单'
   }],
   // 隐私与访问控制
   privacyLevel: {
     type: String,
     enum: ['private', 'share_with_nutritionist', 'share_with_merchant', 'public'],
-    default: 'private'
+    default: 'private',
+    description: '隐私级别'
   },
   // 授权记录
   accessGrants: [{
     grantedTo: {
       type: mongoose.Schema.Types.ObjectId,
-      refPath: 'accessGrants.grantedToType'
+      refPath: 'accessGrants.grantedToType',
+      description: '被授权者ID'
     },
     grantedToType: {
       type: String,
-      enum: ['Nutritionist', 'Merchant']
+      enum: ['Nutritionist', 'Merchant'],
+      description: '被授权者类型'
     },
     grantedAt: {
       type: Date,
-      default: Date.now
+      default: Date.now,
+      description: '授权时间'
     },
-    validUntil: Date,
+    validUntil: {
+      type: Date,
+      description: '有效期至'
+    },
     accessLevel: {
       type: String,
       enum: ['read', 'read_write'],
-      default: 'read'
+      default: 'read',
+      description: '访问级别'
     },
     revoked: {
       type: Boolean,
-      default: false
+      default: false,
+      description: '是否已撤销'
     },
-    revokedAt: Date
+    revokedAt: {
+      type: Date,
+      description: '撤销时间'
+    }
   }],
   // 安全和审计
   accessLog: [{
     timestamp: {
       type: Date,
-      default: Date.now
+      default: Date.now,
+      description: '访问时间'
     },
     accessedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      refPath: 'accessLog.accessedByType'
+      refPath: 'accessLog.accessedByType',
+      description: '访问者ID'
     },
     accessedByType: {
       type: String,
-      enum: ['User', 'Nutritionist', 'Merchant', 'Admin', 'System']
+      enum: ['User', 'Nutritionist', 'Merchant', 'Admin', 'System'],
+      description: '访问者类型'
     },
-    ipAddress: String,
+    ipAddress: {
+      type: String,
+      description: 'IP地址'
+    },
     action: {
       type: String,
-      enum: ['view', 'generate', 'update', 'delete', 'share', 'order']
+      enum: ['view', 'generate', 'update', 'delete', 'share', 'order'],
+      description: '操作类型'
     }
   }],
   // 营养师审核（可选）
   nutritionistReview: {
     reviewedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Nutritionist'
+      ref: 'Nutritionist',
+      description: '审核营养师'
     },
-    reviewedAt: Date,
+    reviewedAt: {
+      type: Date,
+      description: '审核时间'
+    },
     approvalStatus: {
       type: String,
       enum: ['approved', 'approved_with_modifications', 'rejected'],
+      description: '批准状态'
     },
     modifications: [{
       originalDishId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Dish'
+        ref: 'Dish',
+        description: '原菜品ID'
       },
       replacementDishId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Dish'
+        ref: 'Dish',
+        description: '替换菜品ID'
       },
-      reason: String
+      reason: {
+        type: String,
+        description: '替换原因'
+      }
     }],
-    comments: String
+    comments: {
+      type: String,
+      description: '评论'
+    }
   },
   // 过期和有效期
   expiresAt: {
-    type: Date
+    type: Date,
+    description: '过期时间'
   }
 }, {
   timestamps: true,

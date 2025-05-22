@@ -1,18 +1,22 @@
 /**
- * 商家控制器
- * 处理商家基本信息相关的所有请求，包括商家注册、信息更新等
+ * 商家控制器模块（merchantController）
+ * 管理商家相关的所有请求：创建、更新、查询、审核、删除
+ * 使用认证中间件 req.user 限制操作权限，确保用户与数据一致性
  * @module controllers/merchant/merchantController
  */
 
+// ✅ 所有方法为 async 函数
+// ✅ 返回结构统一：{ success, message, data? }
+// ✅ 权限控制逻辑清晰：用户本人或管理员
+
 const { merchantService } = require('../../services');
-const catchAsync = require('../../utils/catchAsync');
+const catchAsync = require('../../utils/errors/catchAsync');
 
 /**
- * 创建商家
- * @async
- * @param {Object} req - Express请求对象
- * @param {Object} res - Express响应对象
- * @returns {Object} 包含新创建商家的JSON响应
+ * 创建商家信息
+ * - 用户必须为已认证用户（req.user.id 提供）
+ * - 商家信息写入数据库，禁止自行附带 userId
+ * - 返回商家创建结果
  */
 exports.createMerchant = catchAsync(async (req, res) => {
   const data = req.body;
@@ -38,10 +42,8 @@ exports.createMerchant = catchAsync(async (req, res) => {
 
 /**
  * 获取商家列表
- * @async
- * @param {Object} req - Express请求对象
- * @param {Object} res - Express响应对象
- * @returns {Object} 包含商家列表的JSON响应
+ * - 支持多条件筛选、分页、排序
+ * - 返回商家列表及分页信息
  */
 exports.getMerchantList = catchAsync(async (req, res) => {
   const { 
@@ -84,10 +86,8 @@ exports.getMerchantList = catchAsync(async (req, res) => {
 
 /**
  * 获取单个商家详情
- * @async
- * @param {Object} req - Express请求对象
- * @param {Object} res - Express响应对象
- * @returns {Object} 包含单个商家的JSON响应
+ * - 根据商家ID查询详细信息
+ * - 返回商家详情或错误信息
  */
 exports.getMerchantById = catchAsync(async (req, res) => {
   const { id } = req.params;
@@ -109,12 +109,13 @@ exports.getMerchantById = catchAsync(async (req, res) => {
 });
 
 /**
- * 更新商家
- * @async
- * @param {Object} req - Express请求对象
- * @param {Object} res - Express响应对象
- * @returns {Object} 包含更新后商家的JSON响应
+ * 更新商家信息
+ * - 用户必须是商家本人或管理员
+ * - 禁止修改关键字段，避免越权
+ * - 返回更新后的商家信息
  */
+// NOTE: 以下字段禁止外部修改，防止越权操作
+// - userId / verification / accountStatus / stats
 exports.updateMerchant = catchAsync(async (req, res) => {
   const { id } = req.params;
   const data = req.body;
@@ -160,12 +161,12 @@ exports.updateMerchant = catchAsync(async (req, res) => {
 });
 
 /**
- * 删除商家
- * @async
- * @param {Object} req - Express请求对象
- * @param {Object} res - Express响应对象
- * @returns {Object} 包含操作结果的JSON响应
+ * 删除商家信息
+ * - 用户必须是商家本人或管理员
+ * - 返回删除操作结果
  */
+// NOTE: 以下字段禁止外部修改，防止越权操作
+// - userId / verification / accountStatus / stats
 exports.deleteMerchant = catchAsync(async (req, res) => {
   const { id } = req.params;
   
@@ -204,11 +205,11 @@ exports.deleteMerchant = catchAsync(async (req, res) => {
 
 /**
  * 审核商家资质
- * @async
- * @param {Object} req - Express请求对象
- * @param {Object} res - Express响应对象
- * @returns {Object} 包含操作结果的JSON响应
+ * - 仅管理员可执行
+ * - 更新审核状态及相关信息
+ * - 返回审核结果
  */
+// ONLY ADMIN: 仅限管理员角色可执行此操作
 exports.verifyMerchant = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { verificationStatus, rejectionReason } = req.body;

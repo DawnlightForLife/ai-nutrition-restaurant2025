@@ -1,0 +1,9 @@
+**/widgetbook/**
+**/generated/**
+**/mock_*.dart
+**/*.g.dart
+**/*.freezed.dart
+**/*.config.dart
+**/generated_plugin_registrant.dart
+**/main.dart
+**/widgetbook_main.dart 

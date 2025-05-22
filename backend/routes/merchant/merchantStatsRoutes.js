@@ -3,22 +3,24 @@ const router = express.Router();
 const { createMerchantStats, getMerchantStatsList, getMerchantStatsById, updateMerchantStats, deleteMerchantStats } = require('../../controllers/merchant/merchantStatsController');
 
 /**
- * 商家统计相关路由
+ * 商家经营统计路由
+ * 提供创建、查询、更新、删除商家统计数据的接口
+ * @module routes/merchant/merchantStatsRoutes
  */
 
-// 创建商家统计
+// [POST] 创建商家统计数据
 router.post('/', createMerchantStats);
 
-// 获取商家统计列表
+// [GET] 获取商家统计数据列表
 router.get('/', getMerchantStatsList);
 
-// 获取单个商家统计详情
+// [GET] 获取单个商家统计数据详情
 router.get('/:id', getMerchantStatsById);
 
-// 更新商家统计
+// [PUT] 更新商家统计数据
 router.put('/:id', updateMerchantStats);
 
-// 删除商家统计
+// [DELETE] 删除商家统计数据
 router.delete('/:id', deleteMerchantStats);
 
 module.exports = router;

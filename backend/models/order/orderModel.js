@@ -1,300 +1,466 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
+const { merchantTypeValues } = require('../merchant/merchantTypeEnum');
 
 const orderItemSchema = new mongoose.Schema({
-  dish_id: {
+  dishId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Dish',
-    required: true
+    required: true,
+    description: '菜品ID'
   },
   name: {
     type: String,
-    required: true
+    required: true,
+    description: '菜品名称'
   },
   price: {
     type: Number,
     required: true,
-    min: 0
+    min: 0,
+    description: '菜品单价'
   },
   quantity: {
     type: Number,
     required: true,
     min: 1,
-    default: 1
+    default: 1,
+    description: '菜品数量'
   },
   customizations: [{
-    option_name: String,
-    option_value: String,
-    additional_price: {
+    optionName: {
+      type: String,
+      description: '选项名称'
+    },
+    optionValue: {
+      type: String,
+      description: '选项值'
+    },
+    additionalPrice: {
       type: Number,
-      default: 0
+      default: 0,
+      description: '额外费用'
     }
   }],
-  special_instructions: String,
-  item_total: {
+  specialInstructions: {
+    type: String,
+    description: '特殊要求'
+  },
+  itemTotal: {
     type: Number,
-    required: true
+    required: true,
+    description: '菜品总价'
   }
 });
 
 const orderSchema = new mongoose.Schema({
-  order_number: {
+  orderNumber: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    description: '订单编号'
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    description: '下单用户ID'
   },
-  merchant_id: {
+  merchantId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Merchant',
-    required: true
+    required: true,
+    description: '商家ID'
   },
-  merchant_type: {
+  merchantType: {
     type: String,
-    enum: ['restaurant', 'gym', 'maternity_center', 'school_company'],
-    required: true
+    enum: merchantTypeValues,
+    required: true,
+    description: '商家类型（驼峰命名）'
   },
   items: [orderItemSchema],
   // 使用的营养档案（可选）
   nutritionProfileId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'NutritionProfile'
+    ref: 'NutritionProfile',
+    description: '使用的营养档案ID'
   },
   // 相关的AI推荐
-  ai_recommendation_id: {
+  aiRecommendationId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'AiRecommendation'
+    ref: 'AiRecommendation',
+    description: '相关的AI推荐ID'
   },
   // 订单状态
   status: {
     type: String,
     enum: ['pending', 'confirmed', 'preparing', 'ready', 'in_delivery', 'delivered', 'completed', 'cancelled', 'refunded'],
-    default: 'pending'
+    default: 'pending',
+    description: '订单状态'
   },
   // 订单类型
-  order_type: {
+  orderType: {
     type: String,
     enum: ['dine_in', 'takeout', 'delivery', 'catering', 'subscription'],
-    default: 'dine_in'
+    default: 'dine_in',
+    description: '订单类型'
+  },
+  // 订单来源
+  source: {
+    type: String,
+    enum: ['user', 'admin', 'subscription', 'system'],
+    default: 'user',
+    description: '订单创建来源'
   },
   // 支付信息
   payment: {
     method: {
       type: String,
       enum: ['cash', 'credit_card', 'debit_card', 'mobile_payment', 'subscription', 'other'],
-      required: true
+      required: true,
+      description: '支付方式'
     },
     status: {
       type: String,
       enum: ['pending', 'paid', 'partially_refunded', 'refunded', 'failed'],
-      default: 'pending'
+      default: 'pending',
+      description: '支付状态'
     },
-    transaction_id: String,
-    payment_time: Date,
-    refund_id: String,
-    refund_time: Date
+    transactionId: {
+      type: String,
+      description: '交易ID'
+    },
+    paymentTime: {
+      type: Date,
+      description: '支付时间'
+    },
+    refundId: {
+      type: String,
+      description: '退款ID'
+    },
+    refundTime: {
+      type: Date,
+      description: '退款时间'
+    }
   },
   // 价格明细
-  price_details: {
+  priceDetails: {
     subtotal: {
       type: Number,
-      required: true
+      required: true,
+      description: '小计金额'
     },
     tax: {
       type: Number,
-      default: 0
+      default: 0,
+      description: '税费'
     },
-    delivery_fee: {
+    deliveryFee: {
       type: Number,
-      default: 0
+      default: 0,
+      description: '配送费'
     },
-    service_fee: {
+    serviceFee: {
       type: Number,
-      default: 0
+      default: 0,
+      description: '服务费'
     },
     tip: {
       type: Number,
-      default: 0
+      default: 0,
+      description: '小费'
     },
     discount: {
       type: Number,
-      default: 0
+      default: 0,
+      description: '折扣金额'
     },
-    discount_code: String,
+    discountCode: {
+      type: String,
+      description: '折扣码'
+    },
     total: {
       type: Number,
-      required: true
+      required: true,
+      description: '总金额'
     }
   },
   // 配送信息（如适用）
   delivery: {
     address: {
-      line1: String,
-      line2: String,
-      city: String,
-      state: String,
-      postal_code: String,
+      line1: {
+        type: String,
+        description: '地址行1'
+      },
+      line2: {
+        type: String,
+        description: '地址行2'
+      },
+      city: {
+        type: String,
+        description: '城市'
+      },
+      state: {
+        type: String,
+        description: '省/州'
+      },
+      postalCode: {
+        type: String,
+        description: '邮编'
+      },
       country: {
         type: String,
-        default: 'China'
+        default: 'China',
+        description: '国家'
       },
       coordinates: {
-        latitude: Number,
-        longitude: Number
+        latitude: {
+          type: Number,
+          description: '纬度'
+        },
+        longitude: {
+          type: Number,
+          description: '经度'
+        }
       }
     },
-    contact_name: String,
-    contact_phone: String,
-    delivery_instructions: String,
-    estimated_delivery_time: Date,
-    actual_delivery_time: Date,
-    delivery_person: {
-      id: String,
-      name: String,
-      phone: String
+    contactName: {
+      type: String,
+      description: '联系人姓名'
+    },
+    contactPhone: {
+      type: String,
+      description: '联系人电话'
+    },
+    deliveryInstructions: {
+      type: String,
+      description: '配送说明'
+    },
+    estimatedDeliveryTime: {
+      type: Date,
+      description: '预计配送时间'
+    },
+    actualDeliveryTime: {
+      type: Date,
+      description: '实际配送时间'
+    },
+    deliveryPerson: {
+      id: {
+        type: String,
+        description: '配送员ID'
+      },
+      name: {
+        type: String,
+        description: '配送员姓名'
+      },
+      phone: {
+        type: String,
+        description: '配送员电话'
+      }
     }
   },
   // 堂食信息
-  dine_in: {
-    table_number: String,
-    number_of_people: Number,
-    estimated_completion_time: Date
+  dineIn: {
+    tableNumber: {
+      type: String,
+      description: '桌号'
+    },
+    numberOfPeople: {
+      type: Number,
+      description: '人数'
+    },
+    estimatedCompletionTime: {
+      type: Date,
+      description: '预计完成时间'
+    }
   },
   // 订单营养摘要（汇总所有菜品）
-  nutrition_summary: {
-    calories: Number,
-    protein: Number,
-    fat: Number,
-    carbohydrates: Number,
-    suitable_for_health_conditions: [String],
-    allergens: [String]
+  nutritionSummary: {
+    calories: {
+      type: Number,
+      description: '总卡路里'
+    },
+    protein: {
+      type: Number,
+      description: '总蛋白质(g)'
+    },
+    fat: {
+      type: Number,
+      description: '总脂肪(g)'
+    },
+    carbohydrates: {
+      type: Number,
+      description: '总碳水化合物(g)'
+    },
+    suitableForHealthConditions: {
+      type: [String],
+      description: '适合的健康状况'
+    },
+    allergens: {
+      type: [String],
+      description: '过敏原'
+    }
   },
   // 订单与营养目标吻合度评分（由AI计算）
-  nutrition_goal_alignment: {
+  nutritionGoalAlignment: {
     score: {
       type: Number,
       min: 0,
-      max: 100
+      max: 100,
+      description: '营养目标吻合度评分(0-100)'
     },
-    analysis: String
+    analysis: {
+      type: String,
+      description: '营养分析'
+    }
   },
   // 访问控制与隐私
-  privacy_level: {
+  privacyLevel: {
     type: String,
     enum: ['private', 'share_with_nutritionist', 'share_with_merchant', 'public'],
-    default: 'private'
+    default: 'private',
+    description: '隐私级别'
   },
   // 订单访问授权
-  access_grants: [{
-    granted_to: {
+  accessGrants: [{
+    grantedTo: {
       type: mongoose.Schema.Types.ObjectId,
-      refPath: 'access_grants.granted_to_type'
+      refPath: 'accessGrants.grantedToType',
+      description: '被授权者ID'
     },
-    granted_to_type: {
+    grantedToType: {
       type: String,
-      enum: ['Nutritionist', 'Merchant', 'Admin']
+      enum: ['Nutritionist', 'Merchant', 'Admin'],
+      description: '被授权者类型'
     },
-    granted_at: {
+    grantedAt: {
       type: Date,
-      default: Date.now
+      default: Date.now,
+      description: '授权时间'
     },
-    valid_until: Date,
-    access_level: {
+    validUntil: {
+      type: Date,
+      description: '有效期至'
+    },
+    accessLevel: {
       type: String,
       enum: ['read', 'read_write'],
-      default: 'read'
+      default: 'read',
+      description: '访问级别'
     },
     revoked: {
       type: Boolean,
-      default: false
+      default: false,
+      description: '是否已撤销'
     },
-    revoked_at: Date
+    revokedAt: {
+      type: Date,
+      description: '撤销时间'
+    }
   }],
   // 评价
   rating: {
     overall: {
       type: Number,
       min: 1,
-      max: 5
+      max: 5,
+      description: '总体评分(1-5)'
     },
-    food_quality: {
+    foodQuality: {
       type: Number,
       min: 1,
-      max: 5
+      max: 5,
+      description: '食物质量评分(1-5)'
     },
     service: {
       type: Number,
       min: 1,
-      max: 5
+      max: 5,
+      description: '服务评分(1-5)'
     },
-    delivery_experience: {
+    deliveryExperience: {
       type: Number,
       min: 1,
-      max: 5
+      max: 5,
+      description: '配送体验评分(1-5)'
     },
-    nutrition_quality: {
+    nutritionQuality: {
       type: Number,
       min: 1,
-      max: 5
+      max: 5,
+      description: '营养质量评分(1-5)'
     },
-    review_text: String,
-    review_date: Date,
-    merchant_response: String,
-    merchant_response_date: Date
+    reviewText: {
+      type: String,
+      description: '评价内容'
+    },
+    reviewDate: {
+      type: Date,
+      description: '评价日期'
+    },
+    merchantResponse: {
+      type: String,
+      description: '商家回复'
+    },
+    merchantResponseDate: {
+      type: Date,
+      description: '商家回复日期'
+    }
   },
   // 数据审计
-  status_history: [{
+  statusHistory: [{
     status: {
       type: String,
-      enum: ['pending', 'confirmed', 'preparing', 'ready', 'in_delivery', 'delivered', 'completed', 'cancelled', 'refunded']
+      enum: ['pending', 'confirmed', 'preparing', 'ready', 'in_delivery', 'delivered', 'completed', 'cancelled', 'refunded'],
+      description: '状态'
     },
     timestamp: {
       type: Date,
-      default: Date.now
+      default: Date.now,
+      description: '时间戳'
     },
-    updated_by: {
+    updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      refPath: 'status_history.updated_by_type'
+      refPath: 'statusHistory.updatedByType',
+      description: '更新者ID'
     },
-    updated_by_type: {
+    updatedByType: {
       type: String,
-      enum: ['User', 'Merchant', 'Admin', 'System']
+      enum: ['User', 'Merchant', 'Admin', 'System'],
+      description: '更新者类型'
     },
-    notes: String
-  }],
-  // 安全和审计
-  access_log: [{
-    timestamp: {
-      type: Date,
-      default: Date.now
-    },
-    accessed_by: {
-      type: mongoose.Schema.Types.ObjectId,
-      refPath: 'access_log.accessed_by_type'
-    },
-    accessed_by_type: {
+    notes: {
       type: String,
-      enum: ['User', 'Merchant', 'Nutritionist', 'Admin', 'System']
-    },
-    ip_address: String,
-    action: {
-      type: String,
-      enum: ['view', 'update', 'pay', 'cancel', 'refund', 'rate']
+      description: '备注'
     }
   }],
-  // 时间戳
-  created_at: {
-    type: Date,
-    default: Date.now
-  },
-  updated_at: {
-    type: Date,
-    default: Date.now
-  }
+  // 安全和审计
+  accessLog: [{
+    timestamp: {
+      type: Date,
+      default: Date.now,
+      description: '时间戳'
+    },
+    accessedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      refPath: 'accessLog.accessedByType',
+      description: '访问者ID'
+    },
+    accessedByType: {
+      type: String,
+      enum: ['User', 'Merchant', 'Nutritionist', 'Admin', 'System'],
+      description: '访问者类型'
+    },
+    ipAddress: {
+      type: String,
+      description: 'IP地址'
+    },
+    action: {
+      type: String,
+      enum: ['view', 'update', 'pay', 'cancel', 'refund', 'rate'],
+      description: '操作类型'
+    }
+  }]
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -302,44 +468,44 @@ const orderSchema = new mongoose.Schema({
 });
 
 // 添加索引以优化查询性能
-orderSchema.index({ order_number: 1 }, { unique: true });
+orderSchema.index({ orderNumber: 1 }, { unique: true });
 orderSchema.index({ userId: 1 });
-orderSchema.index({ merchant_id: 1 });
+orderSchema.index({ merchantId: 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });
 orderSchema.index({ 'payment.status': 1 });
-orderSchema.index({ order_type: 1 });
-orderSchema.index({ 'payment.transaction_id': 1 });
-orderSchema.index({ 'delivery.estimated_delivery_time': 1 });
+orderSchema.index({ orderType: 1 });
+orderSchema.index({ 'payment.transactionId': 1 });
+orderSchema.index({ 'delivery.estimatedDeliveryTime': 1 });
 orderSchema.index({ 'nutritionProfileId': 1 });
-orderSchema.index({ 'ai_recommendation_id': 1 });
+orderSchema.index({ 'aiRecommendationId': 1 });
 
 // 添加虚拟字段
-orderSchema.virtual('is_paid').get(function() {
+orderSchema.virtual('isPaid').get(function() {
   return this.payment && this.payment.status === 'paid';
 });
 
-orderSchema.virtual('is_completed').get(function() {
+orderSchema.virtual('isCompleted').get(function() {
   return ['completed', 'delivered'].includes(this.status);
 });
 
-orderSchema.virtual('is_cancelled').get(function() {
+orderSchema.virtual('isCancelled').get(function() {
   return ['cancelled', 'refunded'].includes(this.status);
 });
 
-orderSchema.virtual('order_progress_percent').get(function() {
+orderSchema.virtual('orderProgressPercent').get(function() {
   const statusOrder = ['pending', 'confirmed', 'preparing', 'ready', 'in_delivery', 'delivered', 'completed'];
   const currentIndex = statusOrder.indexOf(this.status);
   
-  if (currentIndex === -1 || this.is_cancelled) return 0;
+  if (currentIndex === -1 || this.isCancelled) return 0;
   return Math.round((currentIndex / (statusOrder.length - 1)) * 100);
 });
 
-orderSchema.virtual('delivery_time_remaining').get(function() {
-  if (!this.delivery || !this.delivery.estimated_delivery_time) return null;
+orderSchema.virtual('deliveryTimeRemaining').get(function() {
+  if (!this.delivery || !this.delivery.estimatedDeliveryTime) return null;
   
   const now = new Date();
-  const estimatedTime = new Date(this.delivery.estimated_delivery_time);
+  const estimatedTime = new Date(this.delivery.estimatedDeliveryTime);
   
   if (now > estimatedTime) return 0;
   
@@ -357,7 +523,7 @@ orderSchema.virtual('user', {
 
 orderSchema.virtual('merchant', {
   ref: 'Merchant',
-  localField: 'merchant_id',
+  localField: 'merchantId',
   foreignField: '_id',
   justOne: true
 });
@@ -372,49 +538,49 @@ orderSchema.virtual('nutritionProfile', {
 // 实例方法
 orderSchema.methods.calculateTotals = function() {
   // 计算小计
-  const subtotal = this.items.reduce((sum, item) => sum + item.item_total, 0);
+  const subtotal = this.items.reduce((sum, item) => sum + item.itemTotal, 0);
   
   // 计算税费 (假设税率为10%)
   const tax = Math.round(subtotal * 0.1 * 100) / 100;
   
   // 获取配送费和服务费
-  const deliveryFee = this.price_details.delivery_fee || 0;
-  const serviceFee = this.price_details.service_fee || 0;
-  const tip = this.price_details.tip || 0;
-  const discount = this.price_details.discount || 0;
+  const deliveryFee = this.priceDetails.deliveryFee || 0;
+  const serviceFee = this.priceDetails.serviceFee || 0;
+  const tip = this.priceDetails.tip || 0;
+  const discount = this.priceDetails.discount || 0;
   
   // 计算总计
   const total = subtotal + tax + deliveryFee + serviceFee + tip - discount;
   
   // 更新价格明细
-  this.price_details = {
-    ...this.price_details,
+  this.priceDetails = {
+    ...this.priceDetails,
     subtotal,
     tax,
     total
   };
   
-  return this.price_details;
+  return this.priceDetails;
 };
 
 orderSchema.methods.addItem = function(item) {
   // 检查是否已存在相同菜品
   const existingItemIndex = this.items.findIndex(
-    i => i.dish_id.toString() === item.dish_id.toString() && 
+    i => i.dishId.toString() === item.dishId.toString() && 
          JSON.stringify(i.customizations) === JSON.stringify(item.customizations)
   );
   
   if (existingItemIndex !== -1) {
     // 更新现有项目的数量和总金额
     this.items[existingItemIndex].quantity += item.quantity || 1;
-    this.items[existingItemIndex].item_total = 
+    this.items[existingItemIndex].itemTotal = 
       this.items[existingItemIndex].price * this.items[existingItemIndex].quantity;
   } else {
-    // 添加新项目，确保计算item_total
+    // 添加新项目，确保计算itemTotal
     const newItem = {
       ...item,
       quantity: item.quantity || 1,
-      item_total: item.price * (item.quantity || 1)
+      itemTotal: item.price * (item.quantity || 1)
     };
     this.items.push(newItem);
   }
@@ -459,28 +625,28 @@ orderSchema.methods.updateStatus = function(newStatus, reason) {
   this.status = newStatus;
   
   // 记录状态历史
-  this.status_history = this.status_history || [];
-  this.status_history.push({
+  this.statusHistory = this.statusHistory || [];
+  this.statusHistory.push({
     status: newStatus,
     timestamp: new Date(),
-    reason: reason
+    notes: reason // 显式赋值
   });
   
   // 根据状态更新其他字段
   if (newStatus === 'confirmed') {
     // 设置订单确认时间
-    this.confirmed_at = new Date();
+    this.confirmedAt = new Date();
   } else if (newStatus === 'in_delivery') {
     // 设置开始配送时间
     this.delivery = this.delivery || {};
-    this.delivery.start_delivery_time = new Date();
+    this.delivery.startDeliveryTime = new Date();
   } else if (newStatus === 'delivered') {
     // 设置实际配送时间
     this.delivery = this.delivery || {};
-    this.delivery.actual_delivery_time = new Date();
+    this.delivery.actualDeliveryTime = new Date();
   } else if (newStatus === 'completed') {
     // 设置完成时间
-    this.completed_at = new Date();
+    this.completedAt = new Date();
   }
   
   return this;
@@ -488,7 +654,7 @@ orderSchema.methods.updateStatus = function(newStatus, reason) {
 
 // 静态方法
 orderSchema.statics.findByOrderNumber = function(orderNumber) {
-  return this.findOne({ order_number: orderNumber });
+  return this.findOne({ orderNumber: orderNumber });
 };
 
 orderSchema.statics.findByUserAndStatus = function(userId, status) {
@@ -498,8 +664,8 @@ orderSchema.statics.findByUserAndStatus = function(userId, status) {
 orderSchema.statics.findPendingDeliveries = function() {
   return this.find({ 
     status: 'in_delivery',
-    order_type: 'delivery'
-  }).sort({ 'delivery.estimated_delivery_time': 1 });
+    orderType: 'delivery'
+  }).sort({ 'delivery.estimatedDeliveryTime': 1 });
 };
 
 orderSchema.statics.getUserOrderStats = async function(userId) {
@@ -508,8 +674,8 @@ orderSchema.statics.getUserOrderStats = async function(userId) {
     { $group: {
       _id: "$userId",
       total_orders: { $sum: 1 },
-      total_spent: { $sum: "$price_details.total" },
-      average_order_value: { $avg: "$price_details.total" },
+      total_spent: { $sum: "$priceDetails.total" },
+      average_order_value: { $avg: "$priceDetails.total" },
       completed_orders: { 
         $sum: { 
           $cond: [{ $eq: ["$status", "completed"] }, 1, 0] 
@@ -521,7 +687,7 @@ orderSchema.statics.getUserOrderStats = async function(userId) {
 
 // 前置钩子 - 生成订单编号
 orderSchema.pre('save', async function(next) {
-  if (!this.order_number) {
+  if (!this.orderNumber) {
     const date = new Date();
     const prefix = date.getFullYear().toString().substr(-2) + 
                   (date.getMonth() + 1).toString().padStart(2, '0') + 
@@ -542,11 +708,11 @@ orderSchema.pre('save', async function(next) {
     const sequence = (orderCount + 1).toString().padStart(4, '0');
     const random = Math.floor(Math.random() * 100).toString().padStart(2, '0');
     
-    this.order_number = `${prefix}${sequence}${random}`;
+    this.orderNumber = `${prefix}${sequence}${random}`;
   }
   
   // 确保计算总金额
-  if (this.isNew || this.isModified('items') || this.isModified('price_details')) {
+  if (this.isNew || this.isModified('items') || this.isModified('priceDetails')) {
     this.calculateTotals();
   }
   
@@ -556,4 +722,4 @@ orderSchema.pre('save', async function(next) {
 // 使用ModelFactory创建支持读写分离的模型
 const Order = ModelFactory.createModel('Order', orderSchema);
 
-module.exports = Order; 
+module.exports = Order;

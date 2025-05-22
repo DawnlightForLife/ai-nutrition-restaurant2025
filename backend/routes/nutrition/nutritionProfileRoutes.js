@@ -1,0 +1,32 @@
+/**
+ * 营养档案管理路由
+ * 提供创建、获取、更新、删除营养档案的接口
+ * @module routes/nutrition/nutritionProfileRoutes
+ */
+const express = require('express');
+const router = express.Router();
+const nutritionProfileController = require('../../controllers/nutrition/nutritionProfileController');
+const { authenticate } = require('../../middleware/auth/authMiddleware');
+
+// [GET] 获取所有营养档案（仅管理员）
+router.get('/', authenticate, nutritionProfileController.getAllProfiles);
+
+// [GET] 获取单个营养档案
+router.get('/:id', authenticate, nutritionProfileController.getProfileById);
+
+// [GET] 获取指定用户的所有营养档案
+router.get('/user/:userId', authenticate, nutritionProfileController.getProfilesByUserId);
+
+// [POST] 创建新的营养档案
+router.post('/', authenticate, nutritionProfileController.createProfile);
+
+// [PUT] 更新指定营养档案
+router.put('/:id', authenticate, nutritionProfileController.updateProfile);
+
+// [DELETE] 删除指定营养档案
+router.delete('/:id', authenticate, nutritionProfileController.deleteProfile);
+
+// [PUT] 设置指定营养档案为主档案
+router.put('/:id/primary', authenticate, nutritionProfileController.setPrimaryProfile);
+
+module.exports = router;

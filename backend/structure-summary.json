@@ -1,0 +1,146 @@
+{
+  "version": "v1.0.0",
+  "freezeDate": "2025-05-17",
+  "modules": [
+    {
+      "name": "config",
+      "description": "系统配置层，包含环境配置和模块配置",
+      "mainFiles": ["index.js", "environment.js", "database.js"],
+      "subDirectories": ["modules"],
+      "hasFreezeDoc": true,
+      "freezeDocName": "CONFIG_FREEZE.md",
+      "maintainer": "",
+      "freezeAt": "2025-05-17"
+    },
+    {
+      "name": "constants",
+      "description": "系统常量层，包含枚举和配置常量",
+      "mainFiles": ["index.js", "errorCodes.js", "statusCodes.js"],
+      "subDirectories": ["app", "api", "business"],
+      "hasFreezeDoc": true,
+      "freezeDocName": "CONSTANTS_FREEZE.md",
+      "maintainer": "",
+      "freezeAt": "2025-05-17"
+    },
+    {
+      "name": "jobs",
+      "description": "定时任务层，包含周期性执行的后台任务",
+      "mainFiles": ["index.js", "scheduler.js"],
+      "subDirectories": ["daily", "weekly", "monthly"],
+      "hasFreezeDoc": true,
+      "freezeDocName": "JOBS_FREEZE.md",
+      "maintainer": "",
+      "freezeAt": "2025-05-17"
+    },
+    {
+      "name": "scripts",
+      "description": "脚本工具层，包含数据库初始化、数据迁移等工具脚本",
+      "mainFiles": ["index.js", "runner.js"],
+      "subDirectories": ["db", "migrations", "data", "maintenance"],
+      "hasFreezeDoc": true,
+      "freezeDocName": "SCRIPTS_FREEZE.md",
+      "maintainer": "",
+      "freezeAt": "2025-05-17"
+    },
+    {
+      "name": "docs",
+      "description": "文档层，包含API接口说明、数据模型描述等",
+      "mainFiles": ["README.md", "CHANGELOG.md"],
+      "subDirectories": ["api", "models", "enums", "workflows", "subsystems", "integrations"],
+      "hasFreezeDoc": true,
+      "freezeDocName": "DOCS_FREEZE.md",
+      "maintainer": "",
+      "freezeAt": "2025-05-17"
+    },
+    {
+      "name": "hooks",
+      "description": "钩子系统层，基于事件驱动机制触发行为扩展",
+      "mainFiles": ["index.js"],
+      "subDirectories": ["user", "nutrition", "consult", "order", "merchant", "forum", "admin", "feedback", "notification", "system", "utils"],
+      "hasFreezeDoc": true,
+      "freezeDocName": "HOOKS_FREEZE.md",
+      "maintainer": "",
+      "freezeAt": "2025-05-17"
+    },
+    {
+      "name": "plugins",
+      "description": "插件系统层，封装第三方服务接口，支持多厂商调用",
+      "mainFiles": ["index.js"],
+      "subDirectories": ["sms", "payment", "email", "storage", "export", "llm", "platform"],
+      "hasFreezeDoc": true,
+      "freezeDocName": "PLUGINS_FREEZE.md",
+      "maintainer": "",
+      "freezeAt": "2025-05-17"
+    },
+    {
+      "name": "types",
+      "description": "类型系统层，提供前后端一致性、接口约束与IDE辅助",
+      "mainFiles": ["index.d.ts"],
+      "subDirectories": ["models", "dto", "enums", "api", "schema"],
+      "hasFreezeDoc": true,
+      "freezeDocName": "TYPES_FREEZE.md",
+      "maintainer": "",
+      "freezeAt": "2025-05-17"
+    },
+    {
+      "name": "models",
+      "description": "数据模型层，定义数据库结构和模型关系",
+      "mainFiles": ["index.js"],
+      "subDirectories": ["user", "nutrition", "order", "forum", "merchant"],
+      "hasFreezeDoc": true,
+      "freezeDocName": "MODEL_FREEZE_DOC.md",
+      "maintainer": "",
+      "freezeAt": "2025-05-17"
+    },
+    {
+      "name": "controllers",
+      "description": "控制器层，处理HTTP请求并返回响应",
+      "mainFiles": ["index.js"],
+      "subDirectories": ["auth", "user", "nutrition", "order", "forum", "merchant", "admin"],
+      "hasFreezeDoc": false,
+      "freezeDocName": "",
+      "maintainer": "",
+      "freezeAt": "2025-05-17"
+    },
+    {
+      "name": "services",
+      "description": "服务层，封装业务逻辑",
+      "mainFiles": ["index.js"],
+      "subDirectories": ["auth", "user", "nutrition", "order", "forum", "merchant", "admin"],
+      "hasFreezeDoc": false,
+      "freezeDocName": "",
+      "maintainer": "",
+      "freezeAt": "2025-05-17"
+    },
+    {
+      "name": "routes",
+      "description": "路由层，定义API路由",
+      "mainFiles": ["index.js"],
+      "subDirectories": ["v1", "v2", "internal", "admin"],
+      "hasFreezeDoc": false,
+      "freezeDocName": "",
+      "maintainer": "",
+      "freezeAt": "2025-05-17"
+    },
+    {
+      "name": "middleware",
+      "description": "中间件层，处理请求前后的通用逻辑",
+      "mainFiles": ["index.js"],
+      "subDirectories": ["auth", "validation", "error", "logging"],
+      "hasFreezeDoc": false,
+      "freezeDocName": "",
+      "maintainer": "",
+      "freezeAt": "2025-05-17"
+    },
+    {
+      "name": "utils",
+      "description": "工具层，提供通用功能",
+      "mainFiles": ["index.js"],
+      "subDirectories": ["format", "validation", "security", "date", "file"],
+      "hasFreezeDoc": false,
+      "freezeDocName": "",
+      "maintainer": "",
+      "freezeAt": "2025-05-17"
+    }
+  ]
+} 

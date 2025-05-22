@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据库模式可视化</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
+  <style>
+    /* 样式统一管理区：用于数据库模式可视化展示 UI */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+      background-color: #f8f9fa;
+      padding-top: 20px;
+    }
+
+    .card {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      border: none;
+      border-radius: 8px;
+    }
+
+    .card-header {
+      font-weight: 600;
+      background-color: #f1f5f9;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .schema-card {
+      transition: all 0.3s ease;
+    }
+
+    .schema-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .field-row:nth-child(odd) {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .field-type {
+      color: #0d6efd;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85em;
+    }
+
+    .required-badge {
+      background-color: #dc3545;
+      color: white;
+      font-size: 0.7em;
+      padding: 2px 5px;
+      border-radius: 3px;
+      vertical-align: middle;
+    }
+
+    .index-badge {
+      background-color: #198754;
+      color: white;
+      font-size: 0.7em;
+      padding: 2px 5px;
+      border-radius: 3px;
+      vertical-align: middle;
+      margin-left: 3px;
+    }
+
+    .unique-badge {
+      background-color: #6610f2;
+      color: white;
+    }
+
+    .frozen-badge {
+      background-color: #0dcaf0;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      margin-left: 10px;
+    }
+
+    .graph-container {
+      width: 100%;
+      height: 600px;
+      background-color: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .graph-node {
+      cursor: pointer;
+    }
+
+    .tooltip {
+      position: absolute;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .stats-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #0d6efd;
+    }
+
+    .stats-label {
+      font-size: 0.9rem;
+      color: #6c757d;
+      text-transform: uppercase;
+    }
+
+    .search-container {
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 767px) {
+      .stats-value {
+        font-size: 1.5rem;
+      }
+
+      .stats-label {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 主内容容器：包含标题、统计信息、导航选项卡和内容展示区 -->
+  <div class="container-fluid">
+    <h1 class="mb-4 text-center">数据库模式可视化</h1>
+
+    <!-- 统计数据 -->
+    <div class="row mb-4">
+      <div class="col-12 col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="stats-value">{{stats.modelCount}}</div>
+            <div class="stats-label">模型总数</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="stats-value">{{stats.fieldCount}}</div>
+            <div class="stats-label">字段总数</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="stats-value">{{stats.relationCount}}</div>
+            <div class="stats-label">关系总数</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="stats-value">{{stats.indexCount}}</div>
+            <div class="stats-label">索引总数</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 导航和搜索 -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <ul class="nav nav-tabs" id="visualization-tabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="graph-tab" data-bs-toggle="tab" data-bs-target="#graph-tab-pane"
+                  type="button" role="tab">关系图</button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="schema-tab" data-bs-toggle="tab" data-bs-target="#schema-tab-pane"
+                  type="button" role="tab">模式列表</button>
+              </li>
+            </ul>
+
+            <div class="search-container mt-3">
+              <div class="input-group">
+                <span class="input-group-text"><i class="fa fa-search"></i></span>
+                <input type="text" class="form-control" id="schemaSearch" placeholder="搜索模型或字段...">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 内容区域 -->
+    <div class="tab-content" id="visualization-tab-content">
+      <!-- 图形化关系图展示区域 -->
+      <div class="tab-pane fade show active" id="graph-tab-pane" role="tabpanel" tabindex="0">
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-body">
+                <div class="graph-container" id="relationshipGraph"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 模式表格展示区域 -->
+      <div class="tab-pane fade" id="schema-tab-pane" role="tabpanel" tabindex="0">
+        <div class="row">
+          {{#each schemas}}
+          <div class="col-12 col-lg-6 schema-item">
+            <div class="card schema-card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <span>
+                  <i class="fa fa-table me-2"></i>{{modelName}}
+                  {{#if isFrozen}}
+                  <span class="frozen-badge"><i class="fa fa-lock me-1"></i>已冻结</span>
+                  {{/if}}
+                </span>
+                <small class="text-muted">{{collection}}</small>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-sm m-0">
+                  <thead>
+                    <tr>
+                      <th style="width: 30%">字段名</th>
+                      <th style="width: 35%">类型</th>
+                      <th style="width: 35%">属性</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{#each fields}}
+                    <tr class="field-row">
+                      <td>{{name}}</td>
+                      <td>
+                        <span class="field-type">{{type}}</span>
+                        {{#if isReference}}
+                        <i class="fa fa-link ms-1" title="引用: {{reference}}"></i>
+                        {{/if}}
+                      </td>
+                      <td>
+                        {{#if required}}
+                        <span class="required-badge">必填</span>
+                        {{/if}}
+
+                        {{#if isIndexed}}
+                        <span class="index-badge">索引</span>
+                        {{/if}}
+
+                        {{#if isUnique}}
+                        <span class="index-badge unique-badge">唯一</span>
+                        {{/if}}
+
+                        {{#if default}}
+                        <small class="text-muted ms-1">默认: {{formatJson default}}</small>
+                        {{/if}}
+                      </td>
+                    </tr>
+                    {{/each}}
+                  </tbody>
+                </table>
+              </div>
+              {{#if indexes.length}}
+              <div class="card-footer">
+                <small>
+                  <strong>索引 ({{indexes.length}}):</strong>
+                  {{#each indexes}}
+                  <div class="mt-1">
+                    {{#if name}}<span class="text-muted">{{name}}:</span>{{/if}}
+                    {{formatJson fields}}
+                    {{#if unique}}<span class="badge bg-primary ms-1">唯一</span>{{/if}}
+                  </div>
+                  {{/each}}
+                </small>
+              </div>
+              {{/if}}
+            </div>
+          </div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // 后端渲染提供的图形数据：包含模型节点和它们之间的引用关系
+    const graphData = {
+      nodes: {{{ formatJson nodes }}},
+      links: {{{ formatJson links }}}
+    };
+
+    // 搜索功能
+    document.getElementById('schemaSearch').addEventListener('input', function (e) {
+      const searchTerm = e.target.value.toLowerCase();
+
+      // 筛选模式卡片
+      document.querySelectorAll('.schema-item').forEach(item => {
+        const modelName = item.querySelector('.card-header').textContent.toLowerCase();
+        const fieldRows = Array.from(item.querySelectorAll('.field-row')).map(row => {
+          return row.children[0].textContent.toLowerCase() + ' ' +
+            row.children[1].textContent.toLowerCase() + ' ' +
+            row.children[2].textContent.toLowerCase();
+        }).join(' ');
+
+        const content = modelName + ' ' + fieldRows;
+
+        if (searchTerm === '' || content.includes(searchTerm)) {
+          item.style.display = '';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      // 如果在图表视图中，也高亮相关节点
+      if (document.getElementById('graph-tab-pane').classList.contains('active')) {
+        updateGraphHighlighting(searchTerm);
+      }
+    });
+
+    // 渲染关系图函数，使用 d3.js 绘制力导向图展示模型之间关系
+    function renderRelationshipGraph() {
+      const width = document.getElementById('relationshipGraph').clientWidth;
+      const height = document.getElementById('relationshipGraph').clientHeight;
+
+      // 清除已有内容
+      d3.select('#relationshipGraph').selectAll('*').remove();
+
+      // 创建SVG容器
+      const svg = d3.select('#relationshipGraph')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height);
+
+      // 创建箭头标记
+      svg.append('defs').append('marker')
+        .attr('id', 'arrowhead')
+        .attr('viewBox', '-0 -5 10 10')
+        .attr('refX', 20)
+        .attr('refY', 0)
+        .attr('orient', 'auto')
+        .attr('markerWidth', 6)
+        .attr('markerHeight', 6)
+        .attr('xoverflow', 'visible')
+        .append('svg:path')
+        .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
+        .attr('fill', '#999')
+        .style('stroke', 'none');
+
+      // 创建力导向图
+      const simulation = d3.forceSimulation()
+        .force('link', d3.forceLink().id(d => d.id).distance(100))
+        .force('charge', d3.forceManyBody().strength(-300))
+        .force('center', d3.forceCenter(width / 2, height / 2));
+
+      // 创建连线
+      const link = svg.append('g')
+        .selectAll('line')
+        .data(graphData.links)
+        .enter()
+        .append('line')
+        .attr('stroke', '#999')
+        .attr('stroke-width', 1.5)
+        .attr('marker-end', 'url(#arrowhead)');
+
+      // 创建节点组
+      const node = svg.append('g')
+        .selectAll('.node')
+        .data(graphData.nodes)
+        .enter()
+        .append('g')
+        .attr('class', 'graph-node')
+        .call(d3.drag()
+          .on('start', dragstarted)
+          .on('drag', dragged)
+          .on('end', dragended));
+
+      // 添加节点圆形
+      node.append('circle')
+        .attr('r', d => d.fields ? 10 + Math.min(d.fields.length / 2, 10) : 10)
+        .attr('fill', d => d.isFrozen ? '#0dcaf0' : '#0d6efd');
+
+      // 添加节点文本
+      node.append('text')
+        .attr('dx', 15)
+        .attr('dy', 5)
+        .text(d => d.name)
+        .attr('fill', '#333');
+
+      // 添加交互提示
+      const tooltip = d3.select('body')
+        .append('div')
+        .attr('class', 'tooltip')
+        .style('opacity', 0);
+
+      node.on('mouseover', function (event, d) {
+        tooltip.transition()
+          .duration(200)
+          .style('opacity', .9);
+
+        let tooltipContent = `<strong>${d.name}</strong><br/>`;
+        tooltipContent += `字段数: ${d.fields ? d.fields.length : 0}<br/>`;
+        tooltipContent += `集合: ${d.collection || '未知'}<br/>`;
+        if (d.isFrozen) {
+          tooltipContent += `<span style="color:#0dcaf0">已冻结</span><br/>`;
+        }
+
+        tooltip.html(tooltipContent)
+          .style('left', (event.pageX + 10) + 'px')
+          .style('top', (event.pageY - 28) + 'px');
+      })
+        .on('mouseout', function () {
+          tooltip.transition()
+            .duration(500)
+            .style('opacity', 0);
+        })
+        .on('click', function (event, d) {
+          // 点击时跳转到对应的模式卡片
+          document.getElementById('schema-tab').click();
+          document.getElementById('schemaSearch').value = d.name;
+          document.getElementById('schemaSearch').dispatchEvent(new Event('input'));
+
+          // 滚动到对应的卡片
+          setTimeout(() => {
+            const schemaItems = document.querySelectorAll('.schema-item');
+            for (let item of schemaItems) {
+              if (item.querySelector('.card-header').textContent.includes(d.name) &&
+                item.style.display !== 'none') {
+                item.scrollIntoView({ behavior: 'smooth' });
+                break;
+              }
+            }
+          }, 300);
+        });
+
+      // 定义力导向图仿真的tick方法
+      simulation.nodes(graphData.nodes)
+        .on('tick', ticked);
+
+      simulation.force('link')
+        .links(graphData.links);
+
+      function ticked() {
+        link
+          .attr('x1', d => Math.max(10, Math.min(width - 10, d.source.x)))
+          .attr('y1', d => Math.max(10, Math.min(height - 10, d.source.y)))
+          .attr('x2', d => Math.max(10, Math.min(width - 10, d.target.x)))
+          .attr('y2', d => Math.max(10, Math.min(height - 10, d.target.y)));
+        node
+          .attr('transform', d => `translate(${Math.max(10, Math.min(width - 10, d.x))},${Math.max(10, Math.min(height - 10, d.y))})`);
+      }
+    }
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@8.13.10/dist/mermaid.min.js"></script>
+  <script>
+    // Mermaid 图表初始化：用于未来支持时序图或流程图可视化
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'default',
+      securityLevel: 'loose',
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: 'basis'
+      }
+    });
+
+    // 平滑滚动到锚点
+    document.querySelectorAll('.schema-list a').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href');
+        const targetElement = document.querySelector(targetId);
+        if (targetElement) {
+          window.scrollTo({
+            top: targetElement.offsetTop - 20,
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+
+    // 注册条件帮助函数（支持模板中的比较操作）
+    if (typeof Handlebars !== 'undefined') {
+      Handlebars.registerHelper('eq', function (a, b) {
+        return a === b;
+      });
+    }
+  </script>
+</body>
+
+</html>

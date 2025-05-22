@@ -1,3 +1,12 @@
+/**
+ * ✅ 命名风格统一（camelCase）
+ * ✅ 日志记录器基于 winston 模块封装
+ * ✅ 支持六类日志：通用、请求、错误、性能、安全、数据库
+ * ✅ 各日志均按模块生成独立 log 文件，支持大小轮转
+ * ✅ 各日志中间件封装清晰，支持链式调用
+ * ✅ 推荐后续接入 Graylog / ELK / Loki 等集中日志平台
+ */
+
 const winston = require('winston');
 const { format } = winston;
 const path = require('path');
@@ -28,7 +37,12 @@ if (!fs.existsSync(logDir)) {
     fs.mkdirSync(logDir, { recursive: true });
 }
 
-// 创建日志记录器
+/**
+ * 创建日志记录器
+ * @param {string} category - 日志类型（如 'request'、'error'）
+ * @param {string} filename - 日志文件名（不含扩展名）
+ * @returns {Logger} winston 日志记录器实例
+ */
 const createLogger = (category, filename) => {
     return winston.createLogger({
         level: process.env.LOG_LEVEL || 'info',
@@ -67,7 +81,10 @@ const performanceLogger = createLogger('performance', 'performance');
 const securityLogger = createLogger('security', 'security');
 const databaseLogger = createLogger('database', 'database');
 
-// 请求日志中间件
+/**
+ * 请求日志中间件
+ * - 记录请求方法、路径、参数、响应状态、耗时等
+ */
 const requestLogMiddleware = (req, res, next) => {
     const start = Date.now();
     
@@ -97,7 +114,10 @@ const requestLogMiddleware = (req, res, next) => {
     next();
 };
 
-// 性能日志中间件
+/**
+ * 性能日志中间件
+ * - 记录超过阈值的慢请求
+ */
 const performanceLogMiddleware = (req, res, next) => {
     const start = Date.now();
     
@@ -116,7 +136,10 @@ const performanceLogMiddleware = (req, res, next) => {
     next();
 };
 
-// 安全日志中间件
+/**
+ * 安全日志中间件
+ * - 记录可疑请求头信息
+ */
 const securityLogMiddleware = (req, res, next) => {
     // 记录可疑的请求头
     const suspiciousHeaders = ['x-forwarded-for', 'x-real-ip', 'x-client-ip'];
@@ -134,7 +157,10 @@ const securityLogMiddleware = (req, res, next) => {
     next();
 };
 
-// 数据库日志中间件
+/**
+ * 数据库日志中间件
+ * - 记录超过阈值的慢数据库操作
+ */
 const databaseLogMiddleware = (req, res, next) => {
     const start = Date.now();
     
@@ -153,7 +179,10 @@ const databaseLogMiddleware = (req, res, next) => {
     next();
 };
 
-// 错误日志中间件
+/**
+ * 错误日志中间件
+ * - 记录错误信息及请求上下文
+ */
 const errorLogMiddleware = (err, req, res, next) => {
     errorLogger.error('Error occurred', {
         error: {

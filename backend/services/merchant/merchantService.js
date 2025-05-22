@@ -1,5 +1,14 @@
+/**
+ * 商家服务模块（merchantService）
+ * 提供商家相关的业务逻辑处理，包括创建、更新、审核、评分等
+ * 支持基于用户ID查询、分页获取、城市/类型筛选、认证审核等功能
+ * 所有操作基于 Merchant 模型并包含数据完整性校验
+ * 与 storeService、dishService 等模块协作支撑商家端功能
+ * @module services/merchant/merchantService
+ */
 const Merchant = require('../../models/merchant/merchantModel');
 const mongoose = require('mongoose');
+const logger = require('../../utils/logger/winstonLogger.js');
 
 const merchantService = {
   /**
@@ -22,6 +31,7 @@ const merchantService = {
       
       return { success: true, data: merchant };
     } catch (error) {
+      logger.error('创建商家失败', { error });
       return { success: false, message: `创建商家失败: ${error.message}` };
     }
   },
@@ -82,6 +92,7 @@ const merchantService = {
         }
       };
     } catch (error) {
+      logger.error('获取商家列表失败', { error });
       return { success: false, message: `获取商家列表失败: ${error.message}` };
     }
   },
@@ -107,6 +118,7 @@ const merchantService = {
       
       return { success: true, data: merchant };
     } catch (error) {
+      logger.error('获取商家详情失败', { error });
       return { success: false, message: `获取商家详情失败: ${error.message}` };
     }
   },
@@ -146,6 +158,7 @@ const merchantService = {
       
       return { success: true, data: merchant };
     } catch (error) {
+      logger.error('更新商家失败', { error });
       return { success: false, message: `更新商家失败: ${error.message}` };
     }
   },
@@ -170,6 +183,7 @@ const merchantService = {
       
       return { success: true, message: '商家信息已成功删除' };
     } catch (error) {
+      logger.error('删除商家失败', { error });
       return { success: false, message: `删除商家失败: ${error.message}` };
     }
   },
@@ -215,6 +229,7 @@ const merchantService = {
       
       return { success: true, data: merchant };
     } catch (error) {
+      logger.error('审核商家失败', { error });
       return { success: false, message: `审核商家失败: ${error.message}` };
     }
   },
@@ -240,6 +255,7 @@ const merchantService = {
       
       return { success: true, data: merchant };
     } catch (error) {
+      logger.error('通过用户ID获取商家失败', { error });
       return { success: false, message: `获取商家详情失败: ${error.message}` };
     }
   },
@@ -272,6 +288,7 @@ const merchantService = {
       
       return { success: true, data: merchant };
     } catch (error) {
+      logger.error('更新商家评分失败', { error });
       return { success: false, message: `更新商家评分失败: ${error.message}` };
     }
   }

@@ -26,7 +26,7 @@ RUN git config --global --add safe.directory /opt/flutter
 RUN flutter pub get
 
 # 9. 构建 Flutter Web 应用
-RUN flutter build web
+RUN flutter build web --target=lib/app/main.dart
 
 # 10. 使用 Nginx 提供 Web 服务器
 FROM nginx:alpine

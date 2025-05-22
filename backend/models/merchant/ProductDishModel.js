@@ -1,262 +1,305 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
 
-// 营养成分的子模式
+// 营养成分的子模式（字段展平、命名统一为camelCase）
 const nutritionFactsSchema = new mongoose.Schema({
   calories: {
     type: Number,
-    default: 0
+    default: 0,
+    description: '卡路里'
   },
   protein: {
     type: Number, // 克
-    default: 0
+    default: 0,
+    description: '蛋白质含量（克）'
   },
   fat: {
     type: Number, // 克
-    default: 0
+    default: 0,
+    description: '脂肪含量（克）'
   },
   carbohydrates: {
     type: Number, // 克
-    default: 0
+    default: 0,
+    description: '碳水化合物含量（克）'
   },
   fiber: {
     type: Number, // 克
-    default: 0
+    default: 0,
+    description: '膳食纤维含量（克）'
   },
   sugar: {
     type: Number, // 克
-    default: 0
+    default: 0,
+    description: '糖分含量（克）'
   },
   sodium: {
     type: Number, // 毫克
-    default: 0
+    default: 0,
+    description: '钠含量（毫克）'
   },
   cholesterol: {
     type: Number, // 毫克
-    default: 0
+    default: 0,
+    description: '胆固醇含量（毫克）'
   },
-  vitamins: {
-    a: Number, // 国际单位
-    c: Number, // 毫克
-    d: Number, // 国际单位
-    e: Number, // 毫克
-    k: Number, // 微克
-    b6: Number, // 毫克
-    b12: Number, // 微克
-  },
-  minerals: {
-    calcium: Number, // 毫克
-    iron: Number, // 毫克
-    magnesium: Number, // 毫克
-    potassium: Number, // 毫克
-    zinc: Number, // 毫克
-  }
+  vitaminA: { type: Number, description: '维生素A（国际单位）' },
+  vitaminC: { type: Number, description: '维生素C（毫克）' },
+  vitaminD: { type: Number, description: '维生素D（国际单位）' },
+  vitaminE: { type: Number, description: '维生素E（毫克）' },
+  vitaminK: { type: Number, description: '维生素K（微克）' },
+  vitaminB6: { type: Number, description: '维生素B6（毫克）' },
+  vitaminB12: { type: Number, description: '维生素B12（微克）' },
+  calcium: { type: Number, description: '钙含量（毫克）' },
+  iron: { type: Number, description: '铁含量（毫克）' },
+  magnesium: { type: Number, description: '镁含量（毫克）' },
+  potassium: { type: Number, description: '钾含量（毫克）' },
+  zinc: { type: Number, description: '锌含量（毫克）' },
+  sensitivityLevel: { type: Number, enum: [1, 2, 3], default: 3 } // 敏感级别：营养字段
 });
 
 const dishSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    description: '菜品名称'
   },
   description: {
     type: String,
-    required: true
+    required: true,
+    description: '菜品描述'
   },
   imageUrl: {
-    type: String
+    type: String,
+    description: '菜品图片URL'
   },
   price: {
     type: Number,
     required: true,
-    min: 0
+    min: 0,
+    description: '原始价格'
   },
   discountedPrice: {
     type: Number,
-    min: 0
+    min: 0,
+    description: '折扣价'
   },
   category: {
     type: String,
-    enum: ['main_course', 'appetizer', 'soup', 'salad', 'dessert', 'beverage', 'package_meal', 'other'],
-    required: true
+    enum: ['mainCourse', 'appetizer', 'soup', 'salad', 'dessert', 'beverage', 'packageMeal', 'other'],
+    required: true,
+    description: '菜品类别'
   },
   subCategory: {
-    type: String
+    type: String,
+    description: '子类别'
   },
   tags: [{
-    type: String
+    type: String,
+    description: '标签'
   }],
   // 营养成分
-  nutritionFacts: nutritionFactsSchema,
-  // 新增营养信息字段，包含基本营养数据
-  nutritionInfo: {
-    calories: {
-      type: Number,
-      default: 0
-    },
-    protein: {
-      type: Number,
-      default: 0
-    },
-    fat: {
-      type: Number,
-      default: 0
-    },
-    carbs: {
-      type: Number,
-      default: 0
-    },
-    sodium: {
-      type: Number,
-      default: 0
-    }
+  nutritionFacts: {
+    type: nutritionFactsSchema,
+    description: '营养成分详细信息',
+    sensitivityLevel: { type: Number, enum: [1, 2, 3], default: 3 }
   },
+  // nutritionInfo 字段已移除，统一使用 nutritionFacts
   // 营养属性（用于快速筛选和推荐）
   nutritionAttributes: [{
     type: String,
-    enum: ['high_protein', 'low_fat', 'low_carb', 'high_fiber', 'low_sodium', 'keto_friendly', 'gluten_free', 'dairy_free', 'vegan', 'vegetarian', 'paleo_friendly', 'diabetic_friendly', 'high_calcium', 'high_iron', 'low_calorie', 'high_vitamin']
+    enum: [
+      'highProtein', 'lowFat', 'lowCarb', 'highFiber', 'lowSodium',
+      'ketoFriendly', 'glutenFree', 'dairyFree', 'vegan', 'vegetarian',
+      'paleoFriendly', 'diabeticFriendly', 'highCalcium', 'highIron',
+      'lowCalorie', 'highVitamin'
+    ],
+    description: '营养属性标签'
   }],
   // 食材列表
   ingredients: [{
-    type: String
+    type: String,
+    description: '食材'
   }],
   allergens: [{
     type: String,
-    enum: ['gluten', 'dairy', 'nuts', 'eggs', 'soy', 'fish', 'shellfish', 'peanuts', 'sesame', 'sulphites']
+    enum: [
+      'gluten', 'dairy', 'nuts', 'eggs', 'soy', 'fish',
+      'shellfish', 'peanuts', 'sesame', 'sulphites'
+    ],
+    description: '过敏原'
   }],
   spicyLevel: {
     type: Number,
     min: 0,
     max: 5,
-    default: 0
+    default: 0,
+    description: '辣度等级'
   },
   preparationTime: {
     type: Number, // 分钟
-    min: 0
+    min: 0,
+    description: '准备时间（分钟）'
   },
   // 地区和季节适应性
   regions: [{
     type: String,
-    enum: ['north', 'south', 'east', 'west', 'northeast', 'northwest', 'southeast', 'southwest', 'central']
+    enum: [
+      'north', 'south', 'east', 'west', 'northeast',
+      'northwest', 'southeast', 'southwest', 'central'
+    ],
+    description: '适用地区'
   }],
   seasons: [{
     type: String,
-    enum: ['spring', 'summer', 'autumn', 'winter', 'all_year']
+    enum: ['spring', 'summer', 'autumn', 'winter', 'allYear'],
+    description: '适用季节'
   }],
   // 如果是套餐，包含的菜品
   isPackage: {
     type: Boolean,
-    default: false
+    default: false,
+    description: '是否为套餐'
   },
   packageDishes: [{
     dishId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Dish'
+      ref: 'Dish',
+      description: '套餐包含的菜品ID'
     },
     quantity: {
       type: Number,
       min: 1,
-      default: 1
+      default: 1,
+      description: '菜品数量'
     }
   }],
   // 商家类型适应性
   suitableMerchantTypes: [{
     type: String,
-    enum: ['restaurant', 'gym', 'maternity_center', 'school_company', 'all'],
-    default: 'all'
+    enum: [
+      'restaurant', 'gym', 'maternityCenter', 'schoolCompany', 'all'
+    ],
+    default: 'all',
+    description: '适合的商家类型'
   }],
   // 健康特性
   healthBenefits: [{
     targetCondition: {
       type: String,
-      enum: ['weight_loss', 'diabetes', 'heart_health', 'pregnancy', 'muscle_gain', 'immune_support', 'general_health', 'other']
+      enum: [
+        'weightLoss', 'diabetes', 'heartHealth', 'pregnancy',
+        'muscleGain', 'immuneSupport', 'generalHealth', 'other'
+      ],
+      description: '目标健康状况'
     },
-    benefitDescription: String
+    benefitDescription: {
+      type: String,
+      description: '健康益处描述'
+    }
   }],
   // 适合的饮食计划
   suitableDiets: [{
     type: String,
-    enum: ['regular', 'keto', 'low_carb', 'mediterranean', 'dash', 'vegetarian', 'vegan', 'paleo', 'gluten_free', 'diabetic', 'pregnancy']
+    enum: [
+      'regular', 'keto', 'lowCarb', 'mediterranean', 'dash',
+      'vegetarian', 'vegan', 'paleo', 'glutenFree', 'diabetic', 'pregnancy'
+    ],
+    description: '适合的饮食计划'
   }],
   // 适合的活动水平
   suitableActivityLevels: [{
     type: String,
-    enum: ['sedentary', 'light', 'moderate', 'active', 'very_active', 'all']
+    enum: [
+      'sedentary', 'light', 'moderate', 'active', 'veryActive', 'all'
+    ],
+    description: '适合的活动水平'
   }],
   // 适合的年龄段
   suitableAgeGroups: [{
     type: String,
-    enum: ['infant', 'child', 'teen', 'adult', 'senior', 'all']
+    enum: ['infant', 'child', 'teen', 'adult', 'senior', 'all'],
+    description: '适合的年龄段'
   }],
   // 原产地/生产商信息
   origin: {
-    country: String,
-    region: String,
-    producer: String
+    country: { type: String, description: '原产国' },
+    region: { type: String, description: '原产地区' },
+    producer: { type: String, description: '生产商' }
   },
   // 统计与评价
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
+    description: '是否上架'
   },
   ratings: {
     average: {
       type: Number,
-      default: 0
+      default: 0,
+      description: '平均评分'
     },
     count: {
       type: Number,
-      default: 0
+      default: 0,
+      description: '评分人数'
     }
   },
   // 访问控制与安全
   visibility: {
     type: String,
-    enum: ['public', 'merchant_only', 'private'],
-    default: 'public'
+    enum: ['public', 'merchantOnly', 'private'],
+    default: 'public',
+    description: '可见性'
   },
   // 元数据信息
   metadata: {
     version: {
       type: String,
-      default: '1.0'
+      default: '1.0',
+      description: '元数据版本'
     },
     revisionHistory: [{
-      version: String,
-      changes: [String],
-      updatedAt: {
-        type: Date,
-        default: Date.now
-      }
+      version: { type: String, description: '版本号' },
+      changes: [{ type: String, description: '更改内容' }]
+      // updatedAt 字段已移除，由 timestamps 统一管理
     }]
   },
   // 审计追踪
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    description: '创建人',
+    sensitivityLevel: 2
   },
   modifiedBy: [{
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: 'User',
+      description: '修改人',
+      sensitivityLevel: 2
     },
-    modifiedAt: {
-      type: Date,
-      default: Date.now
-    },
-    changes: [String]
+    // modifiedAt 字段移除（由 timestamps 统一管理）
+    changes: [{ type: String, description: '变更字段' }]
   }],
   // 数据完整性验证
   verifiedNutritionData: {
     type: Boolean,
-    default: false
+    default: false,
+    description: '营养数据已验证'
   },
   nutritionDataVerifiedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Nutritionist'
+    ref: 'Nutritionist',
+    description: '营养师ID',
+    sensitivityLevel: 2
   },
-  nutritionDataVerifiedAt: Date
+  nutritionDataVerifiedAt: {
+    type: Date,
+    description: '营养数据验证时间'
+  }
 }, { 
   timestamps: true,
   toJSON: { virtuals: true },
@@ -396,12 +439,10 @@ dishSchema.pre('save', function(next) {
     const changedFields = this.modifiedPaths().filter(
       path => !path.startsWith('updatedAt') && !path.startsWith('modifiedBy')
     );
-    
     if (changedFields.length > 0) {
       if (!this.modifiedBy) {
         this.modifiedBy = [];
       }
-      
       this.modifiedBy.push({
         userId: this._current_user_id,
         modifiedAt: Date.now(),
@@ -409,67 +450,57 @@ dishSchema.pre('save', function(next) {
       });
     }
   }
-  
+
   // 自动判断并更新营养属性标签
   const nutrition = this.nutritionFacts || {};
   const attributes = new Set(this.nutritionAttributes || []);
-  
+
   // 高蛋白质检查 (>20g)
   if (nutrition.protein >= 20) {
-    attributes.add('high_protein');
-  } else if (attributes.has('high_protein')) {
-    attributes.delete('high_protein');
+    attributes.add('highProtein');
+  } else if (attributes.has('highProtein')) {
+    attributes.delete('highProtein');
   }
-  
+
   // 低脂肪检查 (<10g)
   if (nutrition.fat !== undefined && nutrition.fat < 10) {
-    attributes.add('low_fat');
-  } else if (attributes.has('low_fat')) {
-    attributes.delete('low_fat');
+    attributes.add('lowFat');
+  } else if (attributes.has('lowFat')) {
+    attributes.delete('lowFat');
   }
-  
+
   // 低碳水检查 (<20g)
   if (nutrition.carbohydrates !== undefined && nutrition.carbohydrates < 20) {
-    attributes.add('low_carb');
-  } else if (attributes.has('low_carb')) {
-    attributes.delete('low_carb');
+    attributes.add('lowCarb');
+  } else if (attributes.has('lowCarb')) {
+    attributes.delete('lowCarb');
   }
-  
+
   // 高纤维检查 (>5g)
   if (nutrition.fiber !== undefined && nutrition.fiber > 5) {
-    attributes.add('high_fiber');
-  } else if (attributes.has('high_fiber')) {
-    attributes.delete('high_fiber');
+    attributes.add('highFiber');
+  } else if (attributes.has('highFiber')) {
+    attributes.delete('highFiber');
   }
-  
+
   // 低钠检查 (<500mg)
   if (nutrition.sodium !== undefined && nutrition.sodium < 500) {
-    attributes.add('low_sodium');
-  } else if (attributes.has('low_sodium')) {
-    attributes.delete('low_sodium');
+    attributes.add('lowSodium');
+  } else if (attributes.has('lowSodium')) {
+    attributes.delete('lowSodium');
   }
-  
+
   // 低卡路里检查 (<300卡)
   if (nutrition.calories !== undefined && nutrition.calories < 300) {
-    attributes.add('low_calorie');
-  } else if (attributes.has('low_calorie')) {
-    attributes.delete('low_calorie');
+    attributes.add('lowCalorie');
+  } else if (attributes.has('lowCalorie')) {
+    attributes.delete('lowCalorie');
   }
-  
+
   // 更新营养属性
   this.nutritionAttributes = Array.from(attributes);
-  
-  // 同步更新nutritionInfo字段
-  if (this.nutritionFacts) {
-    this.nutritionInfo = {
-      calories: this.nutritionFacts.calories || 0,
-      protein: this.nutritionFacts.protein || 0,
-      fat: this.nutritionFacts.fat || 0,
-      carbs: this.nutritionFacts.carbohydrates || 0,
-      sodium: this.nutritionFacts.sodium || 0
-    };
-  }
-  
+
+  // nutritionInfo 字段已废弃，无需同步，仅操作 nutritionFacts
   next();
 });
 
@@ -482,32 +513,32 @@ dishSchema.methods.calculateNutritionAttributes = function() {
   
   // 高蛋白
   if (nutrition.protein >= 15) {
-    attributes.push('high_protein');
+    attributes.push('highProtein');
   }
   
   // 低脂肪
   if (nutrition.fat <= 3) {
-    attributes.push('low_fat');
+    attributes.push('lowFat');
   }
   
   // 低碳水
   if (nutrition.carbohydrates <= 10) {
-    attributes.push('low_carb');
+    attributes.push('lowCarb');
   }
   
   // 高纤维
   if (nutrition.fiber >= 5) {
-    attributes.push('high_fiber');
+    attributes.push('highFiber');
   }
   
   // 低钠
   if (nutrition.sodium <= 140) {
-    attributes.push('low_sodium');
+    attributes.push('lowSodium');
   }
   
   // 低卡路里
   if (nutrition.calories <= 200) {
-    attributes.push('low_calorie');
+    attributes.push('lowCalorie');
   }
   
   // 更新营养属性
@@ -627,10 +658,10 @@ dishSchema.statics.findSuitableForUser = async function(user, nutritionProfile, 
   if (nutritionProfile.goals) {
     let targetCondition;
     switch(nutritionProfile.goals) {
-      case 'weight_loss': targetCondition = 'weight_loss'; break;
-      case 'weight_gain': targetCondition = 'muscle_gain'; break;
-      case 'muscle_gain': targetCondition = 'muscle_gain'; break;
-      case 'health_improvement': targetCondition = 'general_health'; break;
+      case 'weight_loss': targetCondition = 'weightLoss'; break;
+      case 'weight_gain': targetCondition = 'muscleGain'; break;
+      case 'muscle_gain': targetCondition = 'muscleGain'; break;
+      case 'health_improvement': targetCondition = 'generalHealth'; break;
       default: targetCondition = null;
     }
     
@@ -643,9 +674,12 @@ dishSchema.statics.findSuitableForUser = async function(user, nutritionProfile, 
   
   // 3. 考虑活动水平
   if (nutritionProfile.activityLevel) {
+    let mappedLevel = nutritionProfile.activityLevel;
+    // 兼容旧值映射
+    if (mappedLevel === 'very_active') mappedLevel = 'veryActive';
     filterConditions.push({
       $or: [
-        { suitableActivityLevels: nutritionProfile.activityLevel },
+        { suitableActivityLevels: mappedLevel },
         { suitableActivityLevels: 'all' }
       ]
     });
@@ -684,6 +718,6 @@ dishSchema.statics.findSuitableForUser = async function(user, nutritionProfile, 
 };
 
 // 使用ModelFactory创建支持读写分离的菜品模型
-const ProductDish = ModelFactory.createModel('Dish', dishSchema);
+const productDish = ModelFactory.createModel('Dish', dishSchema);
 
-module.exports = ProductDish; 
+module.exports = productDish;

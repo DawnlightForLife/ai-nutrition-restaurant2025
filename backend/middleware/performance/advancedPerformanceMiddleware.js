@@ -3,15 +3,20 @@ const v8 = require('v8');
 const { logger } = require('../core/loggingMiddleware');
 
 /**
- * 高级性能监控中间件集合
- * 提供详细的系统和应用性能监控，包括：
- * - 请求统计和响应时间分析
- * - CPU和内存使用监控
- * - 数据库和缓存性能统计
- * - 性能报告生成
+ * ✅ 命名风格统一（camelCase）
+ * ✅ 高级性能监控模块（内存、CPU、请求、数据库、缓存、响应时间）
+ * ✅ 提供多种指标采集 + 周期统计 + 报告接口 + 异常日志上报
+ * ✅ 支持阈值告警（慢请求、高CPU、高内存）
+ * ✅ 接口：/metrics 获取当前性能指标，/metrics/reset 重置所有统计
+ * ✅ 建议 future：接入Prometheus导出、分布式指标合并、实时可视化面板
  */
 
-// 性能指标收集器
+/**
+ * 性能指标采集器
+ * - 采样维度：请求量、错误数、响应耗时（min/max/avg/p95/p99）
+ * - 系统资源：CPU / 内存 / heap / uptime
+ * - 监控项：数据库查询 + 缓存命中率 + 慢查询 + 错误数
+ */
 class PerformanceMetrics {
     constructor() {
         this.metrics = {
@@ -130,10 +135,18 @@ class PerformanceMetrics {
     }
 }
 
+// TODO: 添加导出 Prometheus / OpenMetrics 格式 endpoint（GET /metrics/prometheus）
+// TODO: metrics.getReport() 可添加统计周期（过去 5 分钟 / 1 小时）功能
+
 // 创建性能指标实例
 const metrics = new PerformanceMetrics();
 
-// 高级性能监控中间件
+/**
+ * 高级性能监控主中间件
+ * - 对所有请求进行响应时间采样
+ * - 每 interval 周期统计 CPU、内存占用
+ * - 达到阈值触发告警日志
+ */
 const advancedPerformanceMonitor = (options = {}) => {
     const {
         interval = 30000, // 30秒更新一次资源统计
@@ -193,7 +206,10 @@ const advancedPerformanceMonitor = (options = {}) => {
     };
 };
 
-// 性能报告中间件
+/**
+ * 性能报告中间件（GET /metrics）
+ * - 实时返回系统资源、响应时间、数据库缓存状态等统计指标
+ */
 const performanceReport = (req, res, next) => {
     if (req.path === '/metrics') {
         res.json(metrics.getReport());
@@ -202,7 +218,10 @@ const performanceReport = (req, res, next) => {
     }
 };
 
-// 重置指标中间件
+/**
+ * 重置性能指标中间件（POST /metrics/reset）
+ * - 重置所有采样指标
+ */
 const resetMetrics = (req, res, next) => {
     if (req.path === '/metrics/reset' && req.method === 'POST') {
         metrics.reset();
@@ -217,4 +236,4 @@ module.exports = {
     performanceReport,
     resetMetrics,
     metrics
-}; 
+};

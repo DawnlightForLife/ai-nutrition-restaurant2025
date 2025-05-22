@@ -4,8 +4,14 @@
  * @module controllers/nutrition/nutritionistController
  */
 
+// ✅ 命名风格为 camelCase
+// ✅ 所有控制器方法为 async 函数，使用 catchAsync 包装
+// ✅ 返回结构统一为 { success, message, data? }
+// ✅ 权限校验清晰（本人或 admin）
+// ✅ 保护字段已排除更新（userId / verification / ratings）
+
 const { nutritionistService } = require('../../services');
-const catchAsync = require('../../utils/catchAsync');
+const catchAsync = require('../../utils/errors/catchAsync');
 
 /**
  * 创建营养师
@@ -14,6 +20,9 @@ const catchAsync = require('../../utils/catchAsync');
  * @param {Object} res - Express响应对象
  * @returns {Object} 包含新创建营养师的JSON响应
  */
+// NOTE: 自动从 req.user 读取 userId，确保只能由本人创建
+// - 推荐添加字段校验逻辑（服务层/中间件）
+// - 建议 future: 日志记录与资质证书文件上传
 exports.createNutritionist = catchAsync(async (req, res) => {
   const data = req.body;
   
@@ -43,6 +52,9 @@ exports.createNutritionist = catchAsync(async (req, res) => {
  * @param {Object} res - Express响应对象
  * @returns {Object} 包含营养师列表的JSON响应
  */
+// NOTE: 支持筛选项：专业方向、评分、价格范围
+// - 默认按评分倒序排序
+// - 预留排序字段扩展接口
 exports.getNutritionistList = catchAsync(async (req, res) => {
   const { 
     specialization, 
@@ -113,6 +125,9 @@ exports.getNutritionistById = catchAsync(async (req, res) => {
  * @param {Object} res - Express响应对象
  * @returns {Object} 包含更新后营养师的JSON响应
  */
+// NOTE: 仅本人或管理员可修改
+// - 禁止更新字段：userId / verification / ratings
+// - 推荐 future: 审计日志记录
 exports.updateNutritionist = catchAsync(async (req, res) => {
   const { id } = req.params;
   const data = req.body;
@@ -163,6 +178,8 @@ exports.updateNutritionist = catchAsync(async (req, res) => {
  * @param {Object} res - Express响应对象
  * @returns {Object} 包含操作结果的JSON响应
  */
+// NOTE: 本人或管理员可删除
+// - 可采用逻辑删除（如 isDeleted 标记）
 exports.deleteNutritionist = catchAsync(async (req, res) => {
   const { id } = req.params;
   
@@ -206,6 +223,9 @@ exports.deleteNutritionist = catchAsync(async (req, res) => {
  * @param {Object} res - Express响应对象
  * @returns {Object} 包含操作结果的JSON响应
  */
+// ONLY ADMIN: 管理员才能执行审核
+// - 更新字段：verificationStatus / rejectedReason / reviewedBy / reviewedAt
+// - 建议 future: 审核通知推送与记录
 exports.verifyNutritionist = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { verificationStatus, rejectedReason } = req.body;

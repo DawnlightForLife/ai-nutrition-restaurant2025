@@ -1,0 +1,10 @@
+{
+    "models": ["core/", "user/", "nutrition/", "forum/", "order/", "merchant/", "security/", "misc/"],
+    "controllers": ["user/", "nutrition/", "merchant/", "forum/", "order/", "consult/", "core/", "dev/"],
+    "routes": ["user/", "nutrition/", "merchant/", "forum/", "order/", "consult/", "common/", "dev/"],
+    "services": ["user/", "nutrition/", "merchant/", "forum/", "order/", "consult/", "core/", "database/", "cache/", "model/", "performance/"],
+    "middleware": ["auth/", "security/", "validation/", "performance/", "database/", "core/", "dev/", "access/", "validators/"],
+    "config": ["index.js", "env/", "modules/"],
+    "constants": ["roles.js", "genderOptions.js", "merchantTypes.js", "subscriptionPlans.js"],
+    "utils": ["access/", "db/", "logger/", "errors/", "sanitize/", "validators/", "schema/", "scheduler/", "encryption/"]
+  }

@@ -3,22 +3,24 @@ const router = express.Router();
 const { createNutritionist, getNutritionistList, getNutritionistById, updateNutritionist, deleteNutritionist } = require('../../controllers/nutrition/nutritionistController');
 
 /**
- * 营养师相关路由
+ * 营养师管理路由
+ * 提供营养师的创建、获取、更新、删除接口
+ * @module routes/nutrition/nutritionistRoutes
  */
 
-// 创建营养师
+// [POST] 创建营养师
 router.post('/', createNutritionist);
 
-// 获取营养师列表
+// [GET] 获取营养师列表
 router.get('/', getNutritionistList);
 
-// 获取单个营养师详情
+// [GET] 获取指定营养师详情
 router.get('/:id', getNutritionistById);
 
-// 更新营养师
+// [PUT] 更新营养师信息
 router.put('/:id', updateNutritionist);
 
-// 删除营养师
+// [DELETE] 删除营养师
 router.delete('/:id', deleteNutritionist);
 
 module.exports = router;

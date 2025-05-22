@@ -1,426 +1,342 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 const ModelFactory = require('../modelFactory');
-const { shardingService } = require('../../services/core/shardingService');
+const cacheManager = require('../../services/cache/cacheManager');
+const { evaluateCondition } = require('../../utils/access/conditionEvaluator');
+const { shardingService } = require('../../services/database/shardingService');
 
-const dataAccessControlSchema = new mongoose.Schema({
-  // 授予权限的主体
+// 数据访问控制模式定义
+const dataAccessControlSchema = new Schema({
+  // 访问主体（用户、组、角色等）
   principal: {
-    // 主体类型（用户、角色、应用）
     type: {
       type: String,
-      enum: ['user', 'role', 'application'],
-      required: true
+      required: true,
+      enum: ['user', 'group', 'role', 'service', 'system'],
+      description: '访问主体类型，如 user、group、role、service、system'
     },
-    // 主体ID
     id: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       required: true,
-      refPath: 'principal.type_ref'
-    },
-    // 主体引用的模型
-    type_ref: {
-      type: String,
-      required: true,
-      enum: ['User', 'UserRole', 'ApiClient'],
-      default: function() {
-        switch(this.principal.type) {
-          case 'user': return 'User';
-          case 'role': return 'UserRole';
-          case 'application': return 'ApiClient';
-          default: return 'User';
-        }
-      }
+      refPath: 'principal.type',
+      description: '访问主体的唯一标识ID',
+      sensitivityLevel: 2
     }
   },
-  // 被授权的资源
+  
+  // 访问资源（实体、文档等）
   resource: {
-    // 资源类型
     type: {
       type: String,
-      enum: [
-        'user_profile', 
-        'health_data', 
-        'nutrition_profile', 
-        'order', 
-        'dish', 
-        'merchant', 
-        'store', 
-        'nutritionist', 
-        'forum_post',
-        'payment',
-        'admin_dashboard',
-        'system_config'
-      ],
-      required: true
+      required: true,
+      description: '资源类型，如 user_profile、order、document 等'
     },
-    // 资源标识符（特定资源ID）
     id: {
-      type: mongoose.Schema.Types.ObjectId,
-      // 如果为null，表示对该类型的所有资源授权
-      default: null
+      type: Schema.Types.ObjectId,
+      required: false,
+      refPath: 'resource.type',
+      description: '资源的唯一标识ID',
+      sensitivityLevel: 2
     },
-    // 资源所有者ID
-    owner_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+    ownerId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: false,
+      description: '资源所有者的用户ID'
     }
   },
-  // 允许的操作
+  
+  // 权限列表（读、写、删除等）
   permissions: [{
     type: String,
-    enum: ['read', 'write', 'delete', 'execute', 'all'],
-    required: true
+    required: true,
+    description: '权限操作列表，如 read、write、delete 等',
+    sensitivityLevel: 3
   }],
-  // 访问条件（存储为JSON对象）
+  
+  // 权限条件（如时间范围、IP限制等）
   conditions: {
-    type: Map,
-    of: mongoose.Schema.Types.Mixed,
-    default: {}
+    type: Schema.Types.Mixed,
+    default: {},
+    description: '访问权限附加条件，如时间、IP、地域等'
   },
-  // 可访问的敏感度级别（1=高, 2=中, 3=低）
-  sensitivity_level_access: {
+  
+  // 敏感度级别访问（1-最高，5-最低）
+  sensitivityLevelAccess: {
     type: Number,
+    default: 3,
     min: 1,
-    max: 3,
-    default: 3
+    max: 5,
+    description: '访问权限的敏感度级别，1为最高，5为最低'
   },
-  // 有效期
-  valid_from: {
+  
+  // 权限有效期
+  validFrom: {
     type: Date,
-    default: Date.now
+    default: Date.now,
+    description: '权限授权生效时间'
   },
-  valid_until: {
+  validUntil: {
     type: Date,
-    // null表示永不过期
-    default: null
+    default: null,
+    description: '权限授权失效时间，null 表示永久有效'
   },
-  // 授权来源
-  granted_by: {
-    type: mongoose.Schema.Types.ObjectId,
+  
+  // 授权信息
+  grantedBy: {
+    type: Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false,
+    description: '授权操作人用户ID'
   },
-  // 授权原因
-  grant_reason: {
-    type: String
+  grantReason: {
+    type: String,
+    default: '标准授权',
+    description: '授权原因说明'
   },
-  // 是否由用户主动授权
-  user_initiated: {
+  userInitiated: {
     type: Boolean,
-    default: false
+    default: false,
+    description: '是否用户主动发起授权'
   },
-  // 授权是否已被撤销
-  is_revoked: {
+  
+  // 撤销信息
+  isRevoked: {
     type: Boolean,
-    default: false
+    default: false,
+    description: '权限是否已被撤销'
   },
-  revoked_at: {
-    type: Date
-  },
-  revoked_by: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  revoke_reason: {
-    type: String
-  },
-  // 授权记录
-  created_at: {
+  revokedAt: {
     type: Date,
-    default: Date.now
+    default: null,
+    description: '权限撤销时间'
   },
-  updated_at: {
+  revokedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+    description: '撤销操作人用户ID'
+  },
+  revokeReason: {
+    type: String,
+    default: null,
+    description: '撤销原因说明'
+  },
+  
+  // 最后访问时间
+  lastAccessedAt: {
     type: Date,
-    default: Date.now
+    default: null,
+    description: '最近一次访问的时间'
+  },
+  accessCount: {
+    type: Number,
+    default: 0,
+    description: '被访问的累计次数'
   }
-}, {
-  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-});
+}, { timestamps: true });
 
-// 创建索引
+// 为提高查询性能添加索引
 dataAccessControlSchema.index({ 'principal.type': 1, 'principal.id': 1 });
 dataAccessControlSchema.index({ 'resource.type': 1, 'resource.id': 1 });
-dataAccessControlSchema.index({ 'resource.owner_id': 1 });
-dataAccessControlSchema.index({ valid_until: 1 });
-dataAccessControlSchema.index({ is_revoked: 1 });
-// 添加组合索引，用于权限检查查询
-dataAccessControlSchema.index({ 
-  'principal.type': 1, 
-  'principal.id': 1, 
-  'resource.type': 1, 
-  is_revoked: 1, 
-  valid_from: 1, 
-  valid_until: 1 
-});
-// 添加敏感度级别索引，用于按敏感度过滤
-dataAccessControlSchema.index({ sensitivity_level_access: 1 });
-// 添加创建时间索引，用于审计和清理
-dataAccessControlSchema.index({ created_at: -1 });
+dataAccessControlSchema.index({ isRevoked: 1 });
+dataAccessControlSchema.index({ validFrom: 1, validUntil: 1 });
 
-// 添加复合索引以优化常见查询
-dataAccessControlSchema.index({ 
-  'resource.owner_id': 1,
-  'resource.type': 1, 
-  is_revoked: 1
+// 复合索引用于权限查询
+dataAccessControlSchema.index({
+  'principal.type': 1,
+  'principal.id': 1,
+  'resource.type': 1,
+  'resource.id': 1,
+  isRevoked: 1
 });
 
-// 添加时间范围和授权查询的复合索引
-dataAccessControlSchema.index({ 
-  valid_from: 1,
-  valid_until: 1, 
-  granted_by: 1
+// 添加针对有效期的索引
+dataAccessControlSchema.index({ validUntil: 1, isRevoked: 1 });
+
+// 缓存设置
+const CACHE_TTL = 300; // 缓存有效期5分钟
+const ACCESS_CACHE_PREFIX = 'access_control:';
+
+// 虚拟字段：是否有效
+dataAccessControlSchema.virtual('isValid').get(function() {
+  const now = new Date();
+  return (
+    !this.isRevoked && 
+    this.validFrom <= now && 
+    (this.validUntil === null || this.validUntil > now)
+  );
 });
 
-// 添加虚拟字段
-dataAccessControlSchema.virtual('is_valid').get(function() {
-  return this.isValid();
-});
-
-dataAccessControlSchema.virtual('days_until_expiry').get(function() {
-  if (!this.valid_until) return null;
+// 虚拟字段：过期状态
+dataAccessControlSchema.virtual('expiryStatus').get(function() {
+  if (this.isRevoked) return 'revoked';
+  if (!this.validUntil) return 'permanent';
   
   const now = new Date();
-  const diffTime = this.valid_until - now;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const daysUntilExpiry = (this.validUntil - now) / (1000 * 60 * 60 * 24);
   
-  return diffDays > 0 ? diffDays : 0;
+  if (daysUntilExpiry < 0) return 'expired';
+  if (daysUntilExpiry < 7) return 'expiring_soon';
+  return 'active';
 });
 
-dataAccessControlSchema.virtual('principal_name').get(function() {
-  // 需要填充数据才能使用
-  if (this.populated('principal.id')) {
-    const principal = this.populated('principal.id');
-    
-    if (this.principal.type === 'user' && principal) {
-      return principal.full_name || principal.username || principal.email;
-    } else if (this.principal.type === 'role' && principal) {
-      return principal.name;
-    } else if (this.principal.type === 'application' && principal) {
-      return principal.name;
-    }
-  }
-  
-  return `${this.principal.type}-${this.principal.id}`;
-});
-
-dataAccessControlSchema.virtual('resource_name').get(function() {
-  // 需要填充数据才能使用
-  if (this.populated('resource.id')) {
-    const resource = this.populated('resource.id');
-    if (resource && resource.name) {
-      return resource.name;
-    }
-  }
-  
-  return `${this.resource.type}-${this.resource.id || 'all'}`;
-});
-
-// 检查特定权限
+// 方法：检查指定权限
 dataAccessControlSchema.methods.hasPermission = function(permission) {
   return this.permissions.includes(permission) || this.permissions.includes('all');
 };
 
-// 更新前中间件 - 取消timestamps，使用自定义逻辑
-dataAccessControlSchema.pre('save', function(next) {
-  // 更新时间由timestamps处理
-  
-  // 添加额外的验证逻辑
-  if (this.is_revoked && !this.revoked_at) {
-    this.revoked_at = new Date();
-  }
-  
-  // 确保permissions不包含重复项
-  if (this.permissions && Array.isArray(this.permissions)) {
-    this.permissions = [...new Set(this.permissions)];
-    
-    // 如果包含'all'，移除其他权限
-    if (this.permissions.includes('all')) {
-      this.permissions = ['all'];
-    }
-  }
-  
-  next();
-});
-
-// 扩展isValid方法，支持检查特定操作
-dataAccessControlSchema.methods.isValidForOperation = function(operation) {
-  if (!this.isValid()) return false;
-  return this.hasPermission(operation);
-};
-
-// 检查权限是否过期
+// 方法：检查是否过期
 dataAccessControlSchema.methods.isExpired = function() {
-  const now = new Date();
-  return this.valid_until && this.valid_until <= now;
+  if (this.validUntil === null) return false;
+  return new Date() > this.validUntil;
 };
 
-// 撤销权限
+// 方法：撤销权限
 dataAccessControlSchema.methods.revoke = async function(revokedBy, reason) {
-  if (this.is_revoked) return false;
+  if (this.isRevoked) return false;
   
-  this.is_revoked = true;
-  this.revoked_at = new Date();
-  this.revoked_by = revokedBy;
-  this.revoke_reason = reason;
+  this.isRevoked = true;
+  this.revokedAt = new Date();
+  this.revokedBy = revokedBy;
+  this.revokeReason = reason || '手动撤销';
   
   await this.save();
   
   // 清除相关缓存
-  if (global.cacheService) {
-    const cacheKey = this.constructor.generateCacheKey(
-      this.principal.type, 
-      this.principal.id, 
-      this.resource.type, 
-      this.resource.id
-    );
-    await global.cacheService.del(cacheKey);
-  }
+  await this.constructor.clearAccessCache(
+    this.principal.type,
+    this.principal.id,
+    this.resource.type,
+    this.resource.id
+  );
   
   return true;
 };
 
-// 扩展权限
-dataAccessControlSchema.methods.extendValidity = async function(newValidUntil) {
-  if (this.is_revoked || this.isExpired()) return false;
+// 方法：延长有效期
+dataAccessControlSchema.methods.extendValidity = async function(newValidUntil, updatedBy, reason) {
+  if (this.isRevoked) return false;
   
-  const oldValidUntil = this.valid_until;
-  this.valid_until = newValidUntil;
+  this.validUntil = newValidUntil;
+  this.grantedBy = updatedBy || this.grantedBy;
+  this.grantReason = reason || '延长权限有效期';
+  
   await this.save();
   
   // 清除相关缓存
-  if (global.cacheService) {
-    const cacheKey = this.constructor.generateCacheKey(
-      this.principal.type, 
-      this.principal.id, 
-      this.resource.type, 
-      this.resource.id
-    );
-    await global.cacheService.del(cacheKey);
-  }
+  await this.constructor.clearAccessCache(
+    this.principal.type,
+    this.principal.id,
+    this.resource.type,
+    this.resource.id
+  );
   
   return true;
 };
 
-// 更新权限
-dataAccessControlSchema.methods.updatePermissions = async function(newPermissions) {
-  if (this.is_revoked || this.isExpired()) return false;
-  
-  this.permissions = newPermissions;
+// 方法：记录访问
+dataAccessControlSchema.methods.recordAccess = async function() {
+  this.lastAccessedAt = new Date();
+  this.accessCount += 1;
   await this.save();
-  
-  // 清除相关缓存
-  if (global.cacheService) {
-    const cacheKey = this.constructor.generateCacheKey(
-      this.principal.type, 
-      this.principal.id, 
-      this.resource.type, 
-      this.resource.id
-    );
-    await global.cacheService.del(cacheKey);
-  }
-  
-  return true;
 };
 
-// 生成缓存键
-dataAccessControlSchema.statics.generateCacheKey = function(principalType, principalId, resourceType, resourceId) {
-  return `access:${principalType}:${principalId}:${resourceType}:${resourceId || 'all'}`;
-};
-
-// 静态方法：检查主体是否有对资源的指定操作权限
-dataAccessControlSchema.statics.checkAccess = async function(principalType, principalId, resourceType, resourceId, operation, context = {}) {
-  // 先尝试从缓存获取
-  let hasAccess = false;
-  
-  if (global.cacheService) {
-    const cacheKey = this.generateCacheKey(principalType, principalId, resourceType, resourceId);
-    const cachedPermissions = await global.cacheService.get(cacheKey);
-    
-    if (cachedPermissions) {
-      // 检查缓存的权限是否包含请求的操作
-      if (cachedPermissions.includes(operation) || cachedPermissions.includes('all')) {
-        return true;
-      }
-      
-      // 如果缓存存在但不包含权限，则说明没有权限
-      return false;
-    }
+// 方法：评估条件
+dataAccessControlSchema.methods.evaluateConditions = function(context = {}) {
+  // 如果没有条件，则通过
+  if (!this.conditions || Object.keys(this.conditions).length === 0) {
+    return true;
   }
   
-  // 缓存未命中，从数据库查询
+  // 评估所有条件
+  return evaluateCondition(this.conditions, context);
+};
+
+// 静态方法：检查访问权限
+dataAccessControlSchema.statics.checkAccess = async function(principalType, principalId, resourceType, resourceId, permission, context = {}) {
+  // 首先检查缓存
+  const cacheKey = `${ACCESS_CACHE_PREFIX}${principalType}:${principalId}:${resourceType}:${resourceId}:${permission}`;
+  const cachedResult = await cacheManager.get(cacheKey);
+  
+  if (cachedResult !== null) {
+    return cachedResult === 'true';
+  }
+  
   const now = new Date();
   
-  // 查找有效的访问控制记录
+  // 查找匹配的权限记录
   const accessControls = await this.find({
     'principal.type': principalType,
     'principal.id': principalId,
     'resource.type': resourceType,
-    is_revoked: false,
-    valid_from: { $lte: now },
     $or: [
-      { valid_until: null },
-      { valid_until: { $gt: now } }
+      { 'resource.id': resourceId },
+      { 'resource.id': null } // 支持通配符资源ID
+    ],
+    isRevoked: false,
+    validFrom: { $lte: now },
+    $or: [
+      { validUntil: null },
+      { validUntil: { $gt: now } }
     ]
-  }).sort({ sensitivity_level_access: 1 }); // 优先使用可访问高敏感级别的权限
-  
-  if (accessControls.length === 0) return false;
-  
-  // 检查是否有全局权限或特定资源权限
-  const allPermissions = new Set();
-  
-  hasAccess = accessControls.some(ac => {
-    // 收集所有权限
-    ac.permissions.forEach(perm => allPermissions.add(perm));
-    
-    // 检查操作权限
-    if (!ac.permissions.includes(operation) && !ac.permissions.includes('all')) {
-      return false;
-    }
-    
-    // 检查资源ID是否匹配
-    if (resourceId && ac.resource.id && !ac.resource.id.equals(resourceId)) {
-      return false;
-    }
-    
-    // 检查条件
-    if (ac.conditions.size > 0) {
-      for (const [key, value] of ac.conditions.entries()) {
-        if (context[key] !== value) return false;
-      }
-    }
-    
-    return true;
   });
   
-  // 缓存权限结果
-  if (global.cacheService) {
-    const cacheKey = this.generateCacheKey(principalType, principalId, resourceType, resourceId);
-    const permissionsArray = Array.from(allPermissions);
-    
-    // 权限缓存5分钟
-    await global.cacheService.set(cacheKey, permissionsArray, 300);
+  // 检查是否有匹配的权限
+  let hasAccess = false;
+  let matchedControl = null;
+  
+  for (const control of accessControls) {
+    if (control.hasPermission(permission) && control.evaluateConditions(context)) {
+      hasAccess = true;
+      matchedControl = control;
+      break;
+    }
   }
+  
+  // 如果找到匹配的权限记录，记录访问
+  if (hasAccess && matchedControl) {
+    // 使用非阻塞方式记录访问，不等待完成
+    matchedControl.recordAccess().catch(err => console.error('记录访问失败:', err));
+  }
+  
+  // 缓存结果
+  await cacheManager.set(cacheKey, hasAccess.toString(), CACHE_TTL);
   
   return hasAccess;
 };
 
-// 清除指定主体和资源的权限缓存
+// 静态方法：清除访问缓存
 dataAccessControlSchema.statics.clearAccessCache = async function(principalType, principalId, resourceType, resourceId) {
-  if (global.cacheService) {
-    const cacheKey = this.generateCacheKey(principalType, principalId, resourceType, resourceId);
-    await global.cacheService.del(cacheKey);
+  const pattern = `${ACCESS_CACHE_PREFIX}${principalType}:${principalId}:${resourceType}:${resourceId}:*`;
+  await cacheManager.deletePattern(pattern);
+};
+
+// 静态方法：批量检查权限
+dataAccessControlSchema.statics.batchCheckAccess = async function(checks) {
+  const results = {};
+  
+  for (const check of checks) {
+    const { principalType, principalId, resourceType, resourceId, permission, context = {} } = check;
+    const key = `${principalType}:${principalId}:${resourceType}:${resourceId}:${permission}`;
+    
+    results[key] = await this.checkAccess(
+      principalType,
+      principalId,
+      resourceType,
+      resourceId,
+      permission,
+      context
+    );
   }
+  
+  return results;
 };
 
 // 静态方法：授予临时访问权限
-dataAccessControlSchema.statics.grantTemporaryAccess = async function(options) {
-  const {
-    principalType, principalId, 
-    resourceType, resourceId, resourceOwnerId,
-    permissions, validUntil, grantedBy, reason, conditions = {}
-  } = options;
+dataAccessControlSchema.statics.grantTemporaryAccess = async function(principalType, principalId, resourceType, resourceId, permissions, durationHours, grantedBy, options = {}) {
+  const now = new Date();
+  const validUntil = new Date(now.getTime() + (durationHours * 60 * 60 * 1000));
   
   const accessControl = new this({
     principal: {
@@ -430,22 +346,20 @@ dataAccessControlSchema.statics.grantTemporaryAccess = async function(options) {
     resource: {
       type: resourceType,
       id: resourceId,
-      owner_id: resourceOwnerId
+      ownerId: options.ownerId
     },
-    permissions,
-    conditions,
-    valid_until: validUntil,
-    granted_by: grantedBy,
-    grant_reason: reason,
-    user_initiated: true
+    permissions: permissions,
+    conditions: options.conditions || {},
+    sensitivityLevelAccess: options.sensitivityLevel || 3,
+    validFrom: now,
+    validUntil: validUntil,
+    grantedBy: grantedBy,
+    grantReason: options.reason || '临时授权',
+    userInitiated: options.userInitiated || false
   });
   
-  const savedAccess = await accessControl.save();
-  
-  // 清除相关缓存
-  await this.clearAccessCache(principalType, principalId, resourceType, resourceId);
-  
-  return savedAccess;
+  await accessControl.save();
+  return accessControl;
 };
 
 // 静态方法：撤销访问权限
@@ -454,11 +368,10 @@ dataAccessControlSchema.statics.revokeAccess = async function(id, revokedBy, rea
   if (!accessControl) return null;
   
   const updatedAccess = await this.findByIdAndUpdate(id, {
-    is_revoked: true,
-    revoked_at: Date.now(),
-    revoked_by: revokedBy,
-    revoke_reason: reason,
-    updated_at: Date.now()
+    isRevoked: true,
+    revokedAt: Date.now(),
+    revokedBy: revokedBy,
+    revokeReason: reason
   }, { new: true });
   
   // 清除相关缓存
@@ -479,7 +392,7 @@ dataAccessControlSchema.statics.grantFullAccess = async function(principalType, 
     reason = '授予完全访问权限', 
     userInitiated = false,
     conditions = {},
-    sensitivity_level = 1
+    sensitivityLevel = 1
   } = options;
   
   const accessControl = new this({
@@ -490,16 +403,16 @@ dataAccessControlSchema.statics.grantFullAccess = async function(principalType, 
     resource: {
       type: resourceType,
       id: resourceId,
-      owner_id: options.owner_id
+      ownerId: options.ownerId
     },
     permissions: ['all'],
     conditions: conditions,
-    sensitivity_level_access: sensitivity_level,
-    valid_from: new Date(),
-    valid_until: validUntil,
-    granted_by: grantedBy,
-    grant_reason: reason,
-    user_initiated: userInitiated
+    sensitivityLevelAccess: sensitivityLevel,
+    validFrom: new Date(),
+    validUntil: validUntil,
+    grantedBy: grantedBy,
+    grantReason: reason,
+    userInitiated: userInitiated
   });
   
   await accessControl.save();
@@ -530,16 +443,16 @@ dataAccessControlSchema.statics.batchGrant = async function(grants) {
         resource: {
           type: resourceType,
           id: resourceId,
-          owner_id: options.owner_id
+          ownerId: options.ownerId
         },
         permissions: permissions,
         conditions: options.conditions || {},
-        sensitivity_level_access: options.sensitivity_level || 3,
-        valid_from: options.validFrom || new Date(),
-        valid_until: options.validUntil || null,
-        granted_by: grantedBy,
-        grant_reason: options.reason || '批量授权',
-        user_initiated: options.userInitiated || false
+        sensitivityLevelAccess: options.sensitivityLevel || 3,
+        validFrom: options.validFrom || new Date(),
+        validUntil: options.validUntil || null,
+        grantedBy: grantedBy,
+        grantReason: options.reason || '批量授权',
+        userInitiated: options.userInitiated || false
       });
       
       await accessControl.save();
@@ -568,16 +481,16 @@ dataAccessControlSchema.statics.findUserPermissionsForResourceType = async funct
     'principal.type': 'user',
     'principal.id': userId,
     'resource.type': resourceType,
-    is_revoked: false,
-    valid_from: { $lte: now },
+    isRevoked: false,
+    validFrom: { $lte: now },
     $or: [
-      { valid_until: null },
-      { valid_until: { $gt: now } }
+      { validUntil: null },
+      { validUntil: { $gt: now } }
     ]
   })
-  .sort({ created_at: -1 })
+  .sort({ createdAt: -1 })
   .populate('resource.id')
-  .populate('resource.owner_id', 'username email full_name');
+  .populate('resource.ownerId', 'username email full_name');
 };
 
 // 添加静态方法：查找资源的所有授权
@@ -587,27 +500,27 @@ dataAccessControlSchema.statics.findResourcePermissions = async function(resourc
   return this.find({
     'resource.type': resourceType,
     'resource.id': resourceId,
-    is_revoked: false,
-    valid_from: { $lte: now },
+    isRevoked: false,
+    validFrom: { $lte: now },
     $or: [
-      { valid_until: null },
-      { valid_until: { $gt: now } }
+      { validUntil: null },
+      { validUntil: { $gt: now } }
     ]
   })
-  .sort({ created_at: -1 })
+  .sort({ createdAt: -1 })
   .populate('principal.id')
-  .populate('granted_by', 'username email full_name');
+  .populate('grantedBy', 'username email full_name');
 };
 
 // 添加静态方法：查找用户创建的所有授权
 dataAccessControlSchema.statics.findGrantsByUser = async function(userId) {
   return this.find({
-    granted_by: userId
+    grantedBy: userId
   })
-  .sort({ created_at: -1 })
+  .sort({ createdAt: -1 })
   .populate('principal.id')
   .populate('resource.id')
-  .populate('resource.owner_id', 'username email full_name');
+  .populate('resource.ownerId', 'username email full_name');
 };
 
 // 添加静态方法：查找即将过期的授权
@@ -616,17 +529,17 @@ dataAccessControlSchema.statics.findExpiringGrants = async function(daysThreshol
   const thresholdDate = new Date(now.getTime() + (daysThreshold * 24 * 60 * 60 * 1000));
   
   return this.find({
-    is_revoked: false,
-    valid_until: { 
+    isRevoked: false,
+    validUntil: { 
       $ne: null,
       $gt: now, 
       $lte: thresholdDate 
     }
   })
-  .sort({ valid_until: 1 })
+  .sort({ validUntil: 1 })
   .populate('principal.id')
   .populate('resource.id')
-  .populate('granted_by', 'username email full_name');
+  .populate('grantedBy', 'username email full_name');
 };
 
 // 添加静态方法：批量取消授权
@@ -647,7 +560,7 @@ dataAccessControlSchema.statics.batchRevoke = async function(grantIds, revokedBy
         continue;
       }
       
-      if (grant.is_revoked) {
+      if (grant.isRevoked) {
         result.failed.push({
           id: grantId,
           error: '授权记录已被撤销'
@@ -684,8 +597,8 @@ dataAccessControlSchema.statics.cleanupExpiredGrants = async function() {
   const now = new Date();
   
   const expiredGrants = await this.find({
-    is_revoked: false,
-    valid_until: { $ne: null, $lt: now }
+    isRevoked: false,
+    validUntil: { $ne: null, $lt: now }
   });
   
   let revokedCount = 0;

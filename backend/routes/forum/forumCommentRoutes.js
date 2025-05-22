@@ -3,22 +3,24 @@ const router = express.Router();
 const { createForumComment, getForumCommentList, getForumCommentById, updateForumComment, deleteForumComment } = require('../../controllers/forum/forumCommentController');
 
 /**
- * 论坛评论相关路由
+ * 论坛评论管理路由
+ * 包含创建、查询、更新、删除评论的接口
+ * @module routes/forum/forumCommentRoutes
  */
 
-// 创建评论
+// [POST] 创建评论
 router.post('/', createForumComment);
 
-// 获取评论列表
+// [GET] 获取评论列表
 router.get('/', getForumCommentList);
 
-// 获取单个评论详情
+// [GET] 获取单个评论详情
 router.get('/:id', getForumCommentById);
 
-// 更新评论
+// [PUT] 更新评论
 router.put('/:id', updateForumComment);
 
-// 删除评论
+// [DELETE] 删除评论
 router.delete('/:id', deleteForumComment);
 
 module.exports = router; 

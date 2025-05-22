@@ -7,7 +7,8 @@ const dishRoutes = require('./routes/dishRoutes');
 const storeRoutes = require('./routes/storeRoutes');
 const recommendationRoutes = require('./routes/recommendationRoutes');
 const authRoutes = require('./routes/authRoutes');
-const healthDataRoutes = require('./routes/healthDataRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const schemaAdminRoutes = require('./routes/schemaAdminRoutes');
 const authMiddleware = require('./middleware/auth/authMiddleware');
 const { performanceMonitor, resourceMonitor } = require('./middleware/performance/performanceMiddleware');
 const {
@@ -84,6 +85,16 @@ const {
     commonRules,
     customRules
 } = require('./middleware/validation/requestValidationMiddleware');
+const helmet = require('helmet');
+const { defaultLimiter } = require('./middleware/security/rateLimitMiddleware');
+const { accessTrackingMiddleware, initAccessTrackingService } = require('./middleware/security/accessTrackingMiddleware');
+const { dynamicRateLimit } = require('./middleware/security/rateLimitMiddleware');
+const mongoose = require('mongoose');
+const config = require('./config');
+const morgan = require('morgan');
+const compression = require('compression');
+const nutritionMetricsRoutes = require('./routes/nutrition/nutritionMetricsRoutes');
+const sanitizeResponse = require('./utils/sanitizeResponse');
 
 const app = express();
 const API_PREFIX = '/api';
@@ -122,6 +133,9 @@ app.use(requestLogMiddleware);
 app.use(performanceLogMiddleware);
 app.use(securityLogMiddleware);
 app.use(databaseLogMiddleware);
+
+// 应用敏感数据过滤中间件
+app.use(sanitizeResponse);
 
 // 定期记录系统状态
 setInterval(() => {
@@ -182,32 +196,8 @@ setInterval(() => {
     databaseLogger.info('Database status:', dbStatus);
 }, 300000); // 每5分钟记录一次
 
-// 安全中间件
-app.use(securityHeaders);
-app.use(xssProtection);
-app.use(mongoSanitization);
-app.use(parameterPollution);
-app.use(filterSensitiveData);
-app.use(validateOrigin);
-app.use(requestSignatureVerification);
-app.use(requestFrequencyLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: '请求过于频繁，请稍后再试'
-}));
-app.use(sqlInjectionProtection);
-app.use(enhancedXSSProtection);
-
-// 敏感数据加密
-app.use(sensitiveDataEncryption([
-    'password',
-    'creditCard',
-    'ssn',
-    'phone',
-    'email'
-]));
-
-// 基础中间件配置
+// 应用安全中间件
+app.use(helmet());
 app.use(cors({
     origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
@@ -215,11 +205,33 @@ app.use(cors({
     credentials: true,
     maxAge: 86400 // 24小时
 }));
+app.use(defaultLimiter);
+
+// 初始化并应用访问轨迹追踪
+if (process.env.ACCESS_TRACKING_ENABLED === 'true') {
+  // 异步初始化访问轨迹服务
+  initAccessTrackingService()
+    .then(() => {
+      logger.info('访问轨迹追踪服务初始化成功');
+    })
+    .catch(error => {
+      logger.error('访问轨迹追踪服务初始化失败:', error);
+    });
+  
+  // 应用访问轨迹中间件
+  app.use(accessTrackingMiddleware());
+  
+  // 应用动态限流中间件
+  app.use(dynamicRateLimit({
+    useAccessTracking: true
+  }));
+  
+  logger.info('已启用访问轨迹追踪和动态限流');
+}
 
 // 高级限流配置
 const pathLimits = {
     '/api/auth/login': { windowMs: 15 * 60 * 1000, max: 5 }, // 登录接口限制
-    '/api/auth/register': { windowMs: 60 * 60 * 1000, max: 3 }, // 注册接口限制
     '/api/users': { windowMs: 60 * 1000, max: 30 }, // 用户接口限制
     '/api/dishes': { windowMs: 60 * 1000, max: 100 }, // 菜品接口限制
     '/api/stores': { windowMs: 60 * 1000, max: 50 }, // 餐厅接口限制
@@ -310,195 +322,64 @@ const checkCacheHealth = async () => {
 };
 
 // 初始化数据库连接
-connectDB().catch(err => {
-    logger.error('Database connection failed:', err);
-    process.exit(1);
-});
-
-// API路由注册 - 按照资源依赖顺序排列
-const routes = [
-    { 
-        path: '/auth', 
-        router: authRoutes,
-        middleware: [
-            securityHeaders,
-            xssProtection,
-            mongoSanitization,
-            parameterPollution,
-            filterSensitiveData,
-            validateOrigin
-        ]
-    },
-    { 
-        path: '/dishes', 
-        router: dishRoutes, 
-        middleware: [
-            queryOptimizer({
-                maxLimit: 50,
-                defaultLimit: 10,
-                allowedFields: ['name', 'price', 'category', 'createdAt', 'updatedAt'],
-                defaultSort: { createdAt: -1 },
-                maxDepth: 3
-            }),
-            validateQuery(customRules.search),
-            cacheMiddleware({
-                ttl: 300, // 5分钟缓存
-                prefix: 'dishes:',
-                staleWhileRevalidate: true,
-                compression: true
-            }),
-            clearCacheMiddleware(['dishes:*']),
-            batchOptimizer({
-                maxBatchSize: 1000,
-                chunkSize: 100
-            })
-        ] 
-    },
-    { 
-        path: '/stores', 
-        router: storeRoutes, 
-        middleware: [
-            queryOptimizer({
-                maxLimit: 30,
-                defaultLimit: 10,
-                allowedFields: ['name', 'address', 'rating', 'createdAt', 'updatedAt'],
-                defaultSort: { rating: -1 },
-                maxDepth: 3
-            }),
-            validateQuery(customRules.search),
-            cacheMiddleware({
-                ttl: 300,
-                prefix: 'stores:',
-                staleWhileRevalidate: true,
-                compression: true
-            }),
-            clearCacheMiddleware(['stores:*']),
-            batchOptimizer({
-                maxBatchSize: 500,
-                chunkSize: 50
-            })
-        ] 
-    },
-    { 
-        path: '/users', 
-        router: userRoutes, 
-        middleware: [
-            queryOptimizer({
-                maxLimit: 20,
-                defaultLimit: 10,
-                allowedFields: ['username', 'email', 'role', 'createdAt', 'updatedAt'],
-                defaultSort: { createdAt: -1 },
-                maxDepth: 2
-            }),
-            validateQuery(customRules.search),
-            validateHeaders({
-                authorization: commonRules.string.required()
-            }),
-            cacheMiddleware({
-                ttl: 60, // 1分钟缓存
-                prefix: 'users:',
-                staleWhileRevalidate: false,
-                compression: true
-            }),
-            clearCacheMiddleware(['users:*']),
-            batchOptimizer({
-                maxBatchSize: 200,
-                chunkSize: 20
-            })
-        ] 
-    },
-    { 
-        path: '/nutrition-profiles', 
-        router: nutritionProfileRoutes,
-        middleware: [
-            authMiddleware,
-            queryOptimizer({
-                maxLimit: 10,
-                defaultLimit: 5,
-                allowedFields: ['userId', 'createdAt', 'updatedAt'],
-                defaultSort: { createdAt: -1 },
-                maxDepth: 2
-            }),
-            validateQuery(customRules.search),
-            validateHeaders({
-                authorization: commonRules.string.required(),
-                'x-user-id': commonRules.string.required()
-            }),
-            cacheMiddleware({
-                ttl: 60,
-                prefix: 'nutrition:',
-                staleWhileRevalidate: false,
-                compression: true
-            }),
-            clearCacheMiddleware(['nutrition:*']),
-            batchOptimizer({
-                maxBatchSize: 100,
-                chunkSize: 10
-            })
-        ]
-    },
-    { 
-        path: '/recommendation', 
-        router: recommendationRoutes,
-        middleware: [
-            authMiddleware,
-            queryOptimizer({
-                maxLimit: 20,
-                defaultLimit: 10,
-                allowedFields: ['profileId', 'userId', 'createdAt'],
-                defaultSort: { createdAt: -1 },
-                maxDepth: 2
-            }),
-            validateQuery({
-                profileId: commonRules.string.optional(),
-                userId: commonRules.string.optional()
-            }),
-            cacheMiddleware({
-                ttl: 300, // 5分钟缓存
-                prefix: 'recommendation:',
-                staleWhileRevalidate: true,
-                compression: true
-            }),
-            clearCacheMiddleware(['recommendation:*']),
-        ]
-    },
-    { 
-        path: '/health-data', 
-        router: healthDataRoutes,
-        middleware: [
-            authMiddleware,
-            queryOptimizer({
-                maxLimit: 20,
-                defaultLimit: 10,
-                allowedFields: ['user_id', 'createdAt'],
-                defaultSort: { createdAt: -1 },
-                maxDepth: 2
-            }),
-            validateQuery({
-                user_id: commonRules.string.optional()
-            }),
-            cacheMiddleware({
-                ttl: 60, // 1分钟缓存
-                prefix: 'healthData:',
-                staleWhileRevalidate: true,
-                compression: true
-            }),
-            clearCacheMiddleware(['healthData:*']),
-        ]
-    }
-];
-
-// 注册所有路由
-routes.forEach(({ path, router, middleware }) => {
-    logger.info(`Registering route: ${API_PREFIX}${path}`);
-    app.use(`${API_PREFIX}${path}`, ...middleware, router);
+mongoose.connect(config.mongoURI, config.options)
+  .then(() => {
+    logger.info('成功连接到MongoDB数据库');
     
-    // 如果是推荐相关的路由，注册旧版兼容路径
-    if (path === '/recommendation') {
-        logger.info(`Registering legacy route: ${path}`);
-        app.use(path, ...middleware, router);
-    }
-});
+    // 初始化查询监控
+    queryMonitor.initQueryMonitor();
+
+    // 当数据库连接成功时验证模型
+    mongoose.connection.once('open', async () => {
+      logger.info('数据库连接成功，验证核心模型...');
+      
+      // 确保核心模型可以作为构造函数使用
+      try {
+        // 检查User模型
+        const User = require('./models/user/userModel');
+        if (typeof User !== 'function') {
+          logger.error('警告: User模型不是构造函数，尝试从mongoose获取');
+          try {
+            const UserFromMongoose = mongoose.model('User');
+            if (typeof UserFromMongoose === 'function') {
+              logger.info('成功: 从mongoose获取了User构造函数');
+              // 全局注册
+              global._cachedUserModel = UserFromMongoose;
+            }
+          } catch (err) {
+            logger.error('从mongoose获取User模型失败:', err.message);
+          }
+        } else {
+          logger.info('User模型验证成功，可以作为构造函数使用');
+          // 测试创建实例
+          try {
+            const testUser = new User({ phone: 'test-validate-only' });
+            logger.info('测试创建User实例成功');
+          } catch (err) {
+            logger.error('测试创建User实例失败:', err.message);
+          }
+        }
+      } catch (err) {
+        logger.error('验证User模型时出错:', err);
+      }
+    });
+  })
+  .catch(err => {
+    logger.error('连接数据库失败:', err);
+    process.exit(1);
+  });
+
+// 注册API路由
+app.use('/api/users', require('./routes/api/users'));
+app.use('/api/nutrition-profiles', require('./routes/api/nutritionProfiles'));
+app.use('/api/dishes', require('./routes/api/dishes'));
+app.use('/api/stores', require('./routes/api/stores'));
+app.use('/api/recommendations', require('./routes/api/recommendations'));
+app.use('/api/auth', require('./routes/api/auth'));
+app.use('/api/admin', require('./routes/api/admin'));
+app.use('/api/schema', require('./routes/api/schema'));
+app.use('/api/access-tracking', require('./routes/api/accessTracking'));
+app.use('/api/nutrition/nutrition-metrics', nutritionMetricsRoutes);
 
 // 添加ping接口，用于健康检查
 app.get(`${API_PREFIX}/ping`, (req, res) => {

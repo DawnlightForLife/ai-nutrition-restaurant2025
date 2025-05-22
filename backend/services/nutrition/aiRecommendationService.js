@@ -1,4 +1,13 @@
+/**
+ * AI 营养推荐服务模块（aiRecommendationService）
+ * 提供 AI 营养推荐的增删改查、分页查询、用户反馈提交等功能
+ * 与 aiRecommendationModel 配合，为用户营养分析与个性化建议提供支持
+ * 所有方法统一返回 { success, data, message } 结构
+ * 后续支持与 AI 模型服务对接，实现动态生成个性推荐
+ * @module services/nutrition/aiRecommendationService
+ */
 const AiRecommendation = require('../../models/nutrition/aiRecommendationModel');
+const logger = require('../../utils/logger/winstonLogger.js');
 
 const aiRecommendationService = {
   /**
@@ -13,6 +22,7 @@ const aiRecommendationService = {
       await recommendation.save();
       return { success: true, data: recommendation };
     } catch (error) {
+      logger.error('创建AI推荐失败', { error, data });
       return { success: false, message: `创建AI推荐失败: ${error.message}` };
     }
   },
@@ -59,6 +69,7 @@ const aiRecommendationService = {
         }
       };
     } catch (error) {
+      logger.error('获取推荐列表失败', { error, userId, options });
       return { success: false, message: `获取推荐列表失败: ${error.message}` };
     }
   },
@@ -79,6 +90,7 @@ const aiRecommendationService = {
       
       return { success: true, data: recommendation };
     } catch (error) {
+      logger.error('获取推荐详情失败', { error, id });
       return { success: false, message: `获取推荐详情失败: ${error.message}` };
     }
   },
@@ -103,6 +115,7 @@ const aiRecommendationService = {
       
       return { success: true, data: recommendation };
     } catch (error) {
+      logger.error('更新推荐失败', { error, id, data });
       return { success: false, message: `更新推荐失败: ${error.message}` };
     }
   },
@@ -128,6 +141,7 @@ const aiRecommendationService = {
       
       return { success: true, data: recommendation };
     } catch (error) {
+      logger.error('提交反馈失败', { error, id, feedbackData });
       return { success: false, message: `提交反馈失败: ${error.message}` };
     }
   },
@@ -148,6 +162,7 @@ const aiRecommendationService = {
       
       return { success: true, message: '推荐已成功删除' };
     } catch (error) {
+      logger.error('删除推荐失败', { error, id });
       return { success: false, message: `删除推荐失败: ${error.message}` };
     }
   }

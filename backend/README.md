@@ -9,7 +9,7 @@ backend/
 ├── controllers/           # 控制器目录
 │   ├── core/              # 核心模块控制器
 │   ├── forum/             # 论坛模块控制器
-│   ├── health/            # 健康模块控制器
+│   ├── nutrition/         # 营养档案模块控制器
 │   ├── merchant/          # 商家模块控制器
 │   ├── misc/              # 杂项模块控制器
 │   ├── nutrition/         # 营养模块控制器
@@ -19,7 +19,7 @@ backend/
 ├── routes/                # 路由目录
 │   ├── core/              # 核心模块路由
 │   ├── forum/             # 论坛模块路由
-│   ├── health/            # 健康模块路由
+│   ├── nutrition/         # 营养档案模块路由
 │   ├── merchant/          # 商家模块路由
 │   ├── misc/              # 杂项模块路由
 │   ├── nutrition/         # 营养模块路由
@@ -206,3 +206,115 @@ http://localhost:3000/api-docs
 ## 许可证
 
 MIT
+
+## 查询助手方法使用指南
+
+查询助手方法（Query Helper Methods）是为MongoDB模型定义的一组链式调用方法，用于简化和标准化常见的查询操作。用户模型（User Model）中定义了以下查询助手方法：
+
+### 用户模型查询助手
+
+User模型提供了四种查询视图，用于不同场景下获取用户信息：
+
+1. **basicProfile** - 获取用户基本信息
+   ```javascript
+   // 获取所有用户的基本信息列表
+   const users = await User.find({}).basicProfile();
+   
+   // 按角色筛选并获取基本信息
+   const customers = await User.find({ role: 'user' }).basicProfile();
+   ```
+
+2. **fullProfile** - 获取用户完整信息
+   ```javascript
+   // 获取单个用户的完整信息
+   const user = await User.findById(userId).fullProfile();
+   
+   // 获取符合条件的用户完整信息
+   const activeUsers = await User.find({ accountStatus: 'active' }).fullProfile();
+   ```
+
+3. **nutritionistView** - 营养师视角的用户信息
+   ```javascript
+   // 营养师查看用户信息
+   const userForNutritionist = await User.findById(clientId).nutritionistView();
+   ```
+
+4. **merchantView** - 商家视角的用户信息
+   ```javascript
+   // 商家查看用户信息
+   const userForMerchant = await User.findById(customerId).merchantView();
+   ```
+
+### 在服务层中的应用
+
+查询助手方法可以在服务层中使用，简化代码并确保数据访问的一致性：
+
+```javascript
+// 用户服务示例
+const getUserProfile = async (userId, viewingRole) => {
+  let userQuery = User.findById(userId);
+  
+  // 根据查看者角色选择合适的视图
+  switch (viewingRole) {
+    case 'nutritionist':
+      userQuery = userQuery.nutritionistView();
+      break;
+    case 'merchant':
+      userQuery = userQuery.merchantView();
+      break;
+    case 'admin':
+      userQuery = userQuery.fullProfile();
+      break;
+    default:
+      userQuery = userQuery.basicProfile();
+  }
+  
+  return await userQuery;
+};
+```
+
+### 查询助手的好处
+
+1. **代码简洁性** - 减少重复的select字段列表
+2. **一致性** - 确保在整个应用中对用户数据的访问保持一致
+3. **关注点分离** - 将查询逻辑封装在模型层，而不是散布在各个控制器中
+4. **可维护性** - 当需要修改字段选择时，只需更改模型中的定义，而不是每个调用点
+
+### 其他模型的查询助手
+
+除了User模型外，其他模型（如Merchant、Nutritionist等）也定义了类似的查询助手，可以采用相同的方式使用。
+
+## 领域驱动设计(DDD)架构
+
+本项目后端采用领域驱动设计(DDD)架构，将核心业务逻辑封装进领域实体和值对象。
+
+### 架构分层
+
+- **领域层(Domain)**: 包含业务核心概念的实体、值对象和领域服务
+  - **实体(Entities)**: 具有唯一标识的业务对象
+  - **值对象(Value Objects)**: 无唯一标识的不可变对象
+  - **领域服务(Domain Services)**: 处理跨实体的业务逻辑
+  - **仓储接口(Repository Interfaces)**: 定义持久化操作的抽象接口
+
+- **应用层(Application)**: 协调领域对象完成用例
+  - **应用服务(Application Services)**: 编排领域对象实现业务用例
+  - **DTO(Data Transfer Objects)**: 跨层数据传输对象
+
+- **基础设施层(Infrastructure)**: 提供技术能力支持
+  - **仓储实现(Repository Implementations)**: 实现领域层定义的仓储接口
+  - **外部服务集成(External Service Integration)**: 与外部系统交互
+
+- **接口层(Interface)**: 处理用户交互
+  - **控制器(Controllers)**: 处理HTTP请求
+  - **中间件(Middlewares)**: 请求预处理和后处理
+
+### 领域模型
+
+核心领域模型包括：
+
+1. **营养(Nutrition)**: 管理食品营养信息和用户营养需求
+2. **订单(Order)**: 处理用户订单生命周期
+3. **用户(User)**: 管理用户信息和身份验证
+4. **餐厅(Restaurant)**: 管理餐厅信息和菜品
+
+每个领域模型都遵循相同的结构组织：实体、值对象、仓储接口和领域服务。

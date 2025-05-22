@@ -1,105 +1,109 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
-const { shardingService } = require('../../services/core/shardingService');
+const { shardingService } = require('../../services/database/shardingService');
 
 const forumCommentSchema = new mongoose.Schema({
-  post_id: {
+  postId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'ForumPost',
-    required: true
+    required: true,
+    description: '所属帖子ID',
+    sensitivityLevel: 2
   },
-  user_id: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    description: '评论用户ID',
+    sensitivityLevel: 2
   },
-  // 回复其他评论时使用
-  parent_comment_id: {
+  parentCommentId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'ForumComment'
+    ref: 'ForumComment',
+    description: '父级评论ID（如果是回复）',
+    sensitivityLevel: 2
   },
   content: {
     type: String,
-    required: true
+    required: true,
+    description: '评论内容',
+    sensitivityLevel: 2
   },
-  like_count: {
+  likeCount: {
     type: Number,
-    default: 0
+    default: 0,
+    description: '点赞数量'
   },
-  // 评论状态
   status: {
     type: String,
-    enum: ['active', 'deleted', 'pending_review', 'rejected'],
-    default: 'active'
+    enum: ['active', 'deleted', 'pendingReview', 'rejected'],
+    default: 'active',
+    description: '评论状态'
   },
-  // 审核信息
   moderation: {
-    is_moderated: {
+    isModerated: {
       type: Boolean,
-      default: false
+      default: false,
+      description: '是否已审核'
     },
-    moderated_by: {
+    moderatedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Admin'
+      ref: 'Admin',
+      description: '审核管理员ID'
     },
-    moderated_at: {
-      type: Date
+    moderatedAt: {
+      type: Date,
+      description: '审核时间'
     },
-    rejection_reason: {
-      type: String
+    rejectionReason: {
+      type: String,
+      description: '驳回原因',
+      sensitivityLevel: 2
     }
-  },
-  created_at: {
-    type: Date,
-    default: Date.now
-  },
-  updated_at: {
-    type: Date,
-    default: Date.now
   }
 }, {
-  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+  timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
 
 // 创建索引用于快速查找评论
-forumCommentSchema.index({ post_id: 1, created_at: -1 });
-forumCommentSchema.index({ parent_comment_id: 1 });
+forumCommentSchema.index({ postId: 1, createdAt: -1 });
+forumCommentSchema.index({ parentCommentId: 1 });
 // 添加按用户ID的索引，便于查找用户的所有评论
-forumCommentSchema.index({ user_id: 1, created_at: -1 });
+forumCommentSchema.index({ userId: 1, createdAt: -1 });
 // 添加按状态的索引，便于查找需要审核的评论
-forumCommentSchema.index({ status: 1, created_at: -1 });
+forumCommentSchema.index({ status: 1, createdAt: -1 });
 // 添加按点赞数的索引，便于查找热门评论
-forumCommentSchema.index({ post_id: 1, like_count: -1 });
+forumCommentSchema.index({ postId: 1, likeCount: -1 });
 
 // 添加虚拟字段
-forumCommentSchema.virtual('is_reply').get(function() {
-  return !!this.parent_comment_id;
+forumCommentSchema.virtual('isReply').get(function() {
+  return !!this.parentCommentId;
 });
 
-forumCommentSchema.virtual('is_popular').get(function() {
-  return this.like_count >= 5;
+forumCommentSchema.virtual('isPopular').get(function() {
+  return this.likeCount >= 5;
 });
 
-forumCommentSchema.virtual('is_recent').get(function() {
+forumCommentSchema.virtual('isRecent').get(function() {
   const now = new Date();
   const oneDayAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-  return new Date(this.created_at) >= oneDayAgo;
+  return new Date(this.createdAt) >= oneDayAgo;
 });
 
 // 虚拟字段以关联用户信息
 forumCommentSchema.virtual('author', {
   ref: 'User',
-  localField: 'user_id',
+  localField: 'userId',
   foreignField: '_id',
   justOne: true
 });
 
 // 虚拟字段以关联回复的评论
-forumCommentSchema.virtual('parent_comment', {
+forumCommentSchema.virtual('parentComment', {
   ref: 'ForumComment',
-  localField: 'parent_comment_id',
+  localField: 'parentCommentId',
   foreignField: '_id',
   justOne: true
 });
@@ -108,20 +112,20 @@ forumCommentSchema.virtual('parent_comment', {
 forumCommentSchema.virtual('replies', {
   ref: 'ForumComment',
   localField: '_id',
-  foreignField: 'parent_comment_id'
+  foreignField: 'parentCommentId'
 });
 
 // 实例方法
 // 增加点赞
 forumCommentSchema.methods.like = async function() {
-  this.like_count += 1;
+  this.likeCount += 1;
   return await this.save();
 };
 
 // 取消点赞
 forumCommentSchema.methods.unlike = async function() {
-  if (this.like_count > 0) {
-    this.like_count -= 1;
+  if (this.likeCount > 0) {
+    this.likeCount -= 1;
     return await this.save();
   }
   return this;
@@ -136,10 +140,10 @@ forumCommentSchema.methods.softDelete = async function(adminId, reason) {
   
   if (adminId) {
     this.moderation = {
-      is_moderated: true,
-      moderated_by: adminId,
-      moderated_at: new Date(),
-      rejection_reason: reason || '评论已被删除'
+      isModerated: true,
+      moderatedBy: adminId,
+      moderatedAt: new Date(),
+      rejectionReason: reason || '评论已被删除'
     };
   }
   
@@ -150,8 +154,8 @@ forumCommentSchema.methods.softDelete = async function(adminId, reason) {
     try {
       const ForumPost = ModelFactory.createModel('ForumPost');
       await ForumPost.findByIdAndUpdate(
-        this.post_id,
-        { $inc: { comment_count: -1 } }
+        this.postId,
+        { $inc: { commentCount: -1 } }
       );
     } catch (err) {
       console.error('更新帖子评论计数失败:', err);
@@ -164,16 +168,16 @@ forumCommentSchema.methods.softDelete = async function(adminId, reason) {
 // 审核评论
 forumCommentSchema.methods.moderate = async function(adminId, approved, reason) {
   this.moderation = {
-    is_moderated: true,
-    moderated_by: adminId,
-    moderated_at: new Date()
+    isModerated: true,
+    moderatedBy: adminId,
+    moderatedAt: new Date()
   };
   
   if (approved) {
     this.status = 'active';
   } else {
     this.status = 'rejected';
-    this.moderation.rejection_reason = reason || '评论未通过审核';
+    this.moderation.rejectionReason = reason || '评论未通过审核';
   }
   
   await this.save();
@@ -183,8 +187,8 @@ forumCommentSchema.methods.moderate = async function(adminId, approved, reason) 
     try {
       const ForumPost = ModelFactory.createModel('ForumPost');
       await ForumPost.findByIdAndUpdate(
-        this.post_id,
-        { $inc: { comment_count: 1 } }
+        this.postId,
+        { $inc: { commentCount: 1 } }
       );
     } catch (err) {
       console.error('更新帖子评论计数失败:', err);
@@ -197,11 +201,11 @@ forumCommentSchema.methods.moderate = async function(adminId, approved, reason) 
 // 创建回复
 forumCommentSchema.methods.createReply = async function(userId, content) {
   const reply = new this.constructor({
-    post_id: this.post_id,
-    user_id: userId,
-    parent_comment_id: this._id,
+    postId: this.postId,
+    userId: userId,
+    parentCommentId: this._id,
     content: content,
-    status: global.contentModerationEnabled ? 'pending_review' : 'active'
+    status: global.contentModerationEnabled ? 'pendingReview' : 'active'
   });
   
   await reply.save();
@@ -214,20 +218,20 @@ forumCommentSchema.statics.getPostComments = async function(postId, options = {}
   const { 
     limit = 20, 
     skip = 0,
-    sort = { created_at: -1 },
+    sort = { createdAt: -1 },
     includeReplies = true,
     populateAuthor = true,
     populateReplies = true
   } = options;
   
   const query = {
-    post_id: postId,
+    postId: postId,
     status: 'active'
   };
   
   // 如果不包含回复，只获取顶级评论
   if (!includeReplies) {
-    query.parent_comment_id = { $exists: false };
+    query.parentCommentId = { $exists: false };
   }
   
   const total = await this.countDocuments(query);
@@ -239,22 +243,22 @@ forumCommentSchema.statics.getPostComments = async function(postId, options = {}
   
   // 关联数据
   if (populateAuthor) {
-    commentsQuery = commentsQuery.populate('author', 'username full_name profile_image');
+    commentsQuery = commentsQuery.populate('author', 'username fullName profileImage');
   }
   
   if (includeReplies && populateReplies) {
     commentsQuery = commentsQuery.populate({
       path: 'replies',
       match: { status: 'active' },
-      options: { sort: { created_at: 1 } },
+      options: { sort: { createdAt: 1 } },
       populate: populateAuthor ? { 
         path: 'author', 
-        select: 'username full_name profile_image' 
-      } : null
+        select: 'username fullName profileImage' 
+      } : undefined
     });
   }
   
-  const comments = await commentsQuery.exec();
+  const comments = await commentsQuery;
   
   return {
     comments,
@@ -267,18 +271,17 @@ forumCommentSchema.statics.getPostComments = async function(postId, options = {}
   };
 };
 
-// 获取用户的评论
+// 获取用户评论
 forumCommentSchema.statics.getUserComments = async function(userId, options = {}) {
   const { 
     limit = 20, 
     skip = 0,
-    sort = { created_at: -1 },
-    includeDeleted = false
+    sort = { createdAt: -1 }
   } = options;
   
   const query = {
-    user_id: userId,
-    status: includeDeleted ? { $ne: 'pending_review' } : 'active'
+    userId: userId,
+    status: 'active'
   };
   
   const total = await this.countDocuments(query);
@@ -287,7 +290,10 @@ forumCommentSchema.statics.getUserComments = async function(userId, options = {}
     .sort(sort)
     .skip(skip)
     .limit(limit)
-    .populate('post_id', 'title');
+    .populate({
+      path: 'postId',
+      select: 'title'
+    });
   
   return {
     comments,
@@ -303,26 +309,24 @@ forumCommentSchema.statics.getUserComments = async function(userId, options = {}
 // 获取热门评论
 forumCommentSchema.statics.getPopularComments = async function(postId, limit = 5) {
   return this.find({
-    post_id: postId,
+    postId: postId,
     status: 'active',
-    like_count: { $gt: 0 }
+    likeCount: { $gte: 3 }
   })
-  .sort({ like_count: -1 })
+  .sort({ likeCount: -1 })
   .limit(limit)
-  .populate('author', 'username full_name profile_image');
+  .populate('author', 'username fullName profileImage');
 };
 
-// 获取等待审核的评论
+// 获取待审核评论
 forumCommentSchema.statics.getPendingComments = async function(options = {}) {
   const { 
     limit = 20, 
     skip = 0,
-    sort = { created_at: 1 }
+    sort = { createdAt: 1 }
   } = options;
   
-  const query = { 
-    status: 'pending_review' 
-  };
+  const query = { status: 'pendingReview' };
   
   const total = await this.countDocuments(query);
   
@@ -330,8 +334,11 @@ forumCommentSchema.statics.getPendingComments = async function(options = {}) {
     .sort(sort)
     .skip(skip)
     .limit(limit)
-    .populate('author', 'username full_name profile_image')
-    .populate('post_id', 'title');
+    .populate('author', 'username fullName profileImage')
+    .populate({
+      path: 'postId',
+      select: 'title'
+    });
   
   return {
     comments,
@@ -344,108 +351,47 @@ forumCommentSchema.statics.getPendingComments = async function(options = {}) {
   };
 };
 
-// 批量审核评论
-forumCommentSchema.statics.bulkModerate = async function(commentIds, adminId, approved, reason) {
-  const result = {
-    success: [],
-    failed: []
-  };
-  
-  for (const commentId of commentIds) {
-    try {
-      const comment = await this.findById(commentId);
-      if (!comment) {
-        result.failed.push({
-          id: commentId,
-          error: '评论不存在'
-        });
-        continue;
-      }
-      
-      if (comment.status !== 'pending_review') {
-        result.failed.push({
-          id: commentId,
-          error: '评论已经被审核'
-        });
-        continue;
-      }
-      
-      await comment.moderate(adminId, approved, reason);
-      
-      result.success.push({
-        id: commentId,
-        status: approved ? 'active' : 'rejected'
-      });
-    } catch (error) {
-      result.failed.push({
-        id: commentId,
-        error: error.message
-      });
-    }
-  }
-  
-  return result;
-};
-
-// 查找并计数帖子的顶级评论和回复
-forumCommentSchema.statics.countTopLevelAndReplies = async function(postId) {
-  const [topLevelResult, repliesResult] = await Promise.all([
-    this.countDocuments({
-      post_id: postId,
-      status: 'active',
-      parent_comment_id: { $exists: false }
-    }),
-    this.countDocuments({
-      post_id: postId,
-      status: 'active',
-      parent_comment_id: { $exists: true, $ne: null }
-    })
-  ]);
-  
-  return {
-    topLevelCount: topLevelResult,
-    repliesCount: repliesResult,
-    totalCount: topLevelResult + repliesResult
-  };
-};
-
-// 移除旧的创建后更新帖子评论计数的中间件，改进版本
+// 中间件
+// 更新帖子评论计数
 forumCommentSchema.post('save', async function(doc) {
-  if (doc.isNew && doc.status === 'active') {
+  if (doc.status === 'active' && !doc._forumPostUpdated) {
     try {
       const ForumPost = ModelFactory.createModel('ForumPost');
       await ForumPost.findByIdAndUpdate(
-        doc.post_id,
-        { $inc: { comment_count: 1 } }
+        doc.postId,
+        { $inc: { commentCount: 1 } }
       );
+      
+      doc._forumPostUpdated = true;
     } catch (err) {
       console.error('更新帖子评论计数失败:', err);
     }
   }
 });
 
-// 添加删除评论时更新帖子评论计数的中间件
+// 防止重复计数
 forumCommentSchema.post('findOneAndUpdate', async function(doc) {
-  if (doc && doc.status === 'deleted') {
+  if (doc && doc.status === 'active' && !doc._forumPostUpdated) {
     try {
       const ForumPost = ModelFactory.createModel('ForumPost');
       await ForumPost.findByIdAndUpdate(
-        doc.post_id,
-        { $inc: { comment_count: -1 } }
+        doc.postId,
+        { $inc: { commentCount: 1 } }
       );
+      
+      doc._forumPostUpdated = true;
     } catch (err) {
       console.error('更新帖子评论计数失败:', err);
     }
   }
 });
 
-// 移除不需要的中间件，由timestamps处理
+// 内容审核
 forumCommentSchema.pre('save', function(next) {
-  // 添加自定义逻辑
   if (this.isNew && this.status === 'active') {
     // 如果平台设置了内容审核，新评论默认为待审核状态
     if (global.contentModerationEnabled) {
-      this.status = 'pending_review';
+      this.status = 'pendingReview';
     }
   }
   
@@ -457,7 +403,9 @@ const ForumComment = ModelFactory.createModel('ForumComment', forumCommentSchema
 
 // 添加分片支持
 ForumComment.getShardKey = function(doc) {
-  return doc.post_id.toString();
+  const month = doc.createdAt.getMonth() + 1;
+  const year = doc.createdAt.getFullYear();
+  return `${year}-${month}`;
 };
 
-module.exports = ForumComment; 
+module.exports = ForumComment;

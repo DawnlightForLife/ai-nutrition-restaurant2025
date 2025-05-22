@@ -1,77 +1,97 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
+const { merchantTypeValues } = require('./merchantTypeEnum');
 
 // 营业时间子模式
 const operatingHoursSchema = new mongoose.Schema({
   dayOfWeek: {
     type: String,
     enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-    required: true
+    required: true,
+    description: '星期几'
   },
   isOpen: {
     type: Boolean,
-    default: true
+    default: true,
+    description: '该日是否营业'
   },
   openingTime: {
     type: String,
-    required: true
+    required: true,
+    description: '开始营业时间'
   },
   closingTime: {
     type: String,
-    required: true
+    required: true,
+    description: '结束营业时间'
   },
-  breakStart: String,
-  breakEnd: String
+  breakStart: {
+    type: String,
+    description: '休息开始时间'
+  },
+  breakEnd: {
+    type: String,
+    description: '休息结束时间'
+  }
 });
 
 const merchantSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    description: '所属用户ID'
   },
   // 基本信息
   businessName: {
     type: String,
     required: true,
     trim: true,
-    sensitivity_level: 3 // 低度敏感数据
+    sensitivityLevel: 3, // 低度敏感数据
+    description: '商家名称'
   },
   businessType: {
     type: String,
-    enum: ['restaurant', 'gym', 'maternity_center', 'school_company'],
+    enum: merchantTypeValues,
     required: true,
-    sensitivity_level: 3 // 低度敏感数据
+    sensitivityLevel: 3, // 低度敏感数据
+    description: '商家类型'
   },
   registrationNumber: {
     type: String,
     required: true,
-    sensitivity_level: 1 // 高度敏感数据
+    sensitivityLevel: 1, // 高度敏感数据
+    description: '营业执照编号'
   },
   taxId: {
     type: String,
     required: true,
-    sensitivity_level: 1 // 高度敏感数据
+    sensitivityLevel: 1, // 高度敏感数据
+    description: '税务登记号'
   },
   // 联系信息
   contact: {
     email: {
       type: String,
       required: true,
-      sensitivity_level: 2 // 中度敏感数据
+      sensitivityLevel: 2, // 中度敏感数据
+      description: '联系邮箱'
     },
     phone: {
       type: String,
       required: true,
-      sensitivity_level: 2 // 中度敏感数据
+      sensitivityLevel: 2, // 中度敏感数据
+      description: '联系电话'
     },
     alternativePhone: {
       type: String,
-      sensitivity_level: 2 // 中度敏感数据
+      sensitivityLevel: 2, // 中度敏感数据
+      description: '备用电话'
     },
     website: {
       type: String,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '网站地址'
     }
   },
   // 地址信息
@@ -79,40 +99,48 @@ const merchantSchema = new mongoose.Schema({
     line1: {
       type: String,
       required: true,
-      sensitivity_level: 2 // 中度敏感数据
+      sensitivityLevel: 2, // 中度敏感数据
+      description: '地址第一行'
     },
     line2: {
       type: String,
-      sensitivity_level: 2 // 中度敏感数据
+      sensitivityLevel: 2, // 中度敏感数据
+      description: '地址第二行'
     },
     city: {
       type: String,
       required: true,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '城市'
     },
     state: {
       type: String,
       required: true,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '省/州'
     },
     postalCode: {
       type: String,
       required: true,
-      sensitivity_level: 2 // 中度敏感数据
+      sensitivityLevel: 2, // 中度敏感数据
+      description: '邮政编码'
     },
     country: {
       type: String,
       default: 'China',
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '国家'
     },
     coordinates: {
       latitude: {
         type: Number,
-        sensitivity_level: 2 // 中度敏感数据
+        sensitivityLevel: 2, // 中度敏感数据
+        description: '纬度'
       },
       longitude: {
         type: Number,
-        sensitivity_level: 2 // 中度敏感数据
+        sensitivityLevel: 2, // 中度敏感数据
+        description: '经度'
       }
     }
   },
@@ -121,40 +149,48 @@ const merchantSchema = new mongoose.Schema({
     description: {
       type: String,
       required: true,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '商家简介'
     },
     establishmentYear: {
       type: Number,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '成立年份'
     },
     operatingHours: [operatingHoursSchema],
     cuisineTypes: [{
       type: String,
-      enum: ['chinese', 'sichuan', 'cantonese', 'hunan', 'western', 'fast_food', 'vegetarian', 'fusion', 'other'],
-      sensitivity_level: 3 // 低度敏感数据
+      enum: ['chinese', 'sichuan', 'cantonese', 'hunan', 'western', 'fastFood', 'vegetarian', 'fusion', 'other'],
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '菜系类型'
     }],
     averagePriceRange: {
-      min: {
+      minPrice: {
         type: Number,
-        sensitivity_level: 3 // 低度敏感数据
+        sensitivityLevel: 3, // 低度敏感数据
+        description: '价格区间下限'
       },
-      max: {
+      maxPrice: {
         type: Number,
-        sensitivity_level: 3 // 低度敏感数据
+        sensitivityLevel: 3, // 低度敏感数据
+        description: '价格区间上限'
       }
     },
     facilities: [{
       type: String,
       enum: ['parking', 'wifi', 'outdoor_seating', 'air_conditioning', 'wheelchair_accessible', 'private_rooms', 'takeout', 'delivery', 'catering', 'reservations'],
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '设施服务'
     }],
     images: [{
       type: String,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '商家图片'
     }],
     logoUrl: {
       type: String,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '商家Logo地址'
     }
   },
   // 营养与健康特色
@@ -162,26 +198,43 @@ const merchantSchema = new mongoose.Schema({
     hasNutritionist: {
       type: Boolean,
       default: false,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '是否配备营养师'
     },
     nutritionCertified: {
       type: Boolean,
       default: false,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '是否营养认证'
     },
     certificationDetails: {
       type: String,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '认证详情'
     },
     nutritionistId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Nutritionist',
-      sensitivity_level: 2 // 中度敏感数据
+      sensitivityLevel: 2, // 中度敏感数据
+      description: '关联营养师ID'
     },
     specialtyDiets: [{
       type: String,
-      enum: ['weight_loss', 'diabetes_friendly', 'heart_healthy', 'high_protein', 'low_sodium', 'gluten_free', 'pregnancy_nutrition', 'senior_nutrition', 'child_nutrition', 'athlete_nutrition', 'other'],
-      sensitivity_level: 3 // 低度敏感数据
+      enum: [
+        'weightLoss',
+        'diabetesFriendly',
+        'heartHealthy',
+        'highProtein',
+        'lowSodium',
+        'glutenFree',
+        'pregnancyNutrition',
+        'seniorNutrition',
+        'childNutrition',
+        'athleteNutrition',
+        'other'
+      ],
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '特殊饮食类型'
     }]
   },
   // 商家特定设置
@@ -190,107 +243,138 @@ const merchantSchema = new mongoose.Schema({
     restaurantSettings: {
       allowsReservations: {
         type: Boolean,
-        default: true
+        default: true,
+        description: '是否允许预订'
       },
       minOrderAmount: {
         type: Number,
-        default: 0
+        default: 0,
+        description: '最低订单金额'
       },
       deliveryRadius: {
-        type: Number // 公里
+        type: Number, // 公里
+        description: '配送半径(公里)'
       },
       deliveryFee: {
         type: Number,
-        default: 0
+        default: 0,
+        description: '配送费'
       },
       estimatedDeliveryTime: {
-        type: Number // 分钟
+        type: Number, // 分钟
+        description: '预计配送时间(分钟)'
       },
-      seatingCapacity: Number
+      seatingCapacity: {
+        type: Number,
+        description: '座位容量'
+      }
     },
     // 健身房特定设置
     gymSettings: {
       offersMealPlans: {
         type: Boolean,
-        default: false
+        default: false,
+        description: '是否提供膳食计划'
       },
       hasNutritionCoaching: {
         type: Boolean,
-        default: false
+        default: false,
+        description: '是否提供营养指导'
       },
-      nutritionCoachingFee: Number,
+      nutritionCoachingFee: {
+        type: Number,
+        description: '营养指导费用'
+      },
       membershipRequired: {
         type: Boolean,
-        default: false
+        default: false,
+        description: '是否需要会员资格'
       }
     },
     // 月子中心特定设置
     maternityCenterSettings: {
       offersCustomMealPlans: {
         type: Boolean,
-        default: true
+        default: true,
+        description: '是否提供定制膳食计划'
       },
       offersNutritionEducation: {
         type: Boolean,
-        default: true
+        default: true,
+        description: '是否提供营养教育'
       },
       hasMedicalSupervision: {
         type: Boolean,
-        default: true
+        default: true,
+        description: '是否有医疗监督'
       },
       medicalStaffAvailable: {
         type: Boolean,
-        default: true
+        default: true,
+        description: '是否有医务人员在场'
       }
     },
     // 学校/企业食堂特定设置
     schoolCompanySettings: {
       organizationType: {
         type: String,
-        enum: ['school', 'university', 'company', 'government', 'other']
+        enum: ['school', 'university', 'company', 'government', 'other'],
+        description: '组织类型'
       },
       servesBreakfast: {
         type: Boolean,
-        default: false
+        default: false,
+        description: '是否提供早餐'
       },
       servesLunch: {
         type: Boolean,
-        default: true
+        default: true,
+        description: '是否提供午餐'
       },
       servesDinner: {
         type: Boolean,
-        default: false
+        default: false,
+        description: '是否提供晚餐'
       },
       subscriptionAvailable: {
         type: Boolean,
-        default: false
+        default: false,
+        description: '是否提供订阅服务'
       },
-      subscriptionDetails: String
+      subscriptionDetails: {
+        type: String,
+        description: '订阅服务详情'
+      }
     }
   },
   // 菜单管理
   menuSettings: {
     usesAiRecommendations: {
       type: Boolean,
-      default: true
+      default: true,
+      description: '是否使用AI推荐'
     },
     personalizationLevel: {
       type: String,
       enum: ['none', 'basic', 'advanced', 'full'],
-      default: 'basic'
+      default: 'basic',
+      description: '个性化推荐级别'
     },
     allowsSubstitutions: {
       type: Boolean,
-      default: true
+      default: true,
+      description: '是否允许替换食材'
     },
     autoGeneratesNutritionInfo: {
       type: Boolean,
-      default: true
+      default: true,
+      description: '是否自动生成营养信息'
     },
     rotationFrequency: {
       type: String,
       enum: ['daily', 'weekly', 'monthly', 'seasonal', 'none'],
-      default: 'none'
+      default: 'none',
+      description: '菜单轮换频率'
     }
   },
   // 认证与状态
@@ -298,51 +382,68 @@ const merchantSchema = new mongoose.Schema({
     isVerified: {
       type: Boolean,
       default: false,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '是否已验证'
     },
     verificationStatus: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending',
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '验证状态'
     },
     verifiedAt: {
       type: Date,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '验证时间'
     },
     verifiedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Admin',
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '验证人'
     },
     verificationNotes: {
       type: String,
-      sensitivity_level: 2 // 中度敏感数据
+      sensitivityLevel: 2, // 中度敏感数据
+      description: '验证备注'
     },
     rejectionReason: {
       type: String,
-      sensitivity_level: 2 // 中度敏感数据
+      sensitivityLevel: 2, // 中度敏感数据
+      description: '拒绝原因'
     },
     verificationDocuments: [{
       documentType: {
         type: String,
-        enum: ['business_license', 'food_permit', 'tax_certificate', 'health_certificate', 'identity_proof', 'other'],
-        sensitivity_level: 2 // 中度敏感数据
+        enum: [
+          'businessLicense',
+          'foodPermit',
+          'taxCertificate',
+          'nutritionCertificate',
+          'identityProof',
+          'other'
+        ],
+        sensitivityLevel: 2, // 中度敏感数据
+        description: '文档类型'
       },
       documentUrl: {
         type: String,
-        sensitivity_level: 1 // 高度敏感数据
+        sensitivityLevel: 1, // 高度敏感数据
+        description: '文档链接'
       },
       uploadedAt: {
         type: Date,
         default: Date.now,
-        sensitivity_level: 3 // 低度敏感数据
+        sensitivityLevel: 3, // 低度敏感数据
+        description: '上传时间'
       },
       status: {
         type: String,
         enum: ['pending', 'approved', 'rejected'],
         default: 'pending',
-        sensitivity_level: 3 // 低度敏感数据
+        sensitivityLevel: 3, // 低度敏感数据
+        description: '文档状态'
       }
     }]
   },
@@ -351,57 +452,68 @@ const merchantSchema = new mongoose.Schema({
     isActive: {
       type: Boolean,
       default: true,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '账户是否激活'
     },
     suspensionReason: {
       type: String,
-      sensitivity_level: 2 // 中度敏感数据
+      sensitivityLevel: 2, // 中度敏感数据
+      description: '停用原因'
     },
     suspendedAt: {
       type: Date,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '停用时间'
     },
     suspendedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Admin',
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '停用操作人'
     },
     suspensionEndDate: {
       type: Date,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '停用结束日期'
     }
   },
   // 支付与结算设置
   paymentSettings: {
     acceptedPaymentMethods: [{
       type: String,
-      enum: ['cash', 'credit_card', 'debit_card', 'wechat_pay', 'alipay', 'bank_transfer', 'subscription', 'other'],
-      sensitivity_level: 3 // 低度敏感数据
+      enum: ['cash', 'creditCard', 'debitCard', 'wechatPay', 'alipay', 'bankTransfer', 'subscription', 'other'],
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '支持的支付方式'
     }],
     bankAccountInfo: {
       bankName: {
         type: String,
-        sensitivity_level: 1 // 高度敏感数据
+        sensitivityLevel: 1, // 高度敏感数据
+        description: '开户银行'
       },
       accountNumber: {
         type: String,
-        sensitivity_level: 1 // 高度敏感数据
+        sensitivityLevel: 1, // 高度敏感数据
+        description: '银行账号'
       },
       accountName: {
         type: String,
-        sensitivity_level: 1 // 高度敏感数据
+        sensitivityLevel: 1, // 高度敏感数据
+        description: '账户名称'
       }
     },
     settlementCycle: {
       type: String,
       enum: ['daily', 'weekly', 'biweekly', 'monthly'],
       default: 'weekly',
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '结算周期'
     },
     commissionRate: {
       type: Number,
       default: 0.05,
-      sensitivity_level: 2 // 中度敏感数据
+      sensitivityLevel: 2, // 中度敏感数据
+      description: '佣金率'
     }
   },
   // 订单与统计
@@ -409,74 +521,95 @@ const merchantSchema = new mongoose.Schema({
     totalOrders: {
       type: Number,
       default: 0,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '总订单数'
     },
     totalSales: {
       type: Number,
       default: 0,
-      sensitivity_level: 2 // 中度敏感数据
+      sensitivityLevel: 2, // 中度敏感数据
+      description: '总销售额'
     },
     avgOrderValue: {
       type: Number,
       default: 0,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '平均订单金额'
     },
     avgRating: {
       type: Number,
       default: 0,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '平均评分'
     },
     ratingCount: {
       type: Number,
       default: 0,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '评分数量'
     },
     healthScore: {
       type: Number,
       min: 0,
       max: 100,
       default: 80,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '健康评分(0-100)'
     }
   },
   // 数据共享与访问权限
   dataSharing: {
-    shareHealthDataWithUsers: {
+    shareNutritionDataWithUsers: {
       type: Boolean,
-      default: false
+      default: false,
+      description: '是否与用户共享营养数据'
     },
     shareMenuItemsWithPublic: {
       type: Boolean,
-      default: true
+      default: true,
+      description: '是否公开分享菜单项'
     },
     shareMenuNutritionData: {
       type: Boolean,
-      default: true
+      default: true,
+      description: '是否分享菜单营养数据'
     },
     allowNutritionistReviews: {
       type: Boolean,
-      default: true
+      default: true,
+      description: '是否允许营养师审核'
     }
   },
   // 外部服务集成
   externalServices: [{
     serviceName: {
       type: String,
-      enum: ['delivery_service', 'reservation_system', 'pos_system', 'inventory_management', 'customer_loyalty', 'other'],
-      sensitivity_level: 3 // 低度敏感数据
+      enum: [
+        'deliveryService',
+        'reservationSystem',
+        'posSystem',
+        'inventoryManagement',
+        'customerLoyalty',
+        'other'
+      ],
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '服务名称'
     },
     serviceProvider: {
       type: String,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '服务提供商'
     },
     integrationDetails: {
       type: String,
-      sensitivity_level: 2 // 中度敏感数据
+      sensitivityLevel: 2, // 中度敏感数据
+      description: '集成详情'
     },
     isActive: {
       type: Boolean,
       default: true,
-      sensitivity_level: 3 // 低度敏感数据
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '是否激活'
     }
   }],
   // 授权记录 - 记录哪些用户或营养师可以访问商家数据
@@ -487,33 +620,40 @@ const merchantSchema = new mongoose.Schema({
     },
     grantedToType: {
       type: String,
-      enum: ['User', 'Nutritionist', 'Admin']
+      enum: ['User', 'Nutritionist', 'Admin'],
+      description: '授予访问权限的对象类型'
     },
     grantedAt: {
       type: Date,
-      default: Date.now
+      default: Date.now,
+      description: '授予访问权限的时间'
     },
     validUntil: {
-      type: Date
+      type: Date,
+      description: '访问权限的有效期'
     },
     accessLevel: {
       type: String,
       enum: ['view_menu', 'view_business_info', 'view_orders', 'manage_menu', 'manage_business', 'full_access'],
-      default: 'view_menu'
+      default: 'view_menu',
+      description: '访问级别'
     },
     revoked: {
       type: Boolean,
-      default: false
+      default: false,
+      description: '是否已撤销访问权限'
     },
     revokedAt: {
-      type: Date
+      type: Date,
+      description: '撤销访问权限的时间'
     }
   }],
   // 安全与审计
   accessLog: [{
     timestamp: {
       type: Date,
-      default: Date.now
+      default: Date.now,
+      description: '访问时间'
     },
     accessedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -521,45 +661,50 @@ const merchantSchema = new mongoose.Schema({
     },
     accessedByType: {
       type: String,
-      enum: ['User', 'Nutritionist', 'Admin', 'System']
+      enum: ['User', 'Nutritionist', 'Admin', 'System'],
+      description: '访问者类型'
     },
-    ipAddress: String,
+    ipAddress: {
+      type: String,
+      description: '访问者IP地址'
+    },
     action: {
       type: String,
-      enum: ['view_profile', 'view_menu', 'place_order', 'update_menu', 'update_profile', 'view_orders', 'other']
+      enum: ['view_profile', 'view_menu', 'place_order', 'update_menu', 'update_profile', 'view_orders', 'other'],
+      description: '访问操作'
     },
     resourceId: mongoose.Schema.Types.ObjectId,
-    details: String
+    details: {
+      type: String,
+      description: '访问详情'
+    }
   }],
   // 合规与隐私确认
   compliance: {
     termsAgreed: {
       type: Boolean,
-      default: false
+      default: false,
+      description: '是否同意条款'
     },
     privacyPolicyAgreed: {
       type: Boolean,
-      default: false
+      default: false,
+      description: '是否同意隐私政策'
     },
     dataProcessingAgreed: {
       type: Boolean,
-      default: false
+      default: false,
+      description: '是否同意数据处理'
     },
     agreementDate: {
-      type: Date
+      type: Date,
+      description: '协议同意日期'
     },
     lastPolicyUpdateAgreed: {
-      type: Date
+      type: Date,
+      description: '最后政策更新同意日期'
     }
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -773,6 +918,72 @@ merchantSchema.methods.getFilteredProfile = function(accessLevel = 'public') {
   return this.getFilteredProfile('public');
 };
 
-// 创建模型并导出
-const Merchant = ModelFactory.createModel('Merchant', merchantSchema);
+// 使用modelRegistrar创建模型
+const Merchant = require('../modelRegistrar')('Merchant', merchantSchema, {
+  timestamps: true,
+  optimizedIndexes: {
+    frequentFields: ['userId', 'businessName', 'businessType'],
+    compound: [
+      // 按地理位置查询商家 
+      {
+        fields: { 'address.city': 1, 'address.state': 1, businessType: 1 },
+        name: 'merchant_location_type_idx'
+      },
+      // 按营养特色查询
+      {
+        fields: { 'nutritionFeatures.specialtyDiets': 1, businessType: 1 },
+        name: 'merchant_nutrition_feature_idx'
+      },
+      // 商家评分索引
+      {
+        fields: { averageRating: -1, businessType: 1 },
+        name: 'merchant_rating_idx'
+      }
+    ],
+    partial: [
+      // 有营养师的商家
+      {
+        fields: { 'nutritionFeatures.hasNutritionist': 1, businessType: 1 },
+        filter: { 'nutritionFeatures.hasNutritionist': true },
+        name: 'merchant_with_nutritionist_idx'
+      }
+    ],
+    geo: [
+      // 地理空间索引 
+      { field: 'address.coordinates' }
+    ],
+    text: [
+      // 搜索字段
+      'businessName',
+      'businessProfile.description',
+      'nutritionFeatures.specialtyDiets'
+    ]
+  },
+  // 查询助手方法
+  query: {
+    // 基本信息
+    basicInfo: function() {
+      return this.select('businessName businessType businessProfile.logoUrl businessProfile.description address.city address.state averageRating');
+    },
+    // 详细信息
+    detailedInfo: function() {
+      return this.select('businessName businessType businessProfile contact address nutritionFeatures averageRating');
+    },
+    // 按地理位置排序
+    nearbyFirst: function(coordinates, maxDistance = 10000) {
+      if (!coordinates || !coordinates.latitude || !coordinates.longitude) {
+        return this;
+      }
+      return this.where('address.coordinates').near({
+        center: {
+          type: 'Point',
+          coordinates: [coordinates.longitude, coordinates.latitude]
+        },
+        maxDistance: maxDistance,
+        spherical: true
+      });
+    }
+  }
+});
+
 module.exports = Merchant; 

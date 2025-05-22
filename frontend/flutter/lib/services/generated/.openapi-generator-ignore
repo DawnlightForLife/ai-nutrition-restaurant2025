@@ -1,0 +1,8 @@
+# 忽略不需要的文件/目录
+.gitignore
+.travis.yml
+README.md
+analysis_options.yaml
+git_push.sh
+test/**
+doc/**

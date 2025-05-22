@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
-const { shardingService } = require('../../services/core/shardingService');
+const { shardingService } = require('../../services/database/shardingService');
 
 const auditLogSchema = new mongoose.Schema({
   // 操作类型
-  action: {
+  actionType: {
     type: String,
     required: true,
     enum: [
@@ -29,30 +29,34 @@ const auditLogSchema = new mongoose.Schema({
       
       // 业务操作
       'orderCreate', 'orderUpdate', 'orderCancel', 'paymentProcess',
-      'refundProcess', 'healthDataUpload', 'aiRecommendation',
+      'refundProcess', 'aiRecommendation',
       
       // 系统事件
       'systemError', 'securityAlert', 'apiCall', 'exportData'
-    ]
+    ],
+    description: '操作类型，记录用户执行的具体操作'
   },
   // 操作描述
   description: {
     type: String,
-    required: true
+    required: true,
+    description: '操作的文字描述，提供人类可读的详细信息'
   },
   // 操作执行者
   actor: {
     type: {
       type: String,
       enum: ['user', 'admin', 'system', 'api'],
-      required: true
+      required: true,
+      description: '操作执行者类型'
     },
     id: {
       type: mongoose.Schema.Types.ObjectId,
       required: function() {
         return this.actor.type !== 'system';
       },
-      refPath: 'actor.model'
+      refPath: 'actor.model',
+      description: '操作执行者ID'
     },
     model: {
       type: String,
@@ -65,10 +69,12 @@ const auditLogSchema = new mongoose.Schema({
         if (this.actor.type === 'admin') return 'Admin';
         if (this.actor.type === 'api') return 'ApiClient';
         return null;
-      }
+      },
+      description: '操作执行者关联的模型'
     },
     name: {
-      type: String
+      type: String,
+      description: '操作执行者名称'
     }
   },
   // 资源信息（被操作的对象）
@@ -76,104 +82,121 @@ const auditLogSchema = new mongoose.Schema({
     type: {
       type: String,
       enum: [
-        'user', 'nutritionProfile', 'healthData', 'order', 
+        'user', 'nutritionProfile', 'order', 
         'dish', 'merchant', 'store', 'nutritionist', 'payment',
         'refund', 'systemConfig', 'forumPost', 'forumComment',
         'accessControl', 'sensitiveData'
       ],
-      required: true
+      required: true,
+      description: '被操作资源类型'
     },
     id: {
-      type: mongoose.Schema.Types.ObjectId
+      type: mongoose.Schema.Types.ObjectId,
+      description: '被操作资源ID'
     },
     name: {
-      type: String
+      type: String,
+      description: '被操作资源名称'
     },
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: 'User',
+      description: '被操作资源的所有者ID'
     }
   },
   // 记录操作前后的数据（用于敏感操作）
   dataSnapshot: {
     before: {
       type: Map,
-      of: mongoose.Schema.Types.Mixed
+      of: mongoose.Schema.Types.Mixed,
+      description: '操作前的数据快照'
     },
     after: {
       type: Map,
-      of: mongoose.Schema.Types.Mixed
+      of: mongoose.Schema.Types.Mixed,
+      description: '操作后的数据快照'
     },
-    changedFields: [String]
+    changedFields: {
+      type: [String],
+      description: '发生变化的字段列表'
+    }
   },
   // 操作结果
   result: {
     status: {
       type: String,
       enum: ['success', 'failure', 'warning', 'info'],
-      required: true
+      required: true,
+      description: '操作结果状态'
     },
     message: {
-      type: String
+      type: String,
+      description: '操作结果消息'
     },
     errorCode: {
-      type: String
+      type: String,
+      description: '错误代码（如适用）'
     },
     errorDetails: {
-      type: String
+      type: String,
+      description: '详细错误信息（如适用）'
     }
   },
   // 操作参数（不含敏感数据）
   parameters: {
     type: Map,
-    of: mongoose.Schema.Types.Mixed
+    of: mongoose.Schema.Types.Mixed,
+    description: '操作传入的参数'
   },
   // 操作环境
   context: {
     ipAddress: {
-      type: String
+      type: String,
+      description: '操作来源IP地址'
     },
     userAgent: {
-      type: String
+      type: String,
+      description: '操作使用的客户端信息'
     },
     deviceInfo: {
-      type: String
+      type: String,
+      description: '设备详细信息'
     },
     location: {
-      type: String
+      type: String,
+      description: '操作地理位置'
     },
     sessionId: {
-      type: String
+      type: String,
+      description: '会话ID'
     },
     requestId: {
-      type: String
+      type: String,
+      description: '请求追踪ID'
     }
   },
   // 敏感度分级
   sensitivityLevel: {
     type: Number,
     enum: [1, 2, 3], // 1=高敏感, 2=中敏感, 3=低敏感
-    default: 3
-  },
-  // 操作时间
-  createdAt: {
-    type: Date,
-    default: Date.now,
-    index: true
+    default: 3,
+    description: '数据敏感度级别，1最高，3最低'
   },
   // 数据保留策略
   retentionPolicy: {
     type: String,
     enum: ['standard', 'extended', 'permanent'],
-    default: 'standard'
+    default: 'standard',
+    description: '日志保留策略，决定过期时间'
   },
   // 添加TTL索引，根据不同保留策略自动过期
   // 增加用于计算过期时间的expiryDate字段
   expiryDate: {
-    type: Date
+    type: Date,
+    description: '日志过期时间，基于保留策略计算'
   }
 }, {
-  timestamps: false, // 不使用默认timestamps，使用自定义createdAt字段
+  timestamps: true, // 启用默认timestamps
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
@@ -182,9 +205,10 @@ const auditLogSchema = new mongoose.Schema({
 auditLogSchema.index({ 'actor.id': 1, 'actor.type': 1 });
 auditLogSchema.index({ 'resource.id': 1, 'resource.type': 1 });
 auditLogSchema.index({ 'resource.ownerId': 1 });
-auditLogSchema.index({ action: 1 });
+auditLogSchema.index({ actionType: 1 });
 auditLogSchema.index({ 'result.status': 1 });
 auditLogSchema.index({ sensitivityLevel: 1 });
+// createdAt 字段由 timestamps 生成，无需手动定义索引
 auditLogSchema.index({ createdAt: 1 });
 auditLogSchema.index({ 'context.ipAddress': 1 });
 
@@ -192,9 +216,9 @@ auditLogSchema.index({ 'context.ipAddress': 1 });
 auditLogSchema.index({ expiryDate: 1 }, { expireAfterSeconds: 0 });
 
 // 添加复合索引优化常见查询
-auditLogSchema.index({ action: 1, createdAt: -1 });
+auditLogSchema.index({ actionType: 1, createdAt: -1 });
 auditLogSchema.index({ sensitivityLevel: 1, createdAt: -1 });
-auditLogSchema.index({ 'actor.id': 1, action: 1, createdAt: -1 });
+auditLogSchema.index({ 'actor.id': 1, actionType: 1, createdAt: -1 });
 auditLogSchema.index({ 'resource.type': 1, 'result.status': 1, createdAt: -1 });
 
 // 部分索引，仅对高敏感度操作创建索引，优化安全审计查询
@@ -227,7 +251,7 @@ auditLogSchema.virtual('actionCategory').get(function() {
     systemError: 'system', securityAlert: 'security'
   };
   
-  return actionCategories[this.action] || 'other';
+  return actionCategories[this.actionType] || 'other';
 });
 
 // 更新前自动设置过期时间
@@ -243,20 +267,15 @@ auditLogSchema.pre('save', function(next) {
       this.expiryDate = new Date(now.setFullYear(now.getFullYear() + 5));
     }
     // 永久保留的不设置过期日期
-    
-    // 确保创建时间已设置
-    if (!this.createdAt) {
-      this.createdAt = new Date();
-    }
-    
+
     // 根据操作类型自动设置敏感度
     if (!this.sensitivityLevel) {
       const highSensitivityActions = ['passwordChange', 'passwordReset', 'dataDelete', 'adminAction', 'systemError', 'securityAlert'];
       const mediumSensitivityActions = ['userLogin', 'userLogout', 'roleChange', 'accessGrant', 'accessRevoke', 'dataModify'];
-      
-      if (highSensitivityActions.includes(this.action)) {
+
+      if (highSensitivityActions.includes(this.actionType)) {
         this.sensitivityLevel = 1;
-      } else if (mediumSensitivityActions.includes(this.action)) {
+      } else if (mediumSensitivityActions.includes(this.actionType)) {
         this.sensitivityLevel = 2;
       } else {
         this.sensitivityLevel = 3;
@@ -269,7 +288,7 @@ auditLogSchema.pre('save', function(next) {
 // 静态方法：记录用户登录
 auditLogSchema.statics.logUserLogin = async function(userId, username, isSuccess, ipAddress, userAgent, details = {}) {
   const log = new this({
-    action: 'userLogin',
+    actionType: 'userLogin',
     description: isSuccess ? `用户 ${username} 登录成功` : `用户 ${username} 登录失败`,
     actor: {
       type: 'user',
@@ -302,7 +321,7 @@ auditLogSchema.statics.logUserLogin = async function(userId, username, isSuccess
 // 静态方法：记录数据访问
 auditLogSchema.statics.logDataAccess = async function(actorId, actorType, actorName, resourceType, resourceId, resourceName, isSuccess, ipAddress, details = {}) {
   const log = new this({
-    action: 'dataAccess',
+    actionType: 'dataAccess',
     description: `${actorType} ${actorName} 访问了 ${resourceType} ${resourceName || resourceId}`,
     actor: {
       type: actorType,
@@ -349,7 +368,7 @@ auditLogSchema.statics.logDataModify = async function(actorId, actorType, actorN
   }
   
   const log = new this({
-    action: 'dataModify',
+    actionType: 'dataModify',
     description: `${actorType} ${actorName} 修改了 ${resourceType} ${resourceName || resourceId}`,
     actor: {
       type: actorType,
@@ -390,7 +409,7 @@ auditLogSchema.statics.logDataModify = async function(actorId, actorType, actorN
 // 静态方法：记录管理员操作
 auditLogSchema.statics.logAdminAction = async function(adminId, adminName, action, resourceType, resourceId, resourceName, details = {}) {
   const log = new this({
-    action: 'adminAction',
+    actionType: 'adminAction',
     description: `管理员 ${adminName} 执行了操作: ${action} 于 ${resourceType} ${resourceName || resourceId}`,
     actor: {
       type: 'admin',
@@ -432,7 +451,7 @@ auditLogSchema.statics.logAdminAction = async function(adminId, adminName, actio
 // 静态方法：记录系统错误
 auditLogSchema.statics.logSystemError = async function(errorCode, errorMessage, stackTrace, context = {}) {
   const log = new this({
-    action: 'systemError',
+    actionType: 'systemError',
     description: `系统错误: ${errorMessage}`,
     actor: {
       type: 'system',
@@ -464,7 +483,7 @@ auditLogSchema.statics.logSystemError = async function(errorCode, errorMessage, 
 // 静态方法：记录安全警报
 auditLogSchema.statics.logSecurityAlert = async function(alertType, severity, description, ipAddress, userId, details = {}) {
   const log = new this({
-    action: 'securityAlert',
+    actionType: 'securityAlert',
     description: `安全警报 [${severity}]: ${description}`,
     actor: {
       type: userId ? 'user' : 'system',
@@ -510,7 +529,7 @@ auditLogSchema.statics.getUserActivityHistory = function(userId, startDate = nul
   }
   
   if (actions && Array.isArray(actions) && actions.length > 0) {
-    query.action = { $in: actions };
+    query.actionType = { $in: actions };
   }
   
   return this.find(query)
@@ -539,7 +558,7 @@ auditLogSchema.statics.getResourceAccessHistory = function(resourceType, resourc
 // 静态方法：查询安全事件
 auditLogSchema.statics.getSecurityEvents = function(startDate = null, endDate = null, severity = null, limit = 100) {
   const query = { 
-    action: { $in: ['securityAlert', 'authFailure', 'systemError'] }
+    actionType: { $in: ['securityAlert', 'authFailure', 'systemError'] }
   };
   
   if (startDate || endDate) {

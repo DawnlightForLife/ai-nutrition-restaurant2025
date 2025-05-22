@@ -1,0 +1,23 @@
+# 排除依赖目录
+node_modules
+npm-debug.log
+yarn-error.log
+
+# 排除版本控制文件
+.git
+.gitignore
+
+# 排除环境配置文件
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# 排除日志和临时文件
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store 

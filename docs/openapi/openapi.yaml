@@ -1,0 +1,101 @@
+openapi: 3.0.3
+info:
+  title: Smart AI Nutrition Restaurant API
+  version: 1.0.0
+  description: 后端接口文档（前后端共享）
+
+servers:
+  - url: http://localhost:8080/api
+
+tags:
+  - name: Auth
+    description: 登录模块
+  - name: NutritionProfile
+    description: 营养档案模块
+
+paths:
+  /user/login:
+    post:
+      tags: [Auth]
+      summary: 用户登录（自动注册）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+
+  /nutrition/nutrition-profiles:
+    get:
+      tags: [NutritionProfile]
+      summary: 获取当前用户所有营养档案
+      responses:
+        '200':
+          description: 成功获取营养档案
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NutritionProfileListResponse'
+
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+        code:
+          type: string
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+
+    NutritionProfileListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/NutritionProfile'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        nickname:
+          type: string
+        currentRole:
+          type: string
+
+    NutritionProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        profileName:
+          type: string
+        gender:
+          type: string
+        ageGroup:
+          type: string
+        height:
+          type: number
+        weight:
+          type: number
+        nutritionGoals:
+          type: array
+          items:
+            type: string

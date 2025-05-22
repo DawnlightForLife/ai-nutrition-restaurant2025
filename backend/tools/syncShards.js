@@ -1,4 +1,15 @@
 /**
+ * ✅ 模块名：syncShards.js
+ * ✅ 所属工具：tools
+ * ✅ 功能说明：
+ *   - 将主集合中的用户数据迁移到 MongoDB 分片集合中
+ *   - 支持 dryRun 模式模拟执行，不实际写入数据库
+ *   - 支持限制迁移用户数量（--limit 参数）
+ * ✅ 使用方法：
+ *   node tools/syncShards.js [--limit=100] [--dryRun]
+ */
+
+/**
  * 用户分片同步工具
  * 该工具用于手动触发用户分片数据同步，将默认集合中的用户迁移到对应的分片集合
  * 
@@ -22,8 +33,8 @@
  */
 
 const mongoose = require('mongoose');
-const User = require('../models/core/userModel');
-const dbManager = require('../config/database');
+const User = require('../models/user/userModel');
+const dbManager = require('../services/database/database');
 const { getUserShardName } = require('../services/userService');
 require('dotenv').config();
 
@@ -44,14 +55,14 @@ args.forEach(arg => {
 });
 
 /**
- * 将用户从默认集合迁移到对应的分片
- * 核心功能实现，包括：
- * - 数据库连接
- * - 用户查询
- * - 分片计算
- * - 数据迁移
- * - 日志记录
- * - 统计报告
+ * 主函数：执行用户分片同步过程
+ * 步骤：
+ *   1. 连接数据库
+ *   2. 查询默认集合的用户
+ *   3. 根据手机号计算分片
+ *   4. 判断目标分片是否已存在
+ *   5. 写入目标分片 + 记录迁移日志（或 dryRun 显示）
+ *   6. 输出统计信息
  */
 async function syncUserShards() {
   try {
@@ -122,7 +133,7 @@ async function syncUserShards() {
             
             stats.migrated++;
           } else {
-            console.error(`迁移用户 ${user._id} 到分片 ${shard} 失败`);
+            console.error(`[syncShards] 迁移用户 ${user._id} 到分片 ${shard} 失败`);
             stats.failed++;
           }
         } else {
@@ -137,7 +148,7 @@ async function syncUserShards() {
     }
     
     // 打印执行统计摘要信息
-    console.log('\n分片同步完成！统计信息:');
+    console.log('\n📊 分片同步完成！统计信息如下:');
     console.log(`总用户数: ${stats.total}`);
     console.log(`已迁移: ${stats.migrated}`);
     console.log(`已跳过: ${stats.skipped}`);
@@ -145,12 +156,12 @@ async function syncUserShards() {
     console.log('分片分布:');
     // 显示各分片的用户分布情况
     Object.entries(stats.shards).forEach(([shard, count]) => {
-      console.log(`  ${shard}: ${count}用户`);
+      console.log(`  - ${shard}: ${count} 用户`);
     });
     
   } catch (error) {
     // 捕获并记录整个过程中的任何错误
-    console.error('分片同步过程失败:', error);
+    console.error('[syncShards] 分片同步过程失败:', error);
   } finally {
     // 无论成功失败都确保关闭数据库连接
     await mongoose.disconnect();

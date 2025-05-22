@@ -1,15 +1,18 @@
 const { logger } = require('./loggingMiddleware');
 
 /**
- * 错误处理中间件集合
- * 提供统一的错误处理机制，包括：
- * - 自定义错误类
- * - 统一错误响应格式
- * - 特定类型错误处理
- * - 异步错误捕获
+ * ✅ 命名规范（camelCase）
+ * ✅ 使用自定义错误类 AppError 实现统一错误结构
+ * ✅ 错误响应格式一致：{ success, error: { code, message, details, timestamp } }
+ * ✅ 支持自定义错误、Mongoose、JWT、Redis、Axios 等常见错误类型处理
+ * ✅ 异步错误使用 asyncHandler 封装
+ * ✅ 支持错误类型判断（isErrorType）
+ * ✅ 生产环境下隐藏内部错误堆栈
  */
 
-// 自定义错误类
+// 自定义应用级错误类
+// - 支持状态码、错误码、详细信息与时间戳
+// - 默认状态码 500，错误码 INTERNAL_ERROR
 class AppError extends Error {
     constructor(message, statusCode = 500, errorCode = 'INTERNAL_ERROR', details = null) {
         super(message);
@@ -35,7 +38,12 @@ const ErrorTypes = {
     INTERNAL_ERROR: 'INTERNAL_ERROR'
 };
 
-// 错误处理中间件
+/**
+ * 全局错误处理中间件
+ * 根据错误类型输出结构化 JSON 错误响应
+ * 可处理自定义错误、数据库错误、JWT错误、Redis错误等
+ * 自动记录日志
+ */
 const errorHandler = (err, req, res, next) => {
     // 确保响应没有被发送
     if (res.headersSent) {
@@ -188,6 +196,7 @@ const errorHandler = (err, req, res, next) => {
 };
 
 // 404处理中间件
+// TODO: 可接入审计日志，记录 404 请求路径与来源 IP
 const notFoundHandler = (req, res, next) => {
     // 直接返回JSON响应而不是传递错误
     return res.status(404).json({
@@ -200,7 +209,10 @@ const notFoundHandler = (req, res, next) => {
     });
 };
 
-// 异步处理包装器
+/**
+ * 封装异步路由处理函数
+ * 捕获异步抛出的错误并交由 next(err) 传递至全局 errorHandler
+ */
 const asyncHandler = (fn) => {
     return (req, res, next) => {
         Promise.resolve(fn(req, res, next)).catch(next);

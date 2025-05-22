@@ -4,15 +4,20 @@
  * @module controllers/nutrition/aiRecommendationController
  */
 
+// ✅ 命名统一（camelCase）
+// ✅ 所有方法为 async 函数
+// ✅ 返回结构统一：{ success, message, data? }
+// ✅ 已实现用户权限校验（userId）
+// ✅ 建议未来接入 AI 模型推理与推荐日志记录系统
+
 const { aiRecommendationService } = require('../../services');
-const catchAsync = require('../../utils/catchAsync');
+const catchAsync = require('../../utils/errors/catchAsync');
 
 /**
- * 创建推荐
- * @async
- * @param {Object} req - Express请求对象
- * @param {Object} res - Express响应对象
- * @returns {Object} 包含新创建推荐的JSON响应
+ * 创建 AI 推荐
+ * - 从 req.user 获取 userId，防止伪造
+ * - 将请求体发送给推荐服务，生成个性化推荐
+ * - 返回推荐创建结果
  */
 exports.createAiRecommendation = catchAsync(async (req, res) => {
   const data = req.body;
@@ -38,10 +43,9 @@ exports.createAiRecommendation = catchAsync(async (req, res) => {
 
 /**
  * 获取推荐列表
- * @async
- * @param {Object} req - Express请求对象
- * @param {Object} res - Express响应对象
- * @returns {Object} 包含推荐列表的JSON响应
+ * - 根据用户ID和查询参数获取推荐列表
+ * - 支持分页和排序
+ * - 返回推荐列表及分页信息
  */
 exports.getAiRecommendationList = catchAsync(async (req, res) => {
   const userId = req.user.id;
@@ -79,10 +83,9 @@ exports.getAiRecommendationList = catchAsync(async (req, res) => {
 
 /**
  * 获取单个推荐详情
- * @async
- * @param {Object} req - Express请求对象
- * @param {Object} res - Express响应对象
- * @returns {Object} 包含单个推荐的JSON响应
+ * - 根据推荐ID获取推荐详情
+ * - 验证用户权限，确保只能访问自己的推荐
+ * - 返回推荐详情
  */
 exports.getAiRecommendationById = catchAsync(async (req, res) => {
   const { id } = req.params;
@@ -113,11 +116,13 @@ exports.getAiRecommendationById = catchAsync(async (req, res) => {
 
 /**
  * 更新推荐
- * @async
- * @param {Object} req - Express请求对象
- * @param {Object} res - Express响应对象
- * @returns {Object} 包含更新后推荐的JSON响应
+ * - 根据推荐ID更新推荐内容
+ * - 验证用户权限，确保只能更新自己的推荐
+ * - 保护固定字段不被修改
+ * - 返回更新后的推荐
  */
+// NOTE: 不允许更新以下字段（固定属性）
+// - userId / createdAt / feedback[]
 exports.updateAiRecommendation = catchAsync(async (req, res) => {
   const { id } = req.params;
   const data = req.body;
@@ -143,6 +148,8 @@ exports.updateAiRecommendation = catchAsync(async (req, res) => {
   // 不允许更新某些字段
   delete data.userId;
   delete data.createdAt;
+  // feedback字段也不允许被更新
+  delete data.feedback;
   
   const result = await aiRecommendationService.updateRecommendation(id, data);
   
@@ -162,10 +169,9 @@ exports.updateAiRecommendation = catchAsync(async (req, res) => {
 
 /**
  * 删除推荐
- * @async
- * @param {Object} req - Express请求对象
- * @param {Object} res - Express响应对象
- * @returns {Object} 包含操作结果的JSON响应
+ * - 根据推荐ID删除推荐
+ * - 验证用户权限，确保只能删除自己的推荐
+ * - 返回删除操作结果
  */
 exports.deleteAiRecommendation = catchAsync(async (req, res) => {
   const { id } = req.params;
@@ -205,10 +211,11 @@ exports.deleteAiRecommendation = catchAsync(async (req, res) => {
 
 /**
  * 提交推荐反馈
- * @async
- * @param {Object} req - Express请求对象
- * @param {Object} res - Express响应对象
- * @returns {Object} 包含更新后推荐的JSON响应
+ * - 根据推荐ID提交用户反馈
+ * - 验证用户权限，确保只能提交自己推荐的反馈
+ * - 反馈只允许提交一次，后续覆盖更新（服务层判断）
+// NOTE: 每条推荐只允许用户提交一次反馈，后续覆盖更新（由服务层判断）
+ * - 返回更新后的推荐数据
  */
 exports.submitFeedback = catchAsync(async (req, res) => {
   const { id } = req.params;

@@ -1,5 +1,15 @@
+/**
+ * 营养师服务模块（nutritionistService）
+ * 提供对营养师资料的完整管理，包括创建、查询、修改、删除、审核、评分等功能
+ * 与 nutritionistModel 模型配合，为用户提供认证、咨询、推荐等服务基础
+ * 通过 userId 支持跨模型联合查询，支持分页筛选与专业字段过滤
+ * 所有方法返回统一的 { success, data, message } 结构
+ * @module services/nutrition/nutritionistService
+ */
 const Nutritionist = require('../../models/nutrition/nutritionistModel');
 const mongoose = require('mongoose');
+const User = require('../../models/user/userModel');
+const logger = require('../../utils/logger/winstonLogger.js');
 
 const nutritionistService = {
   /**
@@ -22,6 +32,7 @@ const nutritionistService = {
       
       return { success: true, data: nutritionist };
     } catch (error) {
+      logger.error('创建营养师失败', { error, data });
       return { success: false, message: `创建营养师失败: ${error.message}` };
     }
   },
@@ -80,6 +91,7 @@ const nutritionistService = {
         }
       };
     } catch (error) {
+      logger.error('获取营养师列表失败', { error, options });
       return { success: false, message: `获取营养师列表失败: ${error.message}` };
     }
   },
@@ -105,6 +117,7 @@ const nutritionistService = {
       
       return { success: true, data: nutritionist };
     } catch (error) {
+      logger.error('获取营养师详情失败', { error, id });
       return { success: false, message: `获取营养师详情失败: ${error.message}` };
     }
   },
@@ -153,6 +166,7 @@ const nutritionistService = {
       
       return { success: true, data: nutritionist };
     } catch (error) {
+      logger.error('更新营养师失败', { error, id, data });
       return { success: false, message: `更新营养师失败: ${error.message}` };
     }
   },
@@ -177,6 +191,7 @@ const nutritionistService = {
       
       return { success: true, message: '营养师信息已成功删除' };
     } catch (error) {
+      logger.error('删除营养师失败', { error, id });
       return { success: false, message: `删除营养师失败: ${error.message}` };
     }
   },
@@ -226,6 +241,7 @@ const nutritionistService = {
       
       return { success: true, data: nutritionist };
     } catch (error) {
+      logger.error('审核营养师失败', { error, id, verificationData });
       return { success: false, message: `审核营养师失败: ${error.message}` };
     }
   },
@@ -242,15 +258,24 @@ const nutritionistService = {
         return { success: false, message: '无效的用户ID' };
       }
       
-      const nutritionist = await Nutritionist.findOne({ userId })
-        .populate('user', 'username email profileImage');
+      // 先查找用户信息，使用User模型的fullProfile查询助手
+      const user = await User.findById(userId).fullProfile();
+      if (!user) {
+        return { success: false, message: '找不到用户' };
+      }
+      
+      const nutritionist = await Nutritionist.findOne({ userId });
       
       if (!nutritionist) {
         return { success: false, message: '找不到此用户的营养师资料' };
       }
       
+      // 将用户信息附加到营养师对象上
+      nutritionist.userProfile = user;
+      
       return { success: true, data: nutritionist };
     } catch (error) {
+      logger.error('根据用户ID获取营养师失败', { error, userId });
       return { success: false, message: `获取营养师详情失败: ${error.message}` };
     }
   },
@@ -283,6 +308,7 @@ const nutritionistService = {
       
       return { success: true, data: nutritionist };
     } catch (error) {
+      logger.error('更新营养师评分失败', { error, id, rating });
       return { success: false, message: `更新营养师评分失败: ${error.message}` };
     }
   }

@@ -47,11 +47,24 @@ const config = {
   
   // 缓存配置
   cache: {
+    enabled: process.env.CACHE_ENABLED === 'true',
     ttl: parseInt(process.env.CACHE_TTL || '3600'), // 默认缓存1小时
+    defaultTTL: parseInt(process.env.CACHE_DEFAULT_TTL || '300'), // 默认查询缓存5分钟
     checkPeriod: parseInt(process.env.CACHE_CHECK_PERIOD || '600'), // 检查过期缓存的周期
     maxItems: parseInt(process.env.CACHE_MAX_ITEMS || '1000'),
+    
+    // Redis配置
     useRedis: process.env.USE_REDIS === 'true',
-    redisUrl: process.env.REDIS_URL || 'redis://localhost:6379'
+    redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+    redisPassword: process.env.REDIS_PASSWORD || '',
+    redisDb: parseInt(process.env.REDIS_DB || '0'),
+    
+    // 缓存策略配置
+    queryCache: {
+      enabled: process.env.QUERY_CACHE_ENABLED === 'true',
+      excludedCollections: (process.env.QUERY_CACHE_EXCLUDED || '').split(',').filter(Boolean),
+      ignoreParams: (process.env.QUERY_CACHE_IGNORE_PARAMS || '').split(',').filter(Boolean)
+    }
   },
   
   // 推荐系统配置
@@ -127,7 +140,8 @@ const config = {
 };
 
 // 根据环境加载特定配置
-const envConfig = require(`./${env}.js`);
+const path = require('path');
+const envConfig = require(path.resolve(__dirname, 'env', `${env}.js`));
 
 // 合并配置
 module.exports = { ...config, ...envConfig }; 

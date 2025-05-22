@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
-const { shardingService } = require('../../services/core/shardingService');
+const { shardingService } = require('../../services/database/shardingService');
 
 // 导入需要的模型
-const Dish = require('./ProductDishModel');
+const Dish = require('./productDishModel');
 
 const storeDishSchema = new mongoose.Schema({
   storeId: {
@@ -104,7 +104,7 @@ const storeDishSchema = new mongoose.Schema({
   availableTimes: [{
     startTime: String,
     endTime: String,
-    dayOfWeek: Number // 0-6 表示周日到周六
+    dayOfWeek: Number
   }]
 }, {
   timestamps: true,
@@ -417,4 +417,4 @@ StoreDish.prototype.save = async function(options) {
   return originalSave.call(this, options);
 };
 
-module.exports = StoreDish; 
+module.exports = StoreDish;

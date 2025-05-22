@@ -1,79 +1,91 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
-const { shardingService } = require('../../services/core/shardingService');
+const { shardingService } = require('../../services/database/shardingService');
 
 const forumPostSchema = new mongoose.Schema({
-  user_id: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    description: '发帖用户ID',
+    sensitivityLevel: 2
   },
   title: {
     type: String,
     required: true,
-    maxlength: 200
+    maxlength: 200,
+    description: '帖子标题'
   },
   content: {
     type: String,
-    required: true
+    required: true,
+    description: '帖子内容',
+    sensitivityLevel: 2
   },
   images: [{
-    type: String
+    type: String,
+    description: '帖子图片URL',
+    sensitivityLevel: 2
   }],
   tags: [{
-    type: String
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ForumTag',
+    description: '帖子标签ID'
   }],
-  view_count: {
+  viewCount: {
     type: Number,
-    default: 0
+    default: 0,
+    description: '浏览数量'
   },
-  like_count: {
+  likeCount: {
     type: Number,
-    default: 0
+    default: 0,
+    description: '点赞数量'
   },
-  comment_count: {
+  commentCount: {
     type: Number,
-    default: 0
+    default: 0,
+    description: '评论数量'
   },
-  is_pinned: {
+  isPinned: {
     type: Boolean,
-    default: false
+    default: false,
+    description: '是否置顶'
   },
-  is_highlighted: {
+  isHighlighted: {
     type: Boolean,
-    default: false
+    default: false,
+    description: '是否加精'
   },
   status: {
     type: String,
-    enum: ['active', 'archived', 'deleted', 'pending_review', 'rejected'],
-    default: 'active'
+    enum: ['active', 'archived', 'deleted', 'pendingReview', 'rejected'],
+    default: 'active',
+    description: '帖子状态'
   },
   moderation: {
-    is_moderated: {
+    isModerated: {
       type: Boolean,
-      default: false
+      default: false,
+      description: '是否已审核'
     },
-    moderated_by: {
+    moderatedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Admin'
+      ref: 'Admin',
+      description: '审核人ID'
     },
-    moderated_at: {
-      type: Date
+    moderatedAt: {
+      type: Date,
+      description: '审核时间'
     },
-    rejection_reason: {
-      type: String
+    rejectionReason: {
+      type: String,
+      description: '拒绝原因',
+      sensitivityLevel: 2
     }
-  },
-  created_at: {
-    type: Date,
-    default: Date.now
-  },
-  updated_at: {
-    type: Date,
-    default: Date.now
   }
 }, {
-  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+  timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
@@ -81,44 +93,44 @@ const forumPostSchema = new mongoose.Schema({
 // 创建索引用于搜索
 forumPostSchema.index({ title: 'text', content: 'text', tags: 'text' });
 // 按照创建时间建立索引，便于查询最新帖子
-forumPostSchema.index({ created_at: -1 });
+forumPostSchema.index({ createdAt: -1 });
 // 按照用户ID和创建时间建立索引，便于查询用户的帖子
-forumPostSchema.index({ user_id: 1, created_at: -1 });
+forumPostSchema.index({ userId: 1, createdAt: -1 });
 // 按照点赞数建立索引，便于查询热门帖子
-forumPostSchema.index({ like_count: -1 });
+forumPostSchema.index({ likeCount: -1 });
 // 按照标签和创建时间建立索引，便于查询特定标签的帖子
-forumPostSchema.index({ tags: 1, created_at: -1 });
+forumPostSchema.index({ tags: 1, createdAt: -1 });
 // 按照状态和创建时间建立索引，便于查询特定状态的帖子
-forumPostSchema.index({ status: 1, created_at: -1 });
+forumPostSchema.index({ status: 1, createdAt: -1 });
 
 // 添加虚拟字段
-forumPostSchema.virtual('is_hot').get(function() {
+forumPostSchema.virtual('isHot').get(function() {
   // 如果浏览量超过100或点赞超过20，则认为是热门帖子
-  return (this.view_count >= 100 || this.like_count >= 20);
+  return (this.viewCount >= 100 || this.likeCount >= 20);
 });
 
-forumPostSchema.virtual('is_recent').get(function() {
+forumPostSchema.virtual('isRecent').get(function() {
   const now = new Date();
   const threeDaysAgo = new Date(now.getTime() - (3 * 24 * 60 * 60 * 1000));
-  return new Date(this.created_at) >= threeDaysAgo;
+  return new Date(this.createdAt) >= threeDaysAgo;
 });
 
-forumPostSchema.virtual('engagement_score').get(function() {
+forumPostSchema.virtual('engagementScore').get(function() {
   // 计算帖子参与度分数：浏览量 + 点赞*5 + 评论*10
-  return this.view_count + (this.like_count * 5) + (this.comment_count * 10);
+  return this.viewCount + (this.likeCount * 5) + (this.commentCount * 10);
 });
 
 // 虚拟字段以关联评论
 forumPostSchema.virtual('comments', {
   ref: 'ForumComment',
   localField: '_id',
-  foreignField: 'post_id'
+  foreignField: 'postId'
 });
 
 // 虚拟字段以关联作者信息
 forumPostSchema.virtual('author', {
   ref: 'User',
-  localField: 'user_id',
+  localField: 'userId',
   foreignField: '_id',
   justOne: true
 });
@@ -126,16 +138,16 @@ forumPostSchema.virtual('author', {
 // 实例方法
 // 增加浏览次数
 forumPostSchema.methods.incrementViewCount = async function() {
-  this.view_count += 1;
+  this.viewCount += 1;
   return await this.save();
 };
 
 // 增加或减少点赞
 forumPostSchema.methods.toggleLike = async function(increment = true) {
   if (increment) {
-    this.like_count += 1;
+    this.likeCount += 1;
   } else {
-    this.like_count = Math.max(0, this.like_count - 1);
+    this.likeCount = Math.max(0, this.likeCount - 1);
   }
   return await this.save();
 };
@@ -143,34 +155,69 @@ forumPostSchema.methods.toggleLike = async function(increment = true) {
 // 更新评论计数
 forumPostSchema.methods.updateCommentCount = async function(increment = true) {
   if (increment) {
-    this.comment_count += 1;
+    this.commentCount += 1;
   } else {
-    this.comment_count = Math.max(0, this.comment_count - 1);
+    this.commentCount = Math.max(0, this.commentCount - 1);
   }
   return await this.save();
 };
 
 // 添加或移除标签
-forumPostSchema.methods.updateTags = async function(tags) {
-  this.tags = [...new Set([...this.tags, ...tags])]; // 使用集合去重
-  return await this.save();
+forumPostSchema.methods.updateTags = async function(tagIds) {
+  const oldTags = [...this.tags];
+  this.tags = [...new Set([...tagIds])]; // 使用集合去重
+  const result = await this.save();
+  
+  try {
+    // 更新标签的帖子计数
+    const ForumTag = ModelFactory.createModel('ForumTag');
+    
+    // 增加新添加标签的帖子计数
+    const addedTags = this.tags.filter(t => !oldTags.some(ot => ot.toString() === t.toString()));
+    for (const tagId of addedTags) {
+      await ForumTag.findByIdAndUpdate(tagId, { $inc: { postCount: 1 } });
+    }
+    
+    // 减少已移除标签的帖子计数
+    const removedTags = oldTags.filter(t => !this.tags.some(nt => nt.toString() === t.toString()));
+    for (const tagId of removedTags) {
+      await ForumTag.findByIdAndUpdate(tagId, { $inc: { postCount: -1 } });
+    }
+  } catch (err) {
+    console.error('更新标签帖子计数失败:', err);
+  }
+  
+  return result;
 };
 
 // 移除标签
-forumPostSchema.methods.removeTag = async function(tag) {
-  this.tags = this.tags.filter(t => t !== tag);
-  return await this.save();
+forumPostSchema.methods.removeTag = async function(tagId) {
+  if (this.tags.some(t => t.toString() === tagId.toString())) {
+    this.tags = this.tags.filter(t => t.toString() !== tagId.toString());
+    const result = await this.save();
+    
+    try {
+      // 减少标签的帖子计数
+      const ForumTag = ModelFactory.createModel('ForumTag');
+      await ForumTag.findByIdAndUpdate(tagId, { $inc: { postCount: -1 } });
+    } catch (err) {
+      console.error('更新标签帖子计数失败:', err);
+    }
+    
+    return result;
+  }
+  return this;
 };
 
 // 管理员置顶或取消置顶
 forumPostSchema.methods.togglePin = async function(pin = true) {
-  this.is_pinned = pin;
+  this.isPinned = pin;
   return await this.save();
 };
 
 // 管理员加精或取消加精
 forumPostSchema.methods.toggleHighlight = async function(highlight = true) {
-  this.is_highlighted = highlight;
+  this.isHighlighted = highlight;
   return await this.save();
 };
 
@@ -180,10 +227,10 @@ forumPostSchema.methods.softDelete = async function(adminId, reason) {
   
   if (adminId) {
     this.moderation = {
-      is_moderated: true,
-      moderated_by: adminId,
-      moderated_at: new Date(),
-      rejection_reason: reason || '帖子已被管理员删除'
+      isModerated: true,
+      moderatedBy: adminId,
+      moderatedAt: new Date(),
+      rejectionReason: reason || '帖子已被管理员删除'
     };
   }
   
@@ -212,16 +259,16 @@ forumPostSchema.statics.getHotPosts = async function(options = {}) {
   
   return this.find({
     status: 'active',
-    created_at: { $gte: dateThreshold },
+    createdAt: { $gte: dateThreshold },
     $or: [
-      { view_count: { $gte: minViews } },
-      { like_count: { $gte: minLikes } }
+      { viewCount: { $gte: minViews } },
+      { likeCount: { $gte: minLikes } }
     ]
   })
-  .sort({ engagement_score: -1 })
+  .sort({ engagementScore: -1 })
   .skip(skip)
   .limit(limit)
-  .populate('author', 'username full_name profile_image');
+  .populate('author', 'username fullName profileImage');
 };
 
 // 搜索帖子
@@ -229,7 +276,7 @@ forumPostSchema.statics.searchPosts = async function(query, options = {}) {
   const { 
     limit = 20, 
     skip = 0,
-    sort = { created_at: -1 },
+    sort = { createdAt: -1 },
     includeDeleted = false
   } = options;
   
@@ -246,7 +293,7 @@ forumPostSchema.statics.searchPosts = async function(query, options = {}) {
   .sort({ score: { $meta: "textScore" }, ...sort })
   .skip(skip)
   .limit(limit)
-  .populate('author', 'username full_name profile_image');
+  .populate('author', 'username fullName profileImage');
   
   return {
     posts,
@@ -264,7 +311,7 @@ forumPostSchema.statics.getPostsByTags = async function(tags, options = {}) {
   const { 
     limit = 20, 
     skip = 0,
-    sort = { created_at: -1 },
+    sort = { createdAt: -1 },
     matchAll = false // 是否要匹配所有标签
   } = options;
   
@@ -279,7 +326,7 @@ forumPostSchema.statics.getPostsByTags = async function(tags, options = {}) {
     .sort(sort)
     .skip(skip)
     .limit(limit)
-    .populate('author', 'username full_name profile_image');
+    .populate('author', 'username fullName profileImage');
   
   return {
     posts,
@@ -297,12 +344,12 @@ forumPostSchema.statics.getUserPosts = async function(userId, options = {}) {
   const { 
     limit = 20, 
     skip = 0,
-    sort = { created_at: -1 },
+    sort = { createdAt: -1 },
     includeDeleted = false
   } = options;
   
   const query = {
-    user_id: userId,
+    userId: userId,
     status: includeDeleted ? { $ne: 'deleted' } : 'active'
   };
   
@@ -329,10 +376,10 @@ forumPostSchema.statics.getPendingPosts = async function(options = {}) {
   const { 
     limit = 20, 
     skip = 0,
-    sort = { created_at: 1 }
+    sort = { createdAt: 1 }
   } = options;
   
-  const query = { status: 'pending_review' };
+  const query = { status: 'pendingReview' };
   
   const total = await this.countDocuments(query);
   
@@ -340,7 +387,7 @@ forumPostSchema.statics.getPendingPosts = async function(options = {}) {
     .sort(sort)
     .skip(skip)
     .limit(limit)
-    .populate('author', 'username full_name profile_image');
+    .populate('author', 'username fullName profileImage');
   
   return {
     posts,
@@ -361,9 +408,9 @@ forumPostSchema.statics.archiveOldPosts = async function(ageInDays = 180) {
   const result = await this.updateMany(
     { 
       status: 'active',
-      created_at: { $lt: dateThreshold },
-      is_pinned: false, // 不归档置顶帖
-      is_highlighted: false // 不归档精华帖
+      createdAt: { $lt: dateThreshold },
+      isPinned: false, // 不归档置顶帖
+      isHighlighted: false // 不归档精华帖
     },
     { $set: { status: 'archived' } }
   );
@@ -380,7 +427,7 @@ forumPostSchema.statics.analyzeTrendingTopics = async function(days = 7, limit =
     { 
       $match: { 
         status: 'active',
-        created_at: { $gte: dateThreshold }
+        createdAt: { $gte: dateThreshold }
       }
     },
     { $unwind: '$tags' },
@@ -389,9 +436,9 @@ forumPostSchema.statics.analyzeTrendingTopics = async function(days = 7, limit =
         _id: '$tags',
         count: { $sum: 1 },
         posts: { $push: '$_id' },
-        total_views: { $sum: '$view_count' },
-        total_likes: { $sum: '$like_count' },
-        total_comments: { $sum: '$comment_count' }
+        totalViews: { $sum: '$viewCount' },
+        totalLikes: { $sum: '$likeCount' },
+        totalComments: { $sum: '$commentCount' }
       }
     },
     {
@@ -399,30 +446,30 @@ forumPostSchema.statics.analyzeTrendingTopics = async function(days = 7, limit =
         tag: '$_id',
         count: 1,
         posts: 1,
-        total_views: 1,
-        total_likes: 1,
-        total_comments: 1,
-        engagement_score: {
+        totalViews: 1,
+        totalLikes: 1,
+        totalComments: 1,
+        engagementScore: {
           $add: [
-            '$total_views',
-            { $multiply: ['$total_likes', 5] },
-            { $multiply: ['$total_comments', 10] }
+            '$totalViews',
+            { $multiply: ['$totalLikes', 5] },
+            { $multiply: ['$totalComments', 10] }
           ]
         }
       }
     },
-    { $sort: { engagement_score: -1 } },
+    { $sort: { engagementScore: -1 } },
     { $limit: limit }
   ]);
 };
 
-// 移除不需要的中间件，由timestamps处理
+// 中间件
 forumPostSchema.pre('save', function(next) {
   // 添加自定义逻辑
   if (this.isNew && this.status === 'active') {
     // 如果平台设置了内容审核，新帖子默认为待审核状态
     if (global.contentModerationEnabled) {
-      this.status = 'pending_review';
+      this.status = 'pendingReview';
     }
   }
   
@@ -434,9 +481,9 @@ const ForumPost = ModelFactory.createModel('ForumPost', forumPostSchema);
 
 // 添加分片支持
 ForumPost.getShardKey = function(doc) {
-  const month = doc.created_at.getMonth() + 1;
-  const year = doc.created_at.getFullYear();
+  const month = doc.createdAt.getMonth() + 1;
+  const year = doc.createdAt.getFullYear();
   return `${year}-${month}`;
 };
 
-module.exports = ForumPost; 
+module.exports = ForumPost;

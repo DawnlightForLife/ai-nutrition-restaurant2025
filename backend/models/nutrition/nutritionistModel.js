@@ -7,107 +7,170 @@ const nutritionistSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-    index: true
+    index: true,
+    description: '关联用户 ID'
   },
   // 个人信息
   personalInfo: {
     realName: {
       type: String,
-      required: true
+      required: true,
+      description: '真实姓名'
     },
     idCardNumber: {
       type: String,
-      required: true
+      required: true,
+      description: '身份证号码'
     }
   },
   // 专业资质
   qualifications: {
     licenseNumber: {
       type: String,
-      required: true
+      required: true,
+      description: '营养师执业证编号'
     },
-    licenseImageUrl: String,
+    licenseImageUrl: {
+      type: String,
+      description: '证书照片 URL'
+    },
     certificationImages: [{
-      type: String // URL references to certification documents
+      type: String, // URL references to certification documents
+      description: '其他资格证书 URL 列表'
     }],
     professionalTitle: {
       type: String,
-      enum: ['初级营养师', '中级营养师', '高级营养师', '营养顾问']
+      enum: ['初级营养师', '中级营养师', '高级营养师', '营养顾问'],
+      description: '专业职称（中文）'
     },
     certificationLevel: {
       type: String,
-      enum: ['junior', 'intermediate', 'senior', 'expert']
+      enum: ['junior', 'intermediate', 'senior', 'expert'],
+      description: '专业等级（英文）'
     },
-    issuingAuthority: String,
-    issueDate: Date,
-    expiryDate: Date,
+    issuingAuthority: {
+      type: String,
+      description: '发证机构'
+    },
+    issueDate: {
+      type: Date,
+      description: '发证日期'
+    },
+    expiryDate: {
+      type: Date,
+      description: '有效截止日期'
+    },
     verified: {
       type: Boolean,
-      default: false
+      default: false,
+      description: '是否已验证'
     }
   },
   // 专业信息
   professionalInfo: {
     specializations: [{
       type: String,
-      enum: ['weightManagement', 'sportsNutrition', 'diabetes', 'prenatal', 'pediatric', 'geriatric', 'eatingDisorders', 'heartHealth', 'digestiveHealth', 'foodAllergies']
+      enum: ['weightManagement', 'sportsNutrition', 'diabetes', 'prenatal', 'pediatric', 'geriatric', 'eatingDisorders', 'heartHealth', 'digestiveHealth', 'foodAllergies'],
+      description: '擅长领域'
     }],
     experienceYears: {
       type: Number,
-      min: 0
+      min: 0,
+      description: '从业年限'
     },
     education: [{
-      degree: String,
-      institution: String,
-      year: Number,
-      major: String
+      degree: {
+        type: String,
+        description: '学历学位'
+      },
+      institution: {
+        type: String,
+        description: '毕业院校'
+      },
+      year: {
+        type: Number,
+        description: '毕业年份'
+      },
+      major: {
+        type: String,
+        description: '专业'
+      }
     }],
     languages: [{
-      type: String
+      type: String,
+      description: '擅长语言'
     }],
     bio: {
       type: String,
-      maxlength: 1000
+      maxlength: 1000,
+      description: '个人简介'
     }
   },
   // 服务信息
   serviceInfo: {
     consultationFee: {
       type: Number,
-      min: 0
+      min: 0,
+      description: '咨询费用'
     },
     consultationDuration: {
       type: Number, // 分钟
-      default: 60
+      default: 60,
+      description: '咨询时长（分钟）'
     },
     availableOnline: {
       type: Boolean,
-      default: true
+      default: true,
+      description: '是否支持线上咨询'
     },
     availableInPerson: {
       type: Boolean,
-      default: false
+      default: false,
+      description: '是否支持线下咨询'
     },
     inPersonLocations: [{
-      name: String,
-      address: String,
-      city: String,
+      name: {
+        type: String,
+        description: '线下服务点名称'
+      },
+      address: {
+        type: String,
+        description: '地址'
+      },
+      city: {
+        type: String,
+        description: '城市'
+      },
       coordinates: {
-        latitude: Number,
-        longitude: Number
+        latitude: {
+          type: Number,
+          description: '纬度'
+        },
+        longitude: {
+          type: Number,
+          description: '经度'
+        }
       }
     }],
     serviceTags: [{
-      type: String
+      type: String,
+      description: '服务标签'
     }],
     availableTimeSlots: [{
       day: {
         type: String,
-        enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+        description: '星期'
       },
       slots: [{
-        startTime: String, // format: "HH:MM"
-        endTime: String     // format: "HH:MM"
+        startTime: {
+          type: String, // format: "HH:MM"
+          description: '开始时间'
+        },
+        endTime: {
+          type: String,     // format: "HH:MM"
+          description: '结束时间'
+        }
       }]
     }]
   },
@@ -117,50 +180,98 @@ const nutritionistSchema = new mongoose.Schema({
       type: Number,
       min: 0,
       max: 5,
-      default: 0
+      default: 0,
+      description: '平均评分'
     },
     totalReviews: {
       type: Number,
-      default: 0
+      default: 0,
+      description: '评论数量'
     }
   },
   // 营养师状态
   status: {
     type: String,
     enum: ['active', 'inactive', 'suspended', 'pendingVerification'],
-    default: 'pendingVerification'
+    default: 'pendingVerification',
+    description: '营养师状态'
   },
   // 审核信息
   verification: {
     verificationStatus: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],
-      default: 'pending'
+      default: 'pending',
+      description: '审核状态'
     },
-    rejectedReason: String,
+    rejectedReason: {
+      type: String,
+      description: '驳回理由'
+    },
     reviewedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Admin'
+      ref: 'Admin',
+      description: '审核人'
     },
-    reviewedAt: Date
+    reviewedAt: {
+      type: Date,
+      description: '审核时间'
+    },
+    // 审核历史记录
+    verificationHistory: [{
+      status: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        required: true
+      },
+      reason: {
+        type: String,
+        description: '操作原因或驳回理由'
+      },
+      changedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Admin',
+        description: '操作者'
+      },
+      changedAt: {
+        type: Date,
+        default: Date.now,
+        description: '变更时间'
+      }
+    }]
   },
   // 工作关联
   affiliations: [{
     organizationType: {
       type: String,
-      enum: ['hospital', 'clinic', 'gym', 'restaurant', 'school', 'university', 'company', 'independent']
+      enum: ['hospital', 'clinic', 'gym', 'restaurant', 'school', 'university', 'company', 'independent', 'maternityCenter', 'schoolCompany'],
+      description: '所属机构类型'
     },
-    organizationName: String,
+    organizationName: {
+      type: String,
+      description: '机构名称'
+    },
     organizationId: {
       type: mongoose.Schema.Types.ObjectId,
-      refPath: 'affiliations.organizationType'
+      refPath: 'affiliations.organizationType',
+      description: '机构 ID'
     },
-    position: String,
-    startDate: Date,
-    endDate: Date,
+    position: {
+      type: String,
+      description: '职位'
+    },
+    startDate: {
+      type: Date,
+      description: '入职日期'
+    },
+    endDate: {
+      type: Date,
+      description: '离职日期'
+    },
     current: {
       type: Boolean,
-      default: true
+      default: true,
+      description: '是否当前任职'
     }
   }]
 }, {
@@ -244,4 +355,4 @@ nutritionistSchema.pre('save', function(next) {
 
 // 创建模型并导出
 const Nutritionist = ModelFactory.createModel('Nutritionist', nutritionistSchema);
-module.exports = Nutritionist; 
+module.exports = Nutritionist;

@@ -1,3 +1,15 @@
+/**
+ * ✅ 命名风格统一（camelCase）
+ * ✅ 使用 ioredis 实现缓存控制，支持响应缓存、清理、统计与管理
+ * ✅ CacheManager 提供独立实例化能力，支持多策略参数定制
+ * ✅ 提供统一缓存中间件：cacheMiddleware、clearCacheMiddleware、cacheStatsMiddleware
+ * ✅ 自动轮询缓存容量，超过最大条目自动清理
+ * ✅ 推荐 future：支持基于标签的清除、压缩存储、缓存分片等能力
+ */
+
+// TODO: 支持缓存标签 + 精细化清理（如 user:123:posts）
+// TODO: 压缩数据存储支持（如 LZ-UTF8 / zlib）
+// TODO: 支持缓存优先级机制 + 热点淘汰策略
 const Redis = require('ioredis');
 const { logger } = require('../core/loggingMiddleware');
 const { metrics } = require('./advancedPerformanceMiddleware');
@@ -69,7 +81,11 @@ class CacheStats {
     }
 }
 
-// 缓存管理器类
+/**
+ * CacheManager 缓存管理器
+ * - 提供缓存的读写、清除、统计、自动维护能力
+ * - 支持设置前缀、TTL、最大缓存数、压缩存储等参数
+ */
 class CacheManager {
     constructor(options = {}) {
         this.redis = redis;
@@ -166,28 +182,28 @@ class CacheManager {
 // 创建缓存管理器实例
 const cacheManager = new CacheManager();
 
-// 缓存中间件
+/**
+ * 通用 GET 接口缓存中间件
+ * - 使用 请求路径 + 查询参数 作为缓存 key
+ * - 命中缓存则直接返回
+ * - 未命中缓存则在响应时写入缓存
+ */
 const cacheMiddleware = (options = {}) => {
     const manager = new CacheManager(options);
-    
     return async (req, res, next) => {
         if (req.method !== 'GET') {
             return next();
         }
-
         const cacheKey = `${req.method}:${req.path}:${JSON.stringify(req.query)}`;
         const cachedData = await manager.get(cacheKey);
-
         if (cachedData) {
             return res.json(cachedData);
         }
-
         const originalJson = res.json;
         res.json = function(data) {
             manager.set(cacheKey, data, options.ttl);
             return originalJson.call(this, data);
         };
-
         next();
     };
 };

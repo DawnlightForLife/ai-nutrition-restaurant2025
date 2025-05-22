@@ -3,65 +3,79 @@ const ModelFactory = require('../modelFactory');
 
 // 订阅项目子模式（如餐品、营养指导等）
 const subscriptionItemSchema = new mongoose.Schema({
-  item_type: {
+  itemType: {
     type: String,
-    enum: ['meal', 'dish', 'consultation', 'nutrition_plan'],
-    required: true
+    enum: ['meal', 'dish', 'consultation', 'nutritionPlan'],
+    required: true,
+    description: '订阅项目类型'
   },
-  item_id: {
+  itemId: {
     type: mongoose.Schema.Types.ObjectId,
-    refPath: 'items.item_type_ref'
+    refPath: 'items.itemTypeRef',
+    description: '订阅项目ID',
+    sensitivityLevel: 2
   },
-  item_type_ref: {
+  itemTypeRef: {
     type: String,
     enum: ['Dish', 'AiRecommendation', 'Nutritionist'],
-    required: true
+    required: true,
+    description: '订阅项目引用类型'
   },
-  item_name: {
+  itemName: {
     type: String,
-    required: true
+    required: true,
+    description: '订阅项目名称'
   },
   quantity: {
     type: Number,
     min: 1,
-    default: 1
+    default: 1,
+    description: '数量'
   },
   frequency: {
     type: String,
     enum: ['daily', 'weekdays', 'weekends', 'weekly', 'monthly', 'custom'],
-    default: 'daily'
+    default: 'daily',
+    description: '配送频率'
   },
-  // 自定义重复模式
-  custom_schedule: {
+  // 自定义重复模式 - 自定义配送时间表
+  customSchedule: {
     days: [{ 
       type: Number, 
       min: 0, 
-      max: 6 
-    }], // 0-6 (周日-周六)
+      max: 6,
+      description: '周几（0-6表示周日至周六）'
+    }],
     weeks: [{ 
       type: Number, 
       min: 1, 
-      max: 5 
-    }], // 1-5 (一个月的第几周)
+      max: 5,
+      description: '第几周（1-5表示一个月的第几周）'
+    }],
     months: [{ 
       type: Number, 
       min: 1, 
-      max: 12 
-    }] // 1-12 (一年的第几个月)
+      max: 12,
+      description: '第几月（1-12表示一年的第几个月）'
+    }]
   },
-  nutrition_profile_id: {
+  nutritionProfileId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'NutritionProfile'
+    ref: 'NutritionProfile',
+    description: '关联的营养档案ID',
+    sensitivityLevel: 2
   },
-  price_per_unit: {
+  pricePerUnit: {
     type: Number,
     required: true,
-    min: 0
+    min: 0,
+    description: '单价'
   },
   subtotal: {
     type: Number,
     required: true,
-    min: 0
+    min: 0,
+    description: '小计金额'
   }
 });
 
@@ -71,303 +85,348 @@ const subscriptionSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    description: '订阅用户ID',
+    sensitivityLevel: 2
   },
-  merchant_id: {
+  merchantId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Merchant',
-    required: true
+    required: true,
+    description: '商家ID',
+    sensitivityLevel: 2
   },
-  subscription_number: {
+  subscriptionNumber: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    description: '订阅编号'
   },
   // 订阅类型
-  subscription_type: {
+  subscriptionType: {
     type: String,
-    enum: ['meal_plan', 'nutritionist_service', 'gym_meal', 'maternity_meal', 'school_company_meal'],
-    required: true
+    enum: ['mealPlan', 'nutritionistService', 'gymMeal', 'maternityMeal', 'schoolCompanyMeal'],
+    required: true,
+    description: '订阅类型'
   },
   // 订阅名称
   name: {
     type: String,
-    required: true
+    required: true,
+    description: '订阅名称'
   },
-  description: String,
+  description: {
+    type: String,
+    description: '订阅描述'
+  },
   // 订阅项目
   items: [subscriptionItemSchema],
   // 订阅时间段
-  start_date: {
+  startDate: {
     type: Date,
-    required: true
+    required: true,
+    description: '订阅开始日期'
   },
-  end_date: Date, // 如果为空则为无限期
-  auto_renew: {
+  endDate: {
+    type: Date,
+    description: '订阅结束日期，如果为空则为无限期'
+  },
+  autoRenew: {
     type: Boolean,
-    default: false
+    default: false,
+    description: '是否自动续订'
   },
   // 订阅状态
   status: {
     type: String,
     enum: ['active', 'paused', 'cancelled', 'expired', 'pending'],
-    default: 'pending'
+    default: 'pending',
+    description: '订阅状态'
+  },
+  // 创建人追踪
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    refPath: 'createdByType',
+    description: '创建人ID（用户/营养师/管理员）'
+  },
+  createdByType: {
+    type: String,
+    enum: ['User', 'Nutritionist', 'Admin'],
+    description: '创建人类型'
   },
   // 支付信息
   payment: {
-    billing_cycle: {
+    billingCycle: {
       type: String,
       enum: ['weekly', 'biweekly', 'monthly', 'quarterly', 'annually'],
-      default: 'monthly'
+      default: 'monthly',
+      description: '计费周期'
     },
-    price_details: {
-      base_price: {
+    priceDetails: {
+      basePrice: {
         type: Number,
-        required: true
+        required: true,
+        description: '基础价格'
       },
       discount: {
         type: Number,
-        default: 0
+        default: 0,
+        description: '折扣金额'
       },
       tax: {
         type: Number,
-        default: 0
+        default: 0,
+        description: '税费'
       },
       total: {
         type: Number,
-        required: true
+        required: true,
+        description: '总金额'
       }
     },
-    payment_method: {
+    paymentMethod: {
       type: String,
-      enum: ['credit_card', 'debit_card', 'wechat_pay', 'alipay', 'bank_transfer'],
-      required: true
+      enum: ['creditCard', 'debitCard', 'wechatPay', 'alipay', 'bankTransfer'],
+      required: true,
+      description: '支付方式'
     },
-    payment_status: {
+    paymentStatus: {
       type: String,
       enum: ['paid', 'pending', 'failed'],
-      default: 'pending'
+      default: 'pending',
+      description: '支付状态'
     },
-    next_billing_date: Date,
-    payment_history: [{
-      transaction_id: String,
-      amount: Number,
+    nextBillingDate: {
+      type: Date,
+      description: '下次计费日期'
+    },
+    paymentHistory: [{
+      transactionId: {
+        type: String,
+        description: '交易ID',
+        sensitivityLevel: 2
+      },
+      amount: {
+        type: Number,
+        description: '支付金额',
+        sensitivityLevel: 2
+      },
       date: {
         type: Date,
-        default: Date.now
+        default: Date.now,
+        description: '支付日期'
       },
       status: {
         type: String,
-        enum: ['success', 'pending', 'failed', 'refunded']
+        enum: ['success', 'pending', 'failed', 'refunded'],
+        default: 'success',
+        description: '支付结果状态'
       }
     }]
   },
   // 配送信息
   delivery: {
     address: {
-      line1: String,
-      line2: String,
-      city: String,
-      state: String,
-      postal_code: String,
+      line1: {
+        type: String,
+        description: '地址第一行'
+      },
+      line2: {
+        type: String,
+        description: '地址第二行'
+      },
+      city: {
+        type: String,
+        description: '城市'
+      },
+      state: {
+        type: String,
+        description: '省/州'
+      },
+      postalCode: {
+        type: String,
+        description: '邮政编码'
+      },
       country: {
         type: String,
-        default: 'China'
+        default: 'China',
+        description: '国家'
       }
     },
-    preferred_time: {
+    preferredTime: {
       type: String,
       enum: ['morning', 'noon', 'afternoon', 'evening'],
-      default: 'noon'
+      default: 'noon',
+      description: '首选配送时间'
     },
-    delivery_instructions: String,
-    contact_phone: String
+    deliveryInstructions: {
+      type: String,
+      description: '配送说明'
+    },
+    contactPhone: {
+      type: String,
+      description: '联系电话',
+      sensitivityLevel: 2
+    }
   },
   // 订阅偏好设置
   preferences: {
-    allow_substitutions: {
+    allowSubstitutions: {
       type: Boolean,
-      default: true
+      default: true,
+      description: '是否允许替代品'
     },
-    notification_preferences: {
+    notificationPreferences: {
       email: {
         type: Boolean,
-        default: true
+        default: true,
+        description: '是否接收邮件通知'
       },
       sms: {
         type: Boolean,
-        default: true
+        default: true,
+        description: '是否接收短信通知'
       },
       app: {
         type: Boolean,
-        default: true
+        default: true,
+        description: '是否接收应用通知'
       }
     },
-    special_instructions: String
+    specialInstructions: {
+      type: String,
+      description: '特殊说明'
+    }
   },
   // 相关的营养档案
   nutritionProfileId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'NutritionProfile'
+    ref: 'NutritionProfile',
+    description: '关联的营养档案ID'
   },
   // 订单生成历史
-  order_history: [{
-    order_id: {
+  orderHistory: [{
+    orderId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Order'
+      ref: 'Order',
+      description: '关联订单ID'
     },
-    generated_at: {
+    generatedAt: {
       type: Date,
-      default: Date.now
+      default: Date.now,
+      description: '生成日期'
     },
     status: {
       type: String,
       enum: ['generated', 'delivered', 'cancelled', 'skipped'],
-      default: 'generated'
+      default: 'generated',
+      description: '订单状态'
     }
   }],
   // 访问控制
-  privacy_level: {
+  privacyLevel: {
     type: String,
     enum: ['private', 'share_with_nutritionist', 'share_with_merchant', 'public'],
-    default: 'private'
+    default: 'private',
+    description: '隐私级别'
   },
   // 授权记录
-  access_grants: [{
-    granted_to: {
+  accessGrants: [{
+    grantedTo: {
       type: mongoose.Schema.Types.ObjectId,
-      refPath: 'access_grants.granted_to_type'
+      refPath: 'accessGrants.grantedToType',
+      description: '授权对象ID'
     },
-    granted_to_type: {
+    grantedToType: {
       type: String,
-      enum: ['Nutritionist', 'Merchant', 'Admin']
+      enum: ['Nutritionist', 'Merchant', 'Admin'],
+      description: '授权对象类型'
     },
-    granted_at: {
+    grantedAt: {
       type: Date,
-      default: Date.now
+      default: Date.now,
+      description: '授权时间'
     },
-    valid_until: Date,
-    access_level: {
-      type: String,
-      enum: ['read', 'read_write'],
-      default: 'read'
-    },
-    revoked: {
-      type: Boolean,
-      default: false
-    },
-    revoked_at: Date
-  }],
-  // 安全和审计
-  access_log: [{
-    timestamp: {
+    validUntil: {
       type: Date,
-      default: Date.now
+      description: '授权有效期'
     },
-    accessed_by: {
-      type: mongoose.Schema.Types.ObjectId,
-      refPath: 'access_log.accessed_by_type'
-    },
-    accessed_by_type: {
+    accessLevel: {
       type: String,
-      enum: ['User', 'Nutritionist', 'Merchant', 'Admin', 'System']
-    },
-    ip_address: String,
-    action: {
-      type: String,
-      enum: ['view', 'create', 'update', 'cancel', 'renew', 'pause']
+      enum: ['read', 'modify', 'full'],
+      default: 'read',
+      description: '授权级别'
     }
-  }],
-  // 修改历史
-  modification_history: [{
-    modified_at: {
-      type: Date,
-      default: Date.now
-    },
-    modified_by: {
-      type: mongoose.Schema.Types.ObjectId,
-      refPath: 'modification_history.modified_by_type'
-    },
-    modified_by_type: {
-      type: String,
-      enum: ['User', 'Nutritionist', 'Merchant', 'Admin', 'System']
-    },
-    changes: [String],
-    reason: String
-  }],
-  // 时间戳
-  created_at: {
-    type: Date,
-    default: Date.now
-  },
-  updated_at: {
-    type: Date,
-    default: Date.now
-  }
+  }]
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
 
-// 添加索引以优化查询性能
+// 创建索引
 subscriptionSchema.index({ userId: 1 });
-subscriptionSchema.index({ merchant_id: 1 });
+subscriptionSchema.index({ merchantId: 1 });
 subscriptionSchema.index({ status: 1 });
-subscriptionSchema.index({ subscription_type: 1 });
+subscriptionSchema.index({ subscriptionType: 1 });
 subscriptionSchema.index({ 'plan.id': 1 });
-subscriptionSchema.index({ start_date: 1 });
-subscriptionSchema.index({ end_date: 1 });
-subscriptionSchema.index({ 'payment.next_payment_date': 1 });
-subscriptionSchema.index({ 'nutritionProfileId': 1 });
+subscriptionSchema.index({ startDate: 1 });
+subscriptionSchema.index({ endDate: 1 });
 
-// 添加虚拟字段
-subscriptionSchema.virtual('is_active').get(function() {
+// 虚拟字段
+subscriptionSchema.virtual('isActive').get(function() {
   const now = new Date();
-  const startDate = new Date(this.start_date);
-  const endDate = this.end_date ? new Date(this.end_date) : null;
+  if (this.status !== 'active') return false;
   
-  return this.status === 'active' && 
-         startDate <= now && 
-         (!endDate || endDate >= now);
+  if (this.startDate > now) return false;
+  
+  if (this.endDate && this.endDate < now) return false;
+  
+  return true;
 });
 
-subscriptionSchema.virtual('days_remaining').get(function() {
-  if (!this.is_active || !this.end_date) return 0;
+subscriptionSchema.virtual('daysRemaining').get(function() {
+  if (!this.endDate) return Infinity; // 无限期订阅
   
   const now = new Date();
-  const endDate = new Date(this.end_date);
-  const diffTime = endDate - now;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const end = new Date(this.endDate);
   
-  return Math.max(0, diffDays);
+  return Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
 });
 
-subscriptionSchema.virtual('renewal_status').get(function() {
-  if (!this.is_active) return 'inactive';
-  if (this.auto_renew) return 'auto_renewal';
-  if (this.days_remaining <= 7) return 'expiring_soon';
-  return 'active_no_renewal';
+subscriptionSchema.virtual('renewalStatus').get(function() {
+  if (!this.endDate || !this.autoRenew) return 'not_applicable';
+  
+  const daysRemaining = this.daysRemaining;
+  return daysRemaining <= 3 ? 'upcoming' : 'scheduled';
 });
 
-subscriptionSchema.virtual('current_period').get(function() {
+subscriptionSchema.virtual('currentPeriod').get(function() {
   const now = new Date();
   
-  // 查找当前周期
-  if (!this.billing_cycles || this.billing_cycles.length === 0) {
-    return null;
+  // 获取当前周期的起始日期
+  let periodStart = new Date(this.startDate);
+  let periodEnd;
+  
+  if (this.payment && this.payment.billingCycle) {
+    // 如果存在结束日期且在当前日期之前，则不在活跃周期内
+    if (this.endDate && new Date(this.endDate) < now) {
+      return null;
+    }
+    
+    // 根据计费周期计算当前周期的结束日期
+    if (this.payment.nextBillingDate) {
+      periodEnd = new Date(this.payment.nextBillingDate);
+    }
   }
   
-  return this.billing_cycles
-    .sort((a, b) => new Date(b.period_start) - new Date(a.period_start))
-    .find(cycle => {
-      const periodStart = new Date(cycle.period_start);
-      const periodEnd = new Date(cycle.period_end);
-      return periodStart <= now && periodEnd >= now;
-    }) || null;
+  return {
+    start: periodStart,
+    end: periodEnd || this.endDate || null
+  };
 });
 
-// 关联
+// 关联查询虚拟字段
 subscriptionSchema.virtual('user', {
   ref: 'User',
   localField: 'userId',
@@ -377,7 +436,7 @@ subscriptionSchema.virtual('user', {
 
 subscriptionSchema.virtual('merchant', {
   ref: 'Merchant',
-  localField: 'merchant_id',
+  localField: 'merchantId',
   foreignField: '_id',
   justOne: true
 });
@@ -391,137 +450,162 @@ subscriptionSchema.virtual('nutritionProfile', {
 
 // 实例方法
 subscriptionSchema.methods.calculateNextPaymentDate = function() {
-  if (!this.is_active || !this.auto_renew) return null;
-  
   const now = new Date();
-  let nextPaymentDate;
+  let nextDate = new Date(this.startDate);
   
-  if (this.billing_frequency === 'monthly') {
-    nextPaymentDate = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
-  } else if (this.billing_frequency === 'quarterly') {
-    nextPaymentDate = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
-  } else if (this.billing_frequency === 'annual') {
-    nextPaymentDate = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
-  } else {
-    // 默认按月
-    nextPaymentDate = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  // 如果没有设置计费周期，则返回null
+  if (!this.payment || !this.payment.billingCycle) {
+    return null;
   }
   
-  // 更新下次付款日期
-  if (!this.payment) this.payment = {};
-  this.payment.next_payment_date = nextPaymentDate;
+  // 根据计费周期计算下次付款日期
+  while (nextDate <= now) {
+    switch (this.payment.billingCycle) {
+      case 'weekly':
+        nextDate.setDate(nextDate.getDate() + 7);
+        break;
+      case 'biweekly':
+        nextDate.setDate(nextDate.getDate() + 14);
+        break;
+      case 'monthly':
+        nextDate.setMonth(nextDate.getMonth() + 1);
+        break;
+      case 'quarterly':
+        nextDate.setMonth(nextDate.getMonth() + 3);
+        break;
+      case 'annually':
+        nextDate.setFullYear(nextDate.getFullYear() + 1);
+        break;
+    }
+  }
   
-  return nextPaymentDate;
+  return nextDate;
 };
 
 subscriptionSchema.methods.addBillingCycle = function(amount, status = 'pending') {
   const now = new Date();
-  let periodEnd;
   
-  if (this.billing_frequency === 'monthly') {
-    periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
-  } else if (this.billing_frequency === 'quarterly') {
-    periodEnd = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
-  } else if (this.billing_frequency === 'annual') {
-    periodEnd = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
-  } else {
-    // 默认按月
-    periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  // 创建新的付款记录
+  if (!this.payment.paymentHistory) {
+    this.payment.paymentHistory = [];
   }
   
-  const newCycle = {
-    period_start: now,
-    period_end: periodEnd,
-    amount: amount,
-    status: status,
-    created_at: now
-  };
+  // 生成一个简单的交易ID
+  const transactionId = `txn_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
   
-  if (!this.billing_cycles) this.billing_cycles = [];
-  this.billing_cycles.push(newCycle);
-  
-  // 更新订阅结束日期
-  this.end_date = periodEnd;
-  
-  return newCycle;
-};
-
-subscriptionSchema.methods.cancel = function(reason = '用户取消', immediate = false) {
-  if (immediate) {
-    this.status = 'cancelled';
-    this.end_date = new Date(); // 立即结束
-  } else {
-    // 只取消自动续费，让订阅到期后结束
-    this.auto_renew = false;
-    this.status = 'ending'; // 标记为即将结束
-  }
-  
-  this.cancellation = {
-    date: new Date(),
-    reason: reason
-  };
-  
-  return this;
-};
-
-subscriptionSchema.methods.pause = function(resumeDate = null, reason = null) {
-  if (this.status !== 'active') {
-    throw new Error('只有活跃的订阅才能被暂停');
-  }
-  
-  this.status = 'paused';
-  this.pause_history = this.pause_history || [];
-  
-  this.pause_history.push({
-    paused_at: new Date(),
-    scheduled_resume_date: resumeDate,
-    reason: reason
+  // 添加到付款历史记录
+  this.payment.paymentHistory.push({
+    transactionId,
+    amount,
+    date: now,
+    status
   });
   
-  // 如果指定了恢复日期，相应延长订阅结束日期
-  if (resumeDate && this.end_date) {
-    const now = new Date();
-    const resumeDateObj = new Date(resumeDate);
-    const pauseDuration = resumeDateObj - now;
+  // 更新下次计费日期
+  this.payment.nextBillingDate = this.calculateNextPaymentDate();
+  
+  // 如果状态是待处理，则设置付款状态为待处理
+  if (status === 'pending') {
+    this.payment.paymentStatus = 'pending';
+  } else if (status === 'success') {
+    this.payment.paymentStatus = 'paid';
     
-    if (pauseDuration > 0) {
-      const newEndDate = new Date(this.end_date);
-      newEndDate.setTime(newEndDate.getTime() + pauseDuration);
-      this.end_date = newEndDate;
-    }
-  }
-  
-  return this;
-};
-
-subscriptionSchema.methods.resume = function() {
-  if (this.status !== 'paused') {
-    throw new Error('只有已暂停的订阅才能被恢复');
-  }
-  
-  this.status = 'active';
-  
-  // 更新最后一次暂停记录
-  if (this.pause_history && this.pause_history.length > 0) {
-    const lastPause = this.pause_history[this.pause_history.length - 1];
-    lastPause.resumed_at = new Date();
-    
-    // 计算实际暂停时间与计划的差异
-    if (lastPause.scheduled_resume_date) {
-      const scheduledResume = new Date(lastPause.scheduled_resume_date);
-      const actualResume = new Date(lastPause.resumed_at);
-      
-      // 如果提前恢复，缩短结束日期
-      if (actualResume < scheduledResume && this.end_date) {
-        const timeDiff = scheduledResume - actualResume;
-        const newEndDate = new Date(this.end_date);
-        newEndDate.setTime(newEndDate.getTime() - timeDiff);
-        this.end_date = newEndDate;
+    // 如果有结束日期且计费周期不为空，则根据计费周期延长结束日期
+    if (this.endDate && this.payment.billingCycle) {
+      switch (this.payment.billingCycle) {
+        case 'weekly':
+          this.endDate.setDate(this.endDate.getDate() + 7);
+          break;
+        case 'biweekly':
+          this.endDate.setDate(this.endDate.getDate() + 14);
+          break;
+        case 'monthly':
+          this.endDate.setMonth(this.endDate.getMonth() + 1);
+          break;
+        case 'quarterly':
+          this.endDate.setMonth(this.endDate.getMonth() + 3);
+          break;
+        case 'annually':
+          this.endDate.setFullYear(this.endDate.getFullYear() + 1);
+          break;
       }
     }
   }
   
   return this;
+};
+
+subscriptionSchema.methods.cancel = function(reason = '用户取消', immediate = false) {
+  if (immediate) {
+    // 立即取消订阅
+    this.status = 'cancelled';
+    this.cancelReason = reason;
+    this.endDate = new Date(); // 设置结束日期为当前日期
+  } else {
+    // 到期后取消订阅（禁止自动续订）
+    this.autoRenew = false;
+    this.cancelReason = reason;
+  }
+  
+  return this.save();
+};
+
+subscriptionSchema.methods.pause = function(resumeDate = null, reason = null) {
+  // 确保订阅当前是活跃状态
+  if (this.status !== 'active') {
+    throw new Error('只能暂停活跃状态的订阅');
+  }
+  
+  // 保存当前状态以便之后恢复
+  this._previousStatus = {
+    status: this.status,
+    endDate: this.endDate
+  };
+  
+  // 更新状态
+  this.status = 'paused';
+  
+  // 如果提供了恢复日期，则设置
+  if (resumeDate && resumeDate instanceof Date) {
+    this.resumeDate = resumeDate;
+  }
+  
+  // 如果提供了暂停原因，则记录
+  if (reason) {
+    this.pauseReason = reason;
+  }
+  
+  // 如果有结束日期，需要延长结束日期以补偿暂停期
+  if (this.endDate) {
+    this._pauseStartDate = new Date(); // 记录暂停开始时间
+  }
+  
+  return this.save();
+};
+
+subscriptionSchema.methods.resume = function() {
+  // 确保订阅当前是暂停状态
+  if (this.status !== 'paused') {
+    throw new Error('只能恢复暂停状态的订阅');
+  }
+  
+  // 恢复到活跃状态
+  this.status = 'active';
+  
+  // 清除恢复日期
+  this.resumeDate = undefined;
+  
+  // 清除暂停原因
+  this.pauseReason = undefined;
+  
+  // 如果有结束日期，需要根据暂停的时长延长结束日期
+  if (this.endDate && this._pauseStartDate) {
+    const pauseDuration = new Date() - this._pauseStartDate;
+    this.endDate = new Date(this.endDate.getTime() + pauseDuration);
+    this._pauseStartDate = undefined;
+  }
+  
+  return this.save();
 };
 
 // 静态方法
@@ -531,10 +615,10 @@ subscriptionSchema.statics.findActiveByUser = function(userId) {
   return this.find({
     userId: userId,
     status: 'active',
-    start_date: { $lte: now },
+    startDate: { $lte: now },
     $or: [
-      { end_date: { $gte: now } },
-      { end_date: null }
+      { endDate: { $gt: now } },
+      { endDate: null }
     ]
   });
 };
@@ -542,344 +626,222 @@ subscriptionSchema.statics.findActiveByUser = function(userId) {
 subscriptionSchema.statics.findExpiringSubscriptions = function(daysThreshold = 7) {
   const now = new Date();
   const thresholdDate = new Date();
-  thresholdDate.setDate(now.getDate() + daysThreshold);
+  thresholdDate.setDate(thresholdDate.getDate() + daysThreshold);
   
   return this.find({
     status: 'active',
-    auto_renew: false,
-    start_date: { $lte: now },
-    end_date: { $gte: now, $lte: thresholdDate }
+    endDate: { $gte: now, $lte: thresholdDate },
+    autoRenew: false
   });
 };
 
 subscriptionSchema.statics.getTotalActiveSubscriptions = async function(merchantId = null) {
+  const now = new Date();
+  
   const match = {
     status: 'active',
-    start_date: { $lte: new Date() },
+    startDate: { $lte: now },
     $or: [
-      { end_date: { $gte: new Date() } },
-      { end_date: null }
+      { endDate: { $gt: now } },
+      { endDate: null }
     ]
   };
   
   if (merchantId) {
-    match.merchant_id = mongoose.Types.ObjectId(merchantId);
+    match.merchantId = mongoose.Types.ObjectId(merchantId);
   }
   
   const result = await this.aggregate([
     { $match: match },
     { $group: {
-      _id: null,
-      total: { $sum: 1 },
-      revenue: { $sum: '$price' }
+      _id: '$subscriptionType',
+      count: { $sum: 1 }
+    }},
+    { $project: {
+      _id: 0,
+      subscriptionType: '$_id',
+      count: 1
     }}
   ]);
   
-  return result.length > 0 ? result[0] : { total: 0, revenue: 0 };
+  return result;
 };
 
-// 生成唯一订阅号
+// 生成订阅编号
+function generateSubscriptionNumber() {
+  const timestamp = Date.now().toString().slice(-8);
+  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  return `SUB${timestamp}${random}`;
+}
+
+// 更新订阅状态中间件
 subscriptionSchema.pre('save', async function(next) {
-  if (this.isNew) {
-    const now = new Date();
-    const year = now.getFullYear().toString().substr(-2);
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const day = now.getDate().toString().padStart(2, '0');
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    
-    // 尝试生成一个唯一的订阅号
-    let isUnique = false;
-    let attempts = 0;
-    let generatedNumber;
-    
-    while (!isUnique && attempts < 10) {
-      generatedNumber = `SUB${year}${month}${day}${random}${attempts}`;
-      
-      // 检查是否唯一
-      const existingSubscription = await this.constructor.findOne({ subscription_number: generatedNumber });
-      if (!existingSubscription) {
-        isUnique = true;
-      }
-      
-      attempts++;
-    }
-    
-    if (!isUnique) {
-      return next(new Error('无法生成唯一订阅号'));
-    }
-    
-    this.subscription_number = generatedNumber;
-    
-    // 如果设置了自动续订，但没有设置结束日期，则设置下次计费日期
-    if (this.auto_renew && !this.end_date) {
-      this.setNextBillingDate();
-    }
+  // 如果是新建订阅，生成订阅编号
+  if (this.isNew && !this.subscriptionNumber) {
+    this.subscriptionNumber = generateSubscriptionNumber();
   }
   
-  // 更新时间
-  this.updated_at = Date.now();
+  // 更新订阅状态
+  const now = new Date();
+  
+  // 如果开始日期在未来，状态应为pending
+  if (this.startDate > now && this.status === 'active') {
+    this.status = 'pending';
+  }
+  
+  // 如果超过结束日期，更新状态为expired
+  if (this.endDate && this.endDate < now && this.status !== 'cancelled') {
+    this.status = 'expired';
+  }
+  
+  // 如果订阅是活跃的，但结束日期接近且不自动续订，则触发即将到期提醒
+  if (this.status === 'active' && this.endDate && !this.autoRenew) {
+    const daysToExpiry = Math.ceil((this.endDate - now) / (1000 * 60 * 60 * 24));
+    
+    if (daysToExpiry <= 7 && (!this._previouslyWarned || this._previouslyWarned > daysToExpiry)) {
+      // 在这里可以添加通知逻辑，例如发送邮件、短信等
+      console.log(`订阅 ${this.subscriptionNumber} 将在 ${daysToExpiry} 天后到期`);
+      
+      // 记录已经提醒过，避免重复提醒
+      this._previouslyWarned = daysToExpiry;
+    }
+  }
   
   next();
 });
 
-// 设置下一个计费日期的方法
+// 为模型添加一些在订阅操作的钩子
 subscriptionSchema.methods.setNextBillingDate = function() {
-  const nextDate = new Date();
+  // 记录上次更新时间
+  this.updatedAt = Date.now();
   
-  switch(this.payment.billing_cycle) {
-    case 'weekly':
-      nextDate.setDate(nextDate.getDate() + 7);
-      break;
-    case 'biweekly':
-      nextDate.setDate(nextDate.getDate() + 14);
-      break;
-    case 'monthly':
-      nextDate.setMonth(nextDate.getMonth() + 1);
-      break;
-    case 'quarterly':
-      nextDate.setMonth(nextDate.getMonth() + 3);
-      break;
-    case 'annually':
-      nextDate.setFullYear(nextDate.getFullYear() + 1);
-      break;
-    default:
-      nextDate.setMonth(nextDate.getMonth() + 1);
+  // 计算下一个计费日期
+  if (this.status === 'active' && this.payment && this.payment.billingCycle) {
+    const nextBillingDate = this.calculateNextPaymentDate();
+    if (nextBillingDate) {
+      this.payment.nextBillingDate = nextBillingDate;
+    }
   }
   
-  this.payment.next_billing_date = nextDate;
+  return this;
 };
 
+// 一些操作的封装，方便接口调用
 // 暂停订阅
 subscriptionSchema.methods.pauseSubscription = function(userId, userType, reason) {
-  this.status = 'paused';
+  // 检查是否有权限
+  const canPause = userType === 'admin' || 
+                  (userType === 'user' && this.userId.toString() === userId.toString()) ||
+                  (userType === 'merchant' && this.merchantId.toString() === userId.toString());
   
-  // 记录修改历史
-  if (!this.modification_history) {
-    this.modification_history = [];
+  if (!canPause) {
+    throw new Error('没有权限暂停此订阅');
   }
   
-  this.modification_history.push({
-    modified_at: Date.now(),
-    modified_by: userId,
-    modified_by_type: userType,
-    changes: ['status changed to paused'],
-    reason: reason || '用户请求暂停'
-  });
+  return this.pause(null, reason);
 };
 
 // 取消订阅
 subscriptionSchema.methods.cancelSubscription = function(userId, userType, reason) {
-  this.status = 'cancelled';
+  // 检查是否有权限
+  const canCancel = userType === 'admin' || 
+                  (userType === 'user' && this.userId.toString() === userId.toString()) ||
+                  (userType === 'merchant' && this.merchantId.toString() === userId.toString());
   
-  // 记录修改历史
-  if (!this.modification_history) {
-    this.modification_history = [];
+  if (!canCancel) {
+    throw new Error('没有权限取消此订阅');
   }
   
-  this.modification_history.push({
-    modified_at: Date.now(),
-    modified_by: userId,
-    modified_by_type: userType,
-    changes: ['status changed to cancelled'],
-    reason: reason || '用户请求取消'
-  });
+  // 默认为到期后取消
+  const immediate = userType === 'admin'; // 只有管理员可以立即取消
+  
+  return this.cancel(reason, immediate);
 };
 
-// 重新激活订阅
-subscriptionSchema.methods.reactivateSubscription = function(userId, userType, reason) {
-  this.status = 'active';
-  this.setNextBillingDate();
+// 为订阅添加分析功能
+subscriptionSchema.statics.getSubscriptionAnalytics = async function(options = {}) {
+  const { 
+    merchantId = null,
+    startDate = null,
+    endDate = null,
+    groupBy = 'day'
+  } = options;
   
-  // 记录修改历史
-  if (!this.modification_history) {
-    this.modification_history = [];
+  const match = {};
+  
+  if (merchantId) {
+    match.merchantId = mongoose.Types.ObjectId(merchantId);
   }
   
-  this.modification_history.push({
-    modified_at: Date.now(),
-    modified_by: userId,
-    modified_by_type: userType,
-    changes: ['status changed to active', 'next_billing_date updated'],
-    reason: reason || '用户请求重新激活'
-  });
-};
-
-// 续订订阅
-subscriptionSchema.methods.renewSubscription = function(endDate = null) {
-  // 如果指定了新的结束日期，则更新它
-  if (endDate) {
-    this.end_date = endDate;
+  if (startDate || endDate) {
+    match.createdAt = {};
+    if (startDate) match.createdAt.$gte = new Date(startDate);
+    if (endDate) match.createdAt.$lte = new Date(endDate);
   }
   
-  this.status = 'active';
-  this.setNextBillingDate();
-  
-  // 记录修改历史
-  if (!this.modification_history) {
-    this.modification_history = [];
-  }
-  
-  this.modification_history.push({
-    modified_at: Date.now(),
-    modified_by: this.userId,
-    modified_by_type: 'User',
-    changes: ['subscription renewed', 'next_billing_date updated'],
-    reason: '订阅续期'
-  });
-};
-
-// 记录支付
-subscriptionSchema.methods.recordPayment = function(transactionId, amount, status = 'success') {
-  if (!this.payment.payment_history) {
-    this.payment.payment_history = [];
-  }
-  
-  this.payment.payment_history.push({
-    transaction_id: transactionId,
-    amount: amount,
-    date: Date.now(),
-    status: status
-  });
-  
-  // 如果支付成功，更新支付状态和下次计费日期
-  if (status === 'success') {
-    this.payment.payment_status = 'paid';
-    this.setNextBillingDate();
-  } else if (status === 'failed') {
-    this.payment.payment_status = 'failed';
-  }
-};
-
-// 添加订单到订阅历史
-subscriptionSchema.methods.addOrder = function(orderId, status = 'generated') {
-  if (!this.order_history) {
-    this.order_history = [];
-  }
-  
-  this.order_history.push({
-    order_id: orderId,
-    generated_at: Date.now(),
-    status: status
-  });
-};
-
-// 授权访问方法
-subscriptionSchema.methods.grantAccess = function(granteeId, granteeType, validUntil, accessLevel = 'read') {
-  if (!this.access_grants) {
-    this.access_grants = [];
-  }
-  
-  // 检查是否已存在授权
-  const existingGrant = this.access_grants.find(
-    g => g.granted_to.equals(granteeId) && g.granted_to_type === granteeType && !g.revoked
-  );
-  
-  if (existingGrant) {
-    // 更新现有授权
-    existingGrant.valid_until = validUntil;
-    existingGrant.access_level = accessLevel;
-  } else {
-    // 创建新授权
-    this.access_grants.push({
-      granted_to: granteeId,
-      granted_to_type: granteeType,
-      granted_at: Date.now(),
-      valid_until: validUntil,
-      access_level: accessLevel
-    });
-  }
-};
-
-// 撤销授权方法
-subscriptionSchema.methods.revokeAccess = function(granteeId, granteeType) {
-  if (!this.access_grants) return false;
-  
-  let found = false;
-  this.access_grants.forEach(grant => {
-    if (grant.granted_to.equals(granteeId) && grant.granted_to_type === granteeType && !grant.revoked) {
-      grant.revoked = true;
-      grant.revoked_at = Date.now();
-      found = true;
-    }
-  });
-  
-  return found;
-};
-
-// 记录访问方法
-subscriptionSchema.methods.logAccess = async function(userId, userType, ipAddress, action) {
-  if (!this.access_log) {
-    this.access_log = [];
-  }
-  
-  // 保持日志大小合理
-  if (this.access_log.length >= 20) {
-    this.access_log = this.access_log.slice(-19);
-  }
-  
-  // 添加新的访问记录
-  this.access_log.push({
-    timestamp: Date.now(),
-    accessed_by: userId,
-    accessed_by_type: userType,
-    ip_address: ipAddress,
-    action: action
-  });
-  
-  await this.save();
-};
-
-// 安全查询方法 - 考虑访问控制
-subscriptionSchema.statics.findWithPermissionCheck = async function(query = {}, options = {}, user) {
-  // 如果是用户查询自己的订阅，直接返回
-  if (user && query.userId && user._id.equals(query.userId)) {
-    return this.find(query, options);
-  }
-  
-  // 如果是商户查询自己的订阅
-  if (user && user.role === 'merchant' && query.merchant_id && user._id.equals(query.merchant_id)) {
-    return this.find(query, options);
-  }
-  
-  // 如果是营养师，检查是否有授权
-  if (user && user.role === 'nutritionist') {
-    const nutritionistId = user._id;
-    
-    // 扩展查询条件，添加权限检查
-    const permissionQuery = {
-      ...query,
-      $or: [
-        // 用户授权给这个营养师的订阅
-        { 'access_grants.granted_to': nutritionistId, 'access_grants.granted_to_type': 'Nutritionist', 'access_grants.revoked': false },
-        // 用户在隐私设置中分享给营养师的订阅
-        { privacy_level: 'share_with_nutritionist' }
-      ]
+  let dateFormat;
+  if (groupBy === 'day') {
+    dateFormat = { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } };
+  } else if (groupBy === 'week') {
+    dateFormat = { 
+      $dateToString: { 
+        format: '%Y-W%U', 
+        date: '$createdAt'
+      }
     };
+  } else if (groupBy === 'month') {
+    dateFormat = { $dateToString: { format: '%Y-%m', date: '$createdAt' } };
+  }
+  
+  const pipeline = [
+    { $match: match },
+    { $group: {
+      _id: {
+        timePeriod: dateFormat,
+        subscriptionType: '$subscriptionType'
+      },
+      count: { $sum: 1 },
+      revenue: { $sum: '$payment.priceDetails.total' }
+    }},
+    { $sort: { '_id.timePeriod': 1 } }
+  ];
+  
+  const results = await this.aggregate(pipeline);
+  
+  // 转换结果为更易于使用的格式
+  const formatted = {};
+  results.forEach(item => {
+    const period = item._id.timePeriod;
+    const type = item._id.subscriptionType;
     
-    return this.find(permissionQuery, options);
-  }
+    if (!formatted[period]) {
+      formatted[period] = { total: 0 };
+    }
+    
+    formatted[period][type] = item.count;
+    formatted[period].total += item.count;
+    formatted[period].revenue = (formatted[period].revenue || 0) + (item.revenue || 0);
+  });
   
-  // 如果是管理员，直接返回结果
-  if (user && (user.role === 'admin' || user.role === 'super_admin')) {
-    return this.find(query, options);
-  }
-  
-  // 其他情况，返回空结果
-  return [];
+  return formatted;
 };
 
-// 前置钩子 - 保存前自动计算下次付款日期
+// 前置钩子：在保存前格式化数据
 subscriptionSchema.pre('save', function(next) {
-  if (this.isNew || this.isModified('auto_renew') || this.isModified('billing_frequency')) {
-    if (this.is_active && this.auto_renew) {
-      this.calculateNextPaymentDate();
-    }
+  // 设置下次计费日期
+  if (this.isNew || this.isModified('payment.billingCycle') || this.isModified('startDate')) {
+    this.setNextBillingDate();
   }
   
   next();
 });
 
-// 使用ModelFactory创建支持读写分离的模型
+// 创建模型
 const Subscription = ModelFactory.createModel('Subscription', subscriptionSchema);
+
+// 添加分片支持
+Subscription.getShardKey = function(doc) {
+  return doc.userId.toString();
+};
 
 module.exports = Subscription; 

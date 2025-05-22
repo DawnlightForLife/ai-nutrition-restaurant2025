@@ -1,3 +1,20 @@
+/**
+ * ✅ 模块名：requestValidationMiddleware.js
+ * ✅ 命名风格统一：camelCase
+ * ✅ 功能概览：
+ *   - 提供请求校验中间件（validateBody, validateQuery, validateParams 等）
+ *   - 支持自定义 Joi 验证规则（commonRules + customRules）
+ *   - 支持文件上传验证 validateFileUpload
+ * ✅ 支持的验证范围：
+ *   - body、query、params、headers
+ *   - 文件大小、类型、数量限制
+ * ✅ 错误处理：
+ *   - 所有验证失败均使用统一 AppError 抛出，错误类型为 VALIDATION_ERROR
+ * ✅ 建议 future：
+ *   - 添加多语言支持（错误信息国际化）
+ *   - 支持每个字段的本地化字段名映射提示（如 password → “密码”）
+ */
+
 const Joi = require('joi');
 const { logger } = require('../core/loggingMiddleware');
 const { AppError, ErrorTypes } = require('../core/errorHandlingMiddleware');
@@ -40,6 +57,8 @@ const validateRequest = (schema) => {
             headers: schema.headers
         };
 
+        // stripUnknown: true 会剥离未在 schema 中定义的字段
+        // allowUnknown: true 允许对象中存在未校验字段（不抛错）
         const validationResult = Joi.object(validationSchema).validate({
             body: req.body,
             query: req.query,
@@ -110,6 +129,8 @@ const validateFileUpload = (options = {}) => {
         maxFiles = 1
     } = options;
 
+    // TODO: 支持通过配置动态控制上传限制（如每个用户上传配额）
+
     return (req, res, next) => {
         if (!req.files) {
             throw new AppError(
@@ -158,6 +179,7 @@ const validateFileUpload = (options = {}) => {
 // 自定义验证规则
 const customRules = {
     // 密码强度验证
+    // 密码强度校验：必须包含大小写字母、数字、特殊字符
     strongPassword: Joi.string()
         .min(8)
         .max(32)
@@ -206,4 +228,4 @@ module.exports = {
     validateFileUpload,
     commonRules,
     customRules
-}; 
+};

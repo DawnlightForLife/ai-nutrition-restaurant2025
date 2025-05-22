@@ -1,0 +1,650 @@
+{
+  "User": {
+    "phone": {
+      "type": "String",
+      "required": true,
+      "description": "用户手机号",
+      "sensitivityLevel": 2
+    },
+    "password": {
+      "type": "String",
+      "required": true,
+      "description": "用户密码（加密存储）"
+    },
+    "role": {
+      "type": "String",
+      "enum": [
+        "user",
+        "admin",
+        "nutritionist",
+        "merchant"
+      ],
+      "default": "user",
+      "description": "用户角色"
+    },
+    "currentRole": {
+      "type": "String",
+      "enum": [
+        "user",
+        "nutritionist",
+        "merchant"
+      ],
+      "default": "user",
+      "description": "当前活跃角色"
+    },
+    "nickname": {
+      "type": "String",
+      "default": "",
+      "description": "用户昵称",
+      "sensitivityLevel": 3
+    },
+    "realName": {
+      "type": "String",
+      "default": "",
+      "description": "真实姓名",
+      "sensitivityLevel": 2
+    },
+    "email": {
+      "type": "String",
+      "description": "用户邮箱",
+      "sensitivityLevel": 2
+    },
+    "avatarUrl": {
+      "type": "String",
+      "default": "",
+      "description": "头像URL",
+      "sensitivityLevel": 3
+    },
+    "height": {
+      "type": "Number",
+      "default": 0,
+      "description": "身高（cm）",
+      "sensitivityLevel": 2
+    },
+    "weight": {
+      "type": "Number",
+      "default": 0,
+      "description": "体重（kg）",
+      "sensitivityLevel": 2
+    },
+    "age": {
+      "type": "Number",
+      "default": 0,
+      "description": "年龄",
+      "sensitivityLevel": 2
+    },
+    "gender": {
+      "type": "String",
+      "enum": [
+        "male",
+        "female",
+        "other"
+      ],
+      "default": "other",
+      "description": "性别",
+      "sensitivityLevel": 2
+    },
+    "activityLevel": {
+      "type": "String",
+      "enum": [
+        "sedentary",
+        "light",
+        "moderate",
+        "active",
+        "very_active"
+      ],
+      "default": "moderate",
+      "description": "活动水平",
+      "sensitivityLevel": 3
+    },
+    "region": {
+      "province": {
+        "type": "String",
+        "default": "",
+        "description": "省份",
+        "sensitivityLevel": 3
+      },
+      "city": {
+        "type": "String",
+        "default": "",
+        "description": "城市",
+        "sensitivityLevel": 3
+      }
+    },
+    "dietaryPreferences": {
+      "cuisinePreference": {
+        "type": "String",
+        "enum": [
+          "north",
+          "south",
+          "east",
+          "west",
+          "sichuan",
+          "cantonese",
+          "hunan",
+          "other"
+        ],
+        "default": "other",
+        "description": "偏好菜系",
+        "sensitivityLevel": 3
+      },
+      "allergies": {
+        "type": "Array",
+        "items": {
+          "type": "String"
+        },
+        "description": "过敏原",
+        "sensitivityLevel": 2
+      },
+      "avoidedIngredients": {
+        "type": "Array",
+        "items": {
+          "type": "String"
+        },
+        "description": "避免食材",
+        "sensitivityLevel": 3
+      },
+      "spicyPreference": {
+        "type": "String",
+        "enum": [
+          "none",
+          "mild",
+          "medium",
+          "hot",
+          "extra_hot"
+        ],
+        "default": "medium",
+        "description": "辣度偏好",
+        "sensitivityLevel": 3
+      }
+    },
+    "healthData": {
+      "hasRecentMedicalReport": {
+        "type": "Boolean",
+        "default": false,
+        "description": "是否有近期体检报告",
+        "sensitivityLevel": 2
+      },
+      "medicalReportUrl": {
+        "type": "String",
+        "default": "",
+        "description": "体检报告URL",
+        "sensitivityLevel": 1
+      },
+      "healthIssues": {
+        "type": "Array",
+        "items": {
+          "type": "String"
+        },
+        "description": "健康问题",
+        "sensitivityLevel": 1
+      }
+    }
+  },
+  "AiRecommendation": {
+    "userId": {
+      "type": "ObjectId",
+      "required": true,
+      "description": "所属用户ID"
+    },
+    "profileId": {
+      "type": "ObjectId",
+      "required": true,
+      "description": "对应的营养档案ID"
+    },
+    "recommendationType": {
+      "type": "String",
+      "enum": [
+        "meal_plan",
+        "nutrition_goal",
+        "alert",
+        "custom",
+        "dish",
+        "meal",
+        "diet_suggestion"
+      ],
+      "required": true,
+      "description": "推荐类型"
+    },
+    "recommendationTime": {
+      "type": "String",
+      "enum": [
+        "breakfast",
+        "lunch",
+        "dinner",
+        "snack",
+        "any"
+      ],
+      "default": "any",
+      "description": "推荐时间点"
+    },
+    "context": {
+      "location": {
+        "type": "String",
+        "enum": [
+          "home",
+          "work",
+          "restaurant",
+          "gym",
+          "travel",
+          "other"
+        ],
+        "default": "any",
+        "description": "位置类型"
+      },
+      "weather": {
+        "type": "String",
+        "description": "天气"
+      },
+      "season": {
+        "type": "String",
+        "description": "季节"
+      },
+      "specialOccasion": {
+        "type": "String",
+        "description": "特殊场合"
+      },
+      "timeConstraint": {
+        "type": "String",
+        "enum": [
+          "quick",
+          "normal",
+          "leisurely",
+          "any"
+        ],
+        "default": "any",
+        "description": "时间限制"
+      }
+    },
+    "dishes": {
+      "type": "Array",
+      "description": "推荐的菜品列表"
+    },
+    "mealPlan": {
+      "name": {
+        "type": "String",
+        "description": "套餐名称"
+      },
+      "description": {
+        "type": "String",
+        "description": "套餐描述"
+      },
+      "durationDays": {
+        "type": "Number",
+        "default": 1,
+        "description": "持续天数"
+      }
+    }
+  },
+  "Nutritionist": {
+    "userId": {
+      "type": "ObjectId",
+      "required": true,
+      "description": "关联的用户ID"
+    },
+    "specialties": {
+      "type": "Array",
+      "items": {
+        "type": "String"
+      },
+      "description": "专长领域"
+    },
+    "certifications": {
+      "type": "Array",
+      "items": {
+        "type": "String"
+      },
+      "description": "专业认证"
+    },
+    "workExperience": {
+      "type": "Number",
+      "description": "工作年限"
+    },
+    "education": {
+      "degree": {
+        "type": "String",
+        "description": "学位"
+      },
+      "institution": {
+        "type": "String",
+        "description": "学校"
+      },
+      "major": {
+        "type": "String",
+        "description": "专业"
+      }
+    },
+    "rating": {
+      "type": "Number",
+      "default": 5,
+      "description": "评分"
+    },
+    "bio": {
+      "type": "String",
+      "description": "个人简介"
+    }
+  },
+  "Order": {
+    "userId": {
+      "type": "ObjectId",
+      "required": true,
+      "description": "用户ID"
+    },
+    "merchantId": {
+      "type": "ObjectId",
+      "required": true,
+      "description": "商家ID"
+    },
+    "items": {
+      "type": "Array",
+      "description": "订单项目"
+    },
+    "totalAmount": {
+      "type": "Number",
+      "required": true,
+      "description": "订单总金额"
+    },
+    "status": {
+      "type": "String",
+      "enum": [
+        "pending",
+        "confirmed",
+        "preparing",
+        "delivering",
+        "completed",
+        "cancelled"
+      ],
+      "default": "pending",
+      "description": "订单状态"
+    },
+    "paymentStatus": {
+      "type": "String",
+      "enum": [
+        "unpaid",
+        "paid",
+        "refunded",
+        "partially_refunded"
+      ],
+      "default": "unpaid",
+      "description": "支付状态"
+    },
+    "deliveryAddress": {
+      "type": "String",
+      "description": "配送地址"
+    },
+    "contactPhone": {
+      "type": "String",
+      "description": "联系电话",
+      "sensitivityLevel": 2
+    },
+    "createdAt": {
+      "type": "Date",
+      "auto": true,
+      "description": "创建时间"
+    }
+  },
+  "Merchant": {
+    "userId": {
+      "type": "ObjectId",
+      "required": true,
+      "description": "关联的用户ID"
+    },
+    "name": {
+      "type": "String",
+      "required": true,
+      "description": "商家名称"
+    },
+    "description": {
+      "type": "String",
+      "description": "商家描述"
+    },
+    "logoUrl": {
+      "type": "String",
+      "description": "商家Logo URL"
+    },
+    "coverImageUrl": {
+      "type": "String",
+      "description": "封面图URL"
+    },
+    "operatingHours": {
+      "type": "Object",
+      "description": "营业时间"
+    },
+    "location": {
+      "address": {
+        "type": "String",
+        "description": "商家地址"
+      },
+      "coordinates": {
+        "longitude": {
+          "type": "Number",
+          "description": "经度"
+        },
+        "latitude": {
+          "type": "Number",
+          "description": "纬度"
+        }
+      }
+    },
+    "contactInfo": {
+      "phone": {
+        "type": "String",
+        "description": "联系电话",
+        "sensitivityLevel": 2
+      },
+      "email": {
+        "type": "String",
+        "description": "联系邮箱",
+        "sensitivityLevel": 2
+      }
+    },
+    "businessLicense": {
+      "licenseNumber": {
+        "type": "String",
+        "description": "营业执照号",
+        "sensitivityLevel": 2
+      },
+      "licenseImageUrl": {
+        "type": "String",
+        "description": "营业执照图片",
+        "sensitivityLevel": 2
+      }
+    },
+    "rating": {
+      "type": "Number",
+      "default": 5,
+      "description": "商家评分"
+    },
+    "status": {
+      "type": "String",
+      "enum": [
+        "active",
+        "suspended",
+        "closed"
+      ],
+      "default": "active",
+      "description": "商家状态"
+    }
+  },
+  "HealthData": {
+    "userId": {
+      "type": "ObjectId",
+      "required": true,
+      "description": "用户ID"
+    },
+    "recordDate": {
+      "type": "Date",
+      "required": true,
+      "description": "记录日期"
+    },
+    "weight": {
+      "type": "Number",
+      "description": "体重(kg)",
+      "sensitivityLevel": 2
+    },
+    "bloodPressure": {
+      "systolic": {
+        "type": "Number",
+        "description": "收缩压",
+        "sensitivityLevel": 1
+      },
+      "diastolic": {
+        "type": "Number",
+        "description": "舒张压",
+        "sensitivityLevel": 1
+      }
+    },
+    "bloodSugar": {
+      "type": "Number",
+      "description": "血糖值",
+      "sensitivityLevel": 1
+    },
+    "cholesterol": {
+      "total": {
+        "type": "Number",
+        "description": "总胆固醇",
+        "sensitivityLevel": 1
+      },
+      "hdl": {
+        "type": "Number",
+        "description": "高密度脂蛋白",
+        "sensitivityLevel": 1
+      },
+      "ldl": {
+        "type": "Number",
+        "description": "低密度脂蛋白",
+        "sensitivityLevel": 1
+      },
+      "triglycerides": {
+        "type": "Number",
+        "description": "甘油三酯",
+        "sensitivityLevel": 1
+      }
+    },
+    "notes": {
+      "type": "String",
+      "description": "备注",
+      "sensitivityLevel": 1
+    }
+  },
+  "Dish": {
+    "name": {
+      "type": "String",
+      "required": true,
+      "description": "菜品名称"
+    },
+    "description": {
+      "type": "String",
+      "description": "菜品描述"
+    },
+    "price": {
+      "type": "Number",
+      "required": true,
+      "description": "价格"
+    },
+    "imageUrl": {
+      "type": "String",
+      "description": "图片URL"
+    },
+    "categories": {
+      "type": "Array",
+      "items": {
+        "type": "String"
+      },
+      "description": "分类"
+    },
+    "tags": {
+      "type": "Array",
+      "items": {
+        "type": "String"
+      },
+      "description": "标签"
+    },
+    "nutritionFacts": {
+      "calories": {
+        "type": "Number",
+        "description": "卡路里"
+      },
+      "protein": {
+        "type": "Number",
+        "description": "蛋白质(g)"
+      },
+      "carbs": {
+        "type": "Number",
+        "description": "碳水化合物(g)"
+      },
+      "fat": {
+        "type": "Number",
+        "description": "脂肪(g)"
+      }
+    },
+    "ingredients": {
+      "type": "Array",
+      "items": {
+        "type": "String"
+      },
+      "description": "配料表"
+    },
+    "status": {
+      "type": "String",
+      "enum": [
+        "available",
+        "out_of_stock",
+        "discontinued"
+      ],
+      "default": "available",
+      "description": "状态"
+    }
+  },
+  "Consultation": {
+    "userId": {
+      "type": "ObjectId",
+      "required": true,
+      "description": "用户ID"
+    },
+    "nutritionistId": {
+      "type": "ObjectId",
+      "required": true,
+      "description": "营养师ID"
+    },
+    "status": {
+      "type": "String",
+      "enum": [
+        "scheduled",
+        "completed",
+        "cancelled"
+      ],
+      "default": "scheduled",
+      "description": "咨询状态"
+    },
+    "scheduledTime": {
+      "type": "Date",
+      "required": true,
+      "description": "预约时间"
+    },
+    "duration": {
+      "type": "Number",
+      "default": 30,
+      "description": "时长(分钟)"
+    },
+    "topic": {
+      "type": "String",
+      "description": "咨询主题"
+    },
+    "notes": {
+      "type": "String",
+      "description": "咨询记录",
+      "sensitivityLevel": 1
+    },
+    "userFeedback": {
+      "rating": {
+        "type": "Number",
+        "description": "评分"
+      },
+      "comment": {
+        "type": "String",
+        "description": "评价内容"
+      }
+    }
+  }
+}

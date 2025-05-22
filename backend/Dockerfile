@@ -7,8 +7,10 @@ WORKDIR /usr/src/app
 # 复制 package.json 和 package-lock.json（如果有）
 COPY package*.json ./
 
-# 安装依赖
-RUN npm install --legacy-peer-deps
+# 安装依赖及 native 模块编译工具（mongodb-client-encryption 需要）
+RUN apt-get update && \
+    apt-get install -y build-essential python3 && \
+    npm install --legacy-peer-deps
 
 # 创建上传目录
 RUN mkdir -p uploads/medical-reports

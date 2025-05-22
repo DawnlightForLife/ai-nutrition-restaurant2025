@@ -1,0 +1,607 @@
+backend
+├── _structure-map.json
+├── app.js
+├── application
+│   ├── nutrition
+│   │   └── services
+│   ├── order
+│   │   └── services
+│   ├── restaurant
+│   │   ├── restaurant-commands.js
+│   │   ├── restaurant-queries.js
+│   │   ├── restaurant-service.js
+│   │   └── services
+│   └── user
+│       └── services
+├── config
+│   ├── CONFIG_FREEZE.md
+│   ├── env
+│   │   ├── default.js
+│   │   ├── development.js
+│   │   ├── production.js
+│   │   └── test.js
+│   ├── index.js
+│   └── modules
+│       ├── app.js
+│       ├── db.config.js
+│       ├── jwt.js
+│       ├── llm.js
+│       ├── logger.js
+│       ├── oauthConfig.js
+│       ├── payment.js
+│       ├── redis.js
+│       ├── shardingConfig.js
+│       ├── sms.js
+│       └── system.js
+├── constants
+│   ├── CONSTANTS_FREEZE.md
+│   ├── forumTags.js
+│   ├── genderOptions.js
+│   ├── index.js
+│   ├── merchantTypes.js
+│   ├── notificationTypes.js
+│   ├── orderStatus.js
+│   ├── regionCodes.js
+│   ├── roles.js
+│   └── subscriptionPlans.js
+├── controllers
+│   ├── analytics
+│   │   ├── _freeze.md
+│   │   ├── exportTaskController.js
+│   │   └── usageLogController.js
+│   ├── common
+│   │   ├── _freeze.md
+│   │   ├── fileUploadController.js
+│   │   └── sessionController.js
+│   ├── consult
+│   │   ├── _freeze.md
+│   │   ├── chatMessageController.js
+│   │   └── consultationController.js
+│   ├── CONTROLLERS_FREEZE_DOC.md
+│   ├── core
+│   │   ├── _freeze.md
+│   │   ├── appConfigController.js
+│   │   └── auditLogController.js
+│   ├── dev
+│   │   ├── _freeze.md
+│   │   ├── modelHotUpdateController.js
+│   │   ├── schemaAdminController.js
+│   │   ├── schemaExplorerController.js
+│   │   └── schemaVisualizationController.js
+│   ├── feedback
+│   │   ├── _freeze.md
+│   │   └── feedbackController.js
+│   ├── forum
+│   │   ├── _freeze.md
+│   │   ├── forumCommentController.js
+│   │   ├── forumPostController.js
+│   │   └── forumTagController.js
+│   ├── index.js
+│   ├── merchant
+│   │   ├── _freeze.md
+│   │   ├── dishController.js
+│   │   ├── merchantController.js
+│   │   ├── merchantStatsController.js
+│   │   ├── promotionController.js
+│   │   └── storeController.js
+│   ├── misc
+│   │   └── appConfigController.js
+│   ├── notification
+│   │   ├── _freeze.md
+│   │   ├── notificationController.js
+│   │   └── userNotificationStatusController.js
+│   ├── nutrition
+│   │   ├── _freeze.md
+│   │   ├── aiRecommendationController.js
+│   │   ├── dietaryPreferenceController.js
+│   │   ├── favoriteController.js
+│   │   ├── nutritionistController.js
+│   │   ├── nutritionPlanController.js
+│   │   └── nutritionProfileController.js
+│   ├── order
+│   │   ├── _freeze.md
+│   │   ├── consultationOrderController.js
+│   │   ├── orderController.js
+│   │   ├── paymentController.js
+│   │   └── subscriptionController.js
+│   ├── README.md
+│   ├── restaurant
+│   │   └── restaurantController.js
+│   ├── security
+│   │   ├── _freeze.md
+│   │   └── accessTrackController.js
+│   └── user
+│       ├── _freeze.md
+│       ├── adminController.js
+│       ├── authController.js
+│       ├── oauthController.js
+│       ├── permissionController.js
+│       ├── smsController.js
+│       └── userController.js
+├── Dockerfile
+├── docs
+│   ├── api
+│   │   ├── admin.md
+│   │   ├── auth.md
+│   │   ├── consult.md
+│   │   ├── forum.md
+│   │   ├── merchant.md
+│   │   ├── notification.md
+│   │   ├── nutrition.md
+│   │   ├── order.md
+│   │   └── user.md
+│   ├── backend-structure-freeze.md
+│   ├── CHANGELOG.md
+│   ├── DOCS_FREEZE.md
+│   ├── enums
+│   │   ├── genderOptions.md
+│   │   ├── merchantTypes.md
+│   │   ├── notificationTypes.md
+│   │   ├── roles.md
+│   │   └── subscriptionPlans.md
+│   ├── integrations
+│   │   ├── postman-export.json
+│   │   └── swagger-openapi.yaml
+│   ├── models
+│   │   ├── nutritionProfileModel.md
+│   │   ├── recommendationModel.md
+│   │   ├── schemaRelations.md
+│   │   └── userModel.md
+│   ├── README.md
+│   ├── subsystems
+│   │   ├── domain-driven-design.md
+│   │   └── query-evolution-system.md
+│   ├── swagger-generate.js
+│   ├── swagger.js
+│   └── workflows
+│       ├── consult_feedback_loop.md
+│       ├── merchant_lifecycle.md
+│       └── user_onboarding.md
+├── domain
+│   ├── common
+│   │   ├── entities
+│   │   ├── interfaces
+│   │   ├── repositories
+│   │   ├── services
+│   │   └── value_objects
+│   ├── nutrition
+│   │   ├── entities
+│   │   ├── repositories
+│   │   ├── services
+│   │   └── value_objects
+│   ├── order
+│   │   ├── entities
+│   │   ├── repositories
+│   │   ├── services
+│   │   └── value_objects
+│   ├── restaurant
+│   │   ├── branch.js
+│   │   ├── entities
+│   │   ├── repositories
+│   │   ├── restaurant.js
+│   │   ├── services
+│   │   ├── setting.js
+│   │   ├── table.js
+│   │   └── value_objects
+│   └── user
+│       ├── entities
+│       ├── repositories
+│       ├── services
+│       └── value_objects
+├── hooks
+│   ├── admin
+│   │   ├── onAuditLogCreated.js
+│   │   └── onUserReported.js
+│   ├── consult
+│   │   ├── onConsultationClosed.js
+│   │   ├── onConsultationCreated.js
+│   │   └── onConsultationReplied.js
+│   ├── feedback
+│   │   └── onFeedbackSubmitted.js
+│   ├── forum
+│   │   ├── onCommentAdded.js
+│   │   └── onPostCreated.js
+│   ├── HOOKS_FREEZE.md
+│   ├── index.js
+│   ├── merchant
+│   │   ├── onDishPublished.js
+│   │   ├── onMerchantApproved.js
+│   │   └── onMerchantRegistered.js
+│   ├── notification
+│   │   └── onNotificationSent.js
+│   ├── nutrition
+│   │   ├── onProfileUpdated.js
+│   │   └── onRecommendationGenerated.js
+│   ├── order
+│   │   ├── onOrderCanceled.js
+│   │   ├── onOrderCreated.js
+│   │   ├── onOrderPaid.js
+│   │   └── onSubscriptionRenewed.js
+│   ├── system
+│   │   └── onConfigChanged.js
+│   ├── user
+│   │   ├── onLoginSuccess.js
+│   │   ├── onProfileCompleted.js
+│   │   ├── onUserDeleted.js
+│   │   └── onUserRegistered.js
+│   └── utils
+│       └── registerHook.js
+├── infrastructure
+│   ├── external_services
+│   └── repositories
+│       └── mongodb_meal_repository.js
+├── jobs
+│   ├── auditCleanupJob.js
+│   ├── index.js
+│   ├── JOBS_FREEZE.md
+│   ├── logRotationJob.js
+│   ├── notifySubscriptionRenewal.js
+│   ├── orderAutoCancelJob.js
+│   ├── recommendJob.js
+│   └── scheduler.js
+├── logs
+├── middleware
+│   ├── access
+│   │   └── accessTrackingMiddleware.js
+│   ├── auth
+│   │   ├── authMiddleware.js
+│   │   ├── permissionMiddleware.js
+│   │   └── roleMiddleware.js
+│   ├── auth.js
+│   ├── core
+│   │   ├── errorHandlingMiddleware.js
+│   │   └── loggingMiddleware.js
+│   ├── database
+│   │   ├── fieldEncryptionMiddleware.js
+│   │   ├── readPreferenceMiddleware.js
+│   │   └── shardingMiddleware.js
+│   ├── dev
+│   │   ├── queryDebugMiddleware.js
+│   │   └── routeLoggerMiddleware.js
+│   ├── MIDDLEWARE_FREEZE.md
+│   ├── performance
+│   │   ├── advancedPerformanceMiddleware.js
+│   │   ├── cacheMiddleware.js
+│   │   ├── cacheOptimizationMiddleware.js
+│   │   ├── dbOptimizationMiddleware.js
+│   │   ├── performanceMiddleware.js
+│   │   ├── queryCacheMiddleware.js
+│   │   └── queryMonitorMiddleware.js
+│   ├── security
+│   │   ├── advancedRateLimitMiddleware.js
+│   │   ├── advancedSecurityMiddleware.js
+│   │   ├── rateLimitMiddleware.js
+│   │   └── securityMiddleware.js
+│   ├── validation
+│   │   ├── requestValidationMiddleware.js
+│   │   ├── schemaValidationMiddleware.js
+│   │   └── validationMiddleware.js
+│   └── validators
+│       ├── nutritionProfileValidator.js
+│       └── registrationValidator.js
+├── models
+│   ├── analytics
+│   │   ├── exportTaskModel.js
+│   │   └── usageLogModel.js
+│   ├── common
+│   │   ├── fileUploadModel.js
+│   │   └── sessionModel.js
+│   ├── consult
+│   │   └── consultationModel.js
+│   ├── core
+│   │   ├── appConfigModel.js
+│   │   ├── auditLogModel.js
+│   │   ├── dataAccessControlModel.js
+│   │   └── dbMetricsModel.js
+│   ├── feedback
+│   │   └── feedbackModel.js
+│   ├── forum
+│   │   ├── forumCommentModel.js
+│   │   ├── forumPostModel.js
+│   │   └── forumTagModel.js
+│   ├── index.js
+│   ├── merchant
+│   │   ├── merchantModel.js
+│   │   ├── merchantStatsModel.js
+│   │   ├── merchantTypeEnum.js
+│   │   ├── productDishModel.js
+│   │   ├── storeDishModel.js
+│   │   └── storeModel.js
+│   ├── MODEL_FREEZE.md
+│   ├── modelFactory.js
+│   ├── modelRegistrar.js
+│   ├── notification
+│   │   ├── notificationModel.js
+│   │   └── userNotificationStatusModel.js
+│   ├── nutrition
+│   │   ├── aiRecommendationModel.js
+│   │   ├── dietaryPreferenceModel.js
+│   │   ├── FavoriteModel.js
+│   │   ├── nutritionistModel.js
+│   │   ├── nutritionPlanModel.js
+│   │   └── nutritionProfileModel.js
+│   ├── order
+│   │   ├── orderModel.js
+│   │   ├── paymentModel.js
+│   │   └── subscriptionModel.js
+│   ├── promotion
+│   │   └── promotionModel.js
+│   ├── README.md
+│   ├── restaurant
+│   │   ├── BranchModel.js
+│   │   ├── RestaurantModel.js
+│   │   └── TableModel.js
+│   ├── security
+│   │   └── accessTrackModel.js
+│   └── user
+│       ├── adminModel.js
+│       ├── oauthAccountModel.js
+│       ├── userModel.js
+│       └── userRoleModel.js
+├── pnpm-lock.yaml
+├── README.md
+├── routes
+│   ├── analytics
+│   │   ├── exportTaskRoutes.js
+│   │   └── usageLogRoutes.js
+│   ├── common
+│   │   ├── fileUploadRoutes.js
+│   │   └── sessionRoutes.js
+│   ├── consult
+│   │   ├── chatMessageRoutes.js
+│   │   └── consultationRoutes.js
+│   ├── core
+│   │   ├── appConfigRoutes.js
+│   │   └── auditLogRoutes.js
+│   ├── dev
+│   │   ├── modelHotUpdateRoutes.js
+│   │   ├── schemaAdminRoutes.js
+│   │   ├── schemaExplorerRoutes.js
+│   │   └── schemaVisualizationRoutes.js
+│   ├── feedback
+│   │   └── feedbackRoutes.js
+│   ├── forum
+│   │   ├── forumCommentRoutes.js
+│   │   ├── forumPostRoutes.js
+│   │   └── forumTagRoutes.js
+│   ├── index.js
+│   ├── merchant
+│   │   ├── dishRoutes.js
+│   │   ├── merchantRoutes.js
+│   │   ├── merchantStatsRoutes.js
+│   │   ├── promotionRoutes.js
+│   │   └── storeRoutes.js
+│   ├── notification
+│   │   ├── notificationRoutes.js
+│   │   └── userNotificationStatusRoutes.js
+│   ├── nutrition
+│   │   ├── aiRecommendationRoutes.js
+│   │   ├── dietaryPreferenceRoutes.js
+│   │   ├── favoriteRoutes.js
+│   │   ├── nutritionistRoutes.js
+│   │   ├── nutritionPlanRoutes.js
+│   │   └── nutritionProfileRoutes.js
+│   ├── order
+│   │   ├── consultationOrderRoutes.js
+│   │   ├── orderRoutes.js
+│   │   ├── paymentRoutes.js
+│   │   └── subscriptionRoutes.js
+│   ├── restaurant
+│   │   └── restaurantRoutes.js
+│   ├── ROUTES_FREEZE.md
+│   ├── security
+│   │   └── accessTrackRoutes.js
+│   └── user
+│       ├── adminRoutes.js
+│       ├── authRoutes.js
+│       ├── oauthRoutes.js
+│       ├── permissionRoutes.js
+│       ├── smsRoutes.js
+│       └── userRoutes.js
+├── schema_docs
+│   ├── generate_schema_docs.js
+│   └── schema_descriptions.json
+├── scripts
+│   ├── check
+│   │   ├── check_model_imports.js
+│   │   ├── checkAdmin.js
+│   │   └── checkMigrationStatus.js
+│   ├── data
+│   │   ├── generateMockHealthData.js
+│   │   ├── generateSampleData.js
+│   │   └── initTestUser.js
+│   ├── db
+│   │   ├── directMigration.js
+│   │   ├── fixModelFactory.js
+│   │   ├── initializeDatabase.js
+│   │   ├── migrateToSharding.js
+│   │   ├── migration-nutrition-profile-enum.js
+│   │   ├── resetDatabase.js
+│   │   ├── runMigration.js
+│   │   └── schemaFreezeVerification.js
+│   ├── monitor
+│   │   ├── monitorShards.js
+│   │   ├── queryRegressionEvaluator.js
+│   │   └── queryRollback.js
+│   ├── README.md
+│   ├── runAll.js
+│   ├── SCRIPTS_FREEZE.md
+│   ├── startup
+│   │   ├── deploy-with-query-eval.sh
+│   │   ├── docker_startup.sh
+│   │   └── startup_check.js
+│   ├── user
+│   │   └── initAdmin.js
+│   └── viz
+│       ├── schemaToMarkdown.js
+│       └── schemaVisualization.js
+├── server.js
+├── services
+│   ├── analytics
+│   │   ├── exportTaskService.js
+│   │   └── usageLogService.js
+│   ├── cache
+│   │   ├── cacheManager.js
+│   │   ├── cacheService.js
+│   │   └── enhancedCacheService.js
+│   ├── consult
+│   │   ├── chatMessageService.js
+│   │   └── consultationService.js
+│   ├── core
+│   │   ├── appConfigService.js
+│   │   └── auditLogService.js
+│   ├── database
+│   │   ├── adaptiveShardingService.js
+│   │   ├── asyncConnectionPoolManager.js
+│   │   ├── connectionPoolManager.js
+│   │   ├── database.js
+│   │   ├── dbProxyService.js
+│   │   ├── distributedTransactionService.js
+│   │   ├── readConsistencyService.js
+│   │   ├── shardAccessService.js
+│   │   ├── shardAdvisorService.js
+│   │   ├── shardingService.js
+│   │   └── transactionService.js
+│   ├── dev
+│   │   └── schemaDevToolService.js
+│   ├── feedback
+│   │   └── feedbackService.js
+│   ├── forum
+│   │   ├── forumCommentService.js
+│   │   ├── forumPostService.js
+│   │   └── forumTagService.js
+│   ├── index.js
+│   ├── merchant
+│   │   ├── dishService.js
+│   │   ├── merchantService.js
+│   │   ├── merchantStatsService.js
+│   │   ├── promotionService.js
+│   │   ├── storeDishService.js
+│   │   └── storeService.js
+│   ├── messaging
+│   │   ├── emailService.js
+│   │   └── smsService.js
+│   ├── model
+│   │   ├── dynamicModelLoaderService.js
+│   │   ├── migrationManagerService.js
+│   │   ├── modelIntegrationService.js
+│   │   ├── schemaAnalysisService.js
+│   │   ├── schemaGuardService.js
+│   │   ├── schemaJsonConverter.js
+│   │   └── schemaTransformer.js
+│   ├── monitoring
+│   │   └── alertSystem.js
+│   ├── notification
+│   │   └── notificationService.js
+│   ├── nutrition
+│   │   ├── aiRecommendationService.js
+│   │   ├── dietaryPreferenceService.js
+│   │   ├── FavoriteService.js
+│   │   ├── nutritionistService.js
+│   │   ├── nutritionPlanService.js
+│   │   └── nutritionProfileService.js
+│   ├── order
+│   │   ├── consultationService.js
+│   │   ├── orderService.js
+│   │   └── subscriptionService.js
+│   ├── performance
+│   │   ├── batchProcessService.js
+│   │   ├── circuitBreakerService.js
+│   │   ├── dbOptimizationManager.js
+│   │   └── retryStrategyService.js
+│   ├── restaurant
+│   │   └── restaurantService.js
+│   ├── security
+│   │   ├── accessTrackService.js
+│   │   ├── dataAccessControlService.js
+│   │   └── fieldEncryptionService.js
+│   ├── SERVICES_FREEZE.md
+│   └── user
+│       ├── adminService.js
+│       ├── authService.js
+│       ├── oauthService.js
+│       ├── userRoleService.js
+│       └── userService.js
+├── structure-lock.md
+├── structure-summary.json
+├── templates
+│   ├── schema-visualization-helper.js
+│   └── schema-visualization.hbs
+├── tests
+│   └── unit
+│       └── utils
+├── tools
+│   ├── dbLoadTest
+│   │   ├── captureManager.js
+│   │   ├── config.js
+│   │   ├── dbProxyService.js
+│   │   ├── logger.js
+│   │   ├── scriptGenerator.js
+│   │   └── trafficCapture.js
+│   └── syncShards.js
+├── types
+│   ├── api
+│   │   ├── ApiResponse.d.ts
+│   │   └── Pagination.d.ts
+│   ├── dto
+│   │   ├── AuthRequest.d.ts
+│   │   ├── FeedbackRequest.d.ts
+│   │   ├── OrderSubmitRequest.d.ts
+│   │   ├── ProfileUpdateRequest.d.ts
+│   │   └── RecommendationResult.d.ts
+│   ├── enums
+│   │   ├── Gender.ts
+│   │   ├── MerchantType.ts
+│   │   ├── NotificationType.ts
+│   │   ├── RoleType.ts
+│   │   └── SubscriptionPlan.ts
+│   ├── index.d.ts
+│   ├── models
+│   │   ├── Consultation.d.ts
+│   │   ├── ForumPost.d.ts
+│   │   ├── NutritionProfile.d.ts
+│   │   ├── Order.d.ts
+│   │   ├── Recommendation.d.ts
+│   │   ├── Subscription.d.ts
+│   │   └── User.d.ts
+│   ├── schema
+│   │   ├── NutritionProfile.schema.json
+│   │   ├── Order.schema.json
+│   │   └── User.schema.json
+│   └── TYPES_FREEZE.md
+└── utils
+    ├── access
+    │   └── conditionEvaluator.js
+    ├── cache
+    │   └── cache.js
+    ├── db
+    │   ├── db.js
+    │   ├── dbOptimizationHelper.js
+    │   ├── dbPerformanceAnalyzer.js
+    │   ├── queryEvolutionScorer.js
+    │   └── shardingConfig.js
+    ├── encryption
+    │   └── mongooseEncryptionPlugin.js
+    ├── errors
+    │   ├── appError.js
+    │   ├── catchAsync.js
+    │   └── errorHandler.js
+    ├── index.js
+    ├── loader
+    │   └── dynamicEsmLoader.js
+    ├── logger
+    │   └── logger.js
+    ├── sanitize
+    │   └── sanitizeResponse.js
+    ├── scheduler
+    │   └── scheduledTasks.js
+    ├── schema
+    │   ├── schemaTransformer.js
+    │   └── schemaVisualizerUtils.js
+    ├── UTILS_FREEZE.md
+    └── validators
+        ├── authValidator.js
+        ├── nutritionProfileValidator.js
+        └── userValidator.js
+
+958 directories, 3071 files

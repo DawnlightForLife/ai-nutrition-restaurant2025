@@ -2,10 +2,12 @@
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./docs/swagger');
 require('dotenv').config();
 
 // 确保默认连接已加载
-require('./config/database');
+require('./services/database/database');
 
 // 创建Express应用
 const app = express();
@@ -57,7 +59,7 @@ const startServer = async () => {
     console.log('数据库连接已就绪');
 
     // 创建默认用户
-    const User = require('./models/core/userModel');
+    const User = require('./models/user/userModel');
     const bcrypt = require('bcryptjs');
     
     // 检查是否已有用户
@@ -104,10 +106,10 @@ const startServer = async () => {
     app.use('/api', allRoutes);
     
     // 导入其他需要单独注册的路由和服务
-    const userRoutes = require('./routes/core/userRoutes');
-    const authRoutes = require('./routes/core/authRoutes');
-    const adminRoutes = require('./routes/core/adminRoutes');
-    const auditLogRoutes = require('./routes/audit/auditLogRoutes');
+    const userRoutes = require('./routes/user/userRoutes');
+    const authRoutes = require('./routes/user/authRoutes');
+    const adminRoutes = require('./routes/user/adminRoutes');
+    const auditLogRoutes = require('./routes/core/auditLogRoutes');
     const merchantRoutes = require('./routes/merchant/merchantRoutes');
     const storeRoutes = require('./routes/merchant/storeRoutes');
     const dishRoutes = require('./routes/merchant/dishRoutes');
@@ -118,6 +120,11 @@ const startServer = async () => {
     const { dataAccessControlService } = require('./services/misc/dataAccessControlService');
     const { shardingConfig, shardingService } = require('./config/shardingConfig');
     const ScheduledTasks = require('./utils/scheduledTasks');
+    
+    // 导入数据库优化服务
+    const dbOptimizationManager = require('./services/core/dbOptimizationManager');
+    const ModelFactory = require('./models/modelFactory');
+    const { circuitBreakerService } = require('./services/core/circuitBreakerService');
 
     // 设置其他路由（可选，因为大部分路由已经通过routes/index.js注册）
     // 如果这些路由在index.js中已注册，则可以考虑移除这些冗余项
@@ -129,6 +136,64 @@ const startServer = async () => {
     app.use('/api/stores', storeRoutes);
     app.use('/api/dishes', dishRoutes);
     app.use('/api/orders', orderRoutes);
+    
+    // 添加Swagger UI
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+    app.get('/api-docs.json', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.send(swaggerSpec);
+    });
+    
+    // 添加数据库优化API路由
+    app.get('/api/admin/db/status', async (req, res) => {
+      res.json(dbOptimizationManager.getStatus());
+    });
+    
+    app.post('/api/admin/db/optimize', async (req, res) => {
+      try {
+        const result = await dbOptimizationManager.runAutoOptimization();
+        res.json({ success: true, result });
+      } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+    
+    app.post('/api/admin/db/cache/clear', async (req, res) => {
+      try {
+        const result = await dbOptimizationManager.clearAllCaches();
+        res.json({ success: true, cleared: result });
+      } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+    
+    app.post('/api/admin/db/batch/flush', async (req, res) => {
+      try {
+        const result = await dbOptimizationManager.flushAllBatches();
+        res.json({ success: true, flushed: result });
+      } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+    
+    app.post('/api/admin/db/circuit-breakers/reset', async (req, res) => {
+      try {
+        const result = await dbOptimizationManager.resetAllCircuitBreakers();
+        res.json({ success: true, reset: result });
+      } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+    
+    // 添加健康检查端点
+    app.get('/api/admin/db/health', async (req, res) => {
+      try {
+        const healthStatus = await dbOptimizationManager.runHealthCheck();
+        res.json({ success: true, status: healthStatus });
+      } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
     
     // 初始化服务
     const redisEnabled = process.env.REDIS_ENABLED === 'true';
@@ -143,6 +208,21 @@ const startServer = async () => {
       await shardingService.init(shardingConfig);
       console.log('数据分片服务已初始化');
     }
+    
+    // 初始化ModelFactory与相关服务
+    await ModelFactory.initConnections();
+    console.log('数据库连接池已初始化');
+    
+    // 初始化数据库优化管理器
+    await dbOptimizationManager.initialize();
+    console.log('数据库优化服务已初始化');
+    
+    // 创建通用的数据库断路器
+    circuitBreakerService.getBreaker('db-operations', {
+      threshold: 5,
+      timeout: 30000,
+      halfOpenLimit: 3
+    });
     
     // 初始化定时任务
     if (ScheduledTasks && ScheduledTasks.initTasks) {
@@ -174,6 +254,24 @@ const gracefulShutdown = async () => {
     // 关闭数据库连接
     await mongoose.connection.close();
     console.log('Mongoose连接已关闭');
+    
+    // 关闭缓存服务
+    const cacheService = require('./services/core/cacheService');
+    if (cacheService.initialized) {
+      await cacheService.close();
+      console.log('缓存服务已关闭');
+    }
+    
+    // 关闭ModelFactory连接
+    const ModelFactory = require('./models/modelFactory');
+    await ModelFactory.closeConnections();
+    console.log('ModelFactory连接已关闭');
+    
+    // 刷新所有批处理操作
+    const batchProcessService = require('./services/core/batchProcessService');
+    await batchProcessService.flushAll();
+    console.log('批处理操作已刷新');
+    
     process.exit(0);
   } catch (err) {
     console.error('关闭过程中出错:', err);

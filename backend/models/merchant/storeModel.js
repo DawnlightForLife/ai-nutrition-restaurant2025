@@ -1,110 +1,146 @@
 const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
-const { shardingService } = require('../../services/core/shardingService');
+const { shardingService } = require('../../services/database/shardingService');
+const { merchantTypeValues } = require('./merchantTypeEnum');
 
 // 导入需要的模型
 const StoreDish = require('./storeDishModel');
-const Dish = require('./ProductDishModel');
+const Dish = require('./productDishModel');
 
 const storeSchema = new mongoose.Schema({
   merchantId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Merchant',
-    required: true
+    required: true,
+    description: '关联的商家 ID',
+    sensitivityLevel: 2
   },
   storeName: {
     type: String,
-    required: true
+    required: true,
+    description: '门店名称'
   },
   storeAddress: {
     province: {
       type: String,
-      required: true
+      required: true,
+      description: '省份',
+      sensitivityLevel: 2
     },
     city: {
       type: String,
-      required: true
+      required: true,
+      description: '城市',
+      sensitivityLevel: 2
     },
     district: {
       type: String,
-      required: true
+      required: true,
+      description: '区/县',
+      sensitivityLevel: 2
     },
     street: {
       type: String,
-      required: true
+      required: true,
+      description: '街道地址',
+      sensitivityLevel: 3
     },
     location: {
       lng: {
         type: Number,
-        default: 0
+        default: 0,
+        description: '经度',
+        sensitivityLevel: 3
       },
       lat: {
         type: Number,
-        default: 0
+        default: 0,
+        description: '纬度',
+        sensitivityLevel: 3
       }
     }
   },
   contactPhone: {
     type: String,
-    required: true
+    required: true,
+    description: '联系电话',
+    sensitivityLevel: 3
   },
   managerName: {
     type: String,
-    required: true
+    required: true,
+    description: '门店负责人姓名',
+    sensitivityLevel: 2
   },
   managerPhone: {
     type: String,
-    required: true
+    required: true,
+    description: '负责人联系电话',
+    sensitivityLevel: 3
   },
   imageUrls: [{
-    type: String
+    type: String,
+    description: '门店图片列表'
   }],
   businessHours: [{
     day: {
       type: String,
       enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-      required: true
+      required: true,
+      description: '星期几'
     },
     open: {
       type: String,
-      required: true
+      required: true,
+      description: '开店时间'
     },
     close: {
       type: String,
-      required: true
+      required: true,
+      description: '关店时间'
     }
   }],
+  closedDates: [{
+    type: Date,
+    description: '临时闭店日期（如节假日）'
+  }],
   // 门店级特定类型属性
+  typeSpecificVersion: {
+    type: String,
+    default: 'v1',
+    description: '类型特定字段版本控制'
+  },
   storeType: {
     type: String,
-    enum: ['restaurant', 'gym', 'maternity_center', 'school_company'],
-    required: true
+    enum: merchantTypeValues,
+    required: true,
+    description: '门店类型'
   },
   typeSpecificData: {
     // 餐厅特有
     restaurant: {
-      seatingCapacity: Number,
+      seatingCapacity: { type: Number, description: '就餐座位数' },
       privateRooms: Number,
       cuisineFocus: [String],
       deliveryRadius: Number // 公里
     },
     // 健身房特有
     gym: {
-      equipmentCount: Number,
+      equipmentCount: { type: Number, description: '健身器械数量' },
       showerRooms: Number,
       lockerCount: Number,
       classSchedule: [String]
     },
     // 月子中心特有
-    maternity_center: {
-      bedCount: Number,
+    maternityCenter: {
+      bedCount: { type: Number, description: '床位数量' },
       nannyCount: Number,
       doctorCount: Number,
       facilities: [String]
     },
     // 学校/公司食堂特有
-    school_company: {
-      capacity: Number,
+    schoolCompany: {
+      capacity: { type: Number, description: '食堂容量' },
       servingTimes: [String],
       numberOfCounters: Number,
       specialDietaryOptions: Boolean
@@ -112,20 +148,35 @@ const storeSchema = new mongoose.Schema({
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
+    description: '是否为活跃状态'
   },
   ratings: {
     average: {
       type: Number,
-      default: 0
+      default: 0,
+      description: '平均评分'
     },
     count: {
       type: Number,
-      default: 0
+      default: 0,
+      description: '评分次数'
+    },
+    lastUpdated: {
+      type: Date,
+      default: Date.now,
+      description: '评分最后更新时间'
+    },
+    distribution: {
+      type: Map,
+      of: Number,
+      default: {},
+      description: '各评分档次的数量分布（如：5星、4星）'
     }
   },
   description: {
-    type: String
+    type: String,
+    description: '门店简介'
   }
 }, {
   timestamps: true,
@@ -339,13 +390,21 @@ storeSchema.methods = {
     // 更新平均评分
     const currentCount = this.ratings.count || 0;
     const currentAvg = this.ratings.average || 0;
+    const currentDistribution = this.ratings.distribution || new Map();
     
     const newCount = currentCount + 1;
     const newAvg = ((currentAvg * currentCount) + newRating) / newCount;
     
+    // 更新评分分布
+    const star = Math.round(newRating).toString();
+    const newDistribution = new Map(currentDistribution);
+    newDistribution.set(star, (newDistribution.get(star) || 0) + 1);
+    
     this.ratings = {
       average: parseFloat(newAvg.toFixed(1)), // 保留一位小数
-      count: newCount
+      count: newCount,
+      lastUpdated: new Date(),
+      distribution: newDistribution
     };
     
     return this.save();
@@ -444,4 +503,4 @@ Store.prototype.save = async function(options) {
   return originalSave.call(this, options);
 };
 
-module.exports = Store; 
+module.exports = Store;

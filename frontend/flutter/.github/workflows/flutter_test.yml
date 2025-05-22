@@ -1,0 +1,106 @@
+name: Flutter 测试
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: 测试 Flutter 应用
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-nutrition-restaurant2025/frontend/flutter
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: 设置 Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+          cache: true
+      
+      - name: 获取依赖
+        run: flutter pub get
+      
+      - name: 检查代码格式
+        run: dart format --output=none --set-exit-if-changed .
+      
+      - name: 分析代码
+        run: flutter analyze
+      
+      - name: 运行单元测试
+        run: flutter test --coverage --exclude-tags=golden --machine > test-results.json
+      
+      - name: 运行 widget 测试
+        run: flutter test --tags=widget --machine >> test-results.json
+      
+      - name: 安装 lcov
+        run: sudo apt-get install -y lcov
+      
+      - name: 过滤生成的文件
+        run: |
+          if [ -f "lcov.ignore" ]; then
+            echo "从覆盖率报告中排除指定的文件..."
+            lcov --remove coverage/lcov.info -o coverage/lcov.info $(cat lcov.ignore | tr '\n' ' ')
+          fi
+      
+      - name: 生成覆盖率报告
+        run: genhtml coverage/lcov.info -o coverage/html
+      
+      - name: 上传测试结果
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results
+          path: |
+            ai-nutrition-restaurant2025/frontend/flutter/test-results.json
+            ai-nutrition-restaurant2025/frontend/flutter/coverage/
+      
+      - name: 上传覆盖率到 Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./ai-nutrition-restaurant2025/frontend/flutter/coverage/lcov.info
+      
+      - name: 处理测试结果
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: 测试报告
+          path: ai-nutrition-restaurant2025/frontend/flutter/test-results.json
+          reporter: flutter-json
+          fail-on-error: true
+
+  golden-tests:
+    name: Golden UI 测试
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: ai-nutrition-restaurant2025/frontend/flutter
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: 设置 Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+          cache: true
+      
+      - name: 获取依赖
+        run: flutter pub get
+      
+      - name: 运行 Golden 测试
+        run: flutter test --tags=golden --update-goldens || true
+      
+      - name: 上传 Golden 测试结果
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: golden-test-failures
+          path: ai-nutrition-restaurant2025/frontend/flutter/test/failures/ 

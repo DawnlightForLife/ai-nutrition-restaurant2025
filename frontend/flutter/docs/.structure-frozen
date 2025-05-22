@@ -1,0 +1,99 @@
+{
+  "version": "v1.1.0",
+  "freezeDate": "2025-05-25",
+  "status": "frozen",
+  "responsibleParty": "系统架构组（助手 + Cursor）",
+  "architectureDoc": "ARCHITECTURE_FREEZE.md",
+  "platforms": ["iOS", "Android", "Web"],
+  "freezeScope": {
+    "directoryStructure": true,
+    "namingConventions": true,
+    "moduleResponsibilities": true,
+    "layerSeparation": true,
+    "dependencyInjection": true,
+    "stateManagement": true,
+    "routingSystem": true,
+    "backendMapping": true
+  },
+  "frozenModules": [
+    {
+      "name": "domain",
+      "description": "领域层：实体、接口和业务规则",
+      "subModules": ["user", "restaurant", "order", "nutrition", "abstractions", "common"],
+      "allowExtensions": true,
+      "allowNewSubmodules": true,
+      "restrictionsOnChanges": "不可修改已有接口签名和实体关系"
+    },
+    {
+      "name": "application",
+      "description": "应用层：用例实现和业务流程协调",
+      "subModules": ["core", "user", "auth", "nutrition", "order"],
+      "allowExtensions": true,
+      "allowNewSubmodules": true,
+      "restrictionsOnChanges": "不可修改用例接口和基础用例类"
+    },
+    {
+      "name": "core",
+      "description": "核心组件：DI容器、基础类",
+      "subModules": ["di"],
+      "allowExtensions": true,
+      "allowNewSubmodules": true,
+      "restrictionsOnChanges": "不可修改依赖注入机制和核心接口，必须使用自动生成的依赖注入配置"
+    },
+    {
+      "name": "services",
+      "description": "服务实现层",
+      "subModules": ["user", "nutrition", "order", "restaurant", "background", "onboarding"],
+      "allowExtensions": true,
+      "allowNewSubmodules": true,
+      "restrictionsOnChanges": "必须遵循接口实现规范"
+    },
+    {
+      "name": "repositories",
+      "description": "数据仓库实现",
+      "subModules": ["user", "nutrition", "order", "restaurant"],
+      "allowExtensions": true,
+      "allowNewSubmodules": true,
+      "restrictionsOnChanges": "必须遵循仓库模式和接口约定"
+    },
+    {
+      "name": "storage",
+      "description": "存储相关服务",
+      "subModules": [],
+      "allowExtensions": true,
+      "allowNewSubmodules": true,
+      "restrictionsOnChanges": "必须遵循分层存储策略"
+    },
+    {
+      "name": "routes",
+      "description": "基于auto_route的路由定义和配置",
+      "subModules": [],
+      "allowExtensions": true,
+      "allowNewSubmodules": true,
+      "restrictionsOnChanges": "必须遵循auto_route声明式路由结构"
+    },
+    {
+      "name": "providers",
+      "description": "状态管理",
+      "subModules": [],
+      "allowExtensions": true,
+      "allowNewSubmodules": true,
+      "restrictionsOnChanges": "必须遵循Provider与UseCase集成模式"
+    }
+  ],
+  "changeProcessRules": {
+    "significantChanges": "需提交RFC并经架构评审通过",
+    "minorChanges": "可在团队代码审核时讨论并批准",
+    "bugFixes": "可直接实施，不需特殊批准",
+    "rfcTemplate": "RFC_TEMPLATE.md"
+  },
+  "exceptions": {
+    "emergencyFixes": "紧急修复可绕过正常流程，但需事后提交说明文档",
+    "experimentalFeatures": "可在feature分支中进行架构实验，但合并主分支前需评审"
+  },
+  "technicalDebt": {
+    "trackingMethod": "使用JIRA标记架构技术债",
+    "paymentSchedule": "每个迭代至少解决一个架构技术债"
+  },
+  "notes": "此文件由系统自动生成，标记前端架构已冻结状态。修改此文件需经架构评审批准。架构冻结不影响正常功能开发，但确保项目结构保持一致性。"
+} 

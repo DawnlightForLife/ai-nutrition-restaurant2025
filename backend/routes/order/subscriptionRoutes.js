@@ -3,22 +3,24 @@ const router = express.Router();
 const { createSubscription, getSubscriptionList, getSubscriptionById, updateSubscription, deleteSubscription } = require('../../controllers/order/subscriptionController');
 
 /**
- * 订阅相关路由
+ * 订阅管理路由
+ * 提供创建、获取、更新、删除订阅的接口
+ * @module routes/order/subscriptionRoutes
  */
 
-// 创建订阅
+// [POST] 创建订阅
 router.post('/', createSubscription);
 
-// 获取订阅列表
+// [GET] 获取订阅列表
 router.get('/', getSubscriptionList);
 
-// 获取单个订阅详情
+// [GET] 获取单个订阅详情
 router.get('/:id', getSubscriptionById);
 
-// 更新订阅
+// [PUT] 更新订阅
 router.put('/:id', updateSubscription);
 
-// 删除订阅
+// [DELETE] 删除订阅
 router.delete('/:id', deleteSubscription);
 
 module.exports = router;

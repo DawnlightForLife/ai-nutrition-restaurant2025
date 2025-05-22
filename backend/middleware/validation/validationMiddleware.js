@@ -1,14 +1,33 @@
+/**
+ * ✅ 模块名：validationMiddleware.js
+ * ✅ 命名风格统一：camelCase
+ * ✅ 功能概览：
+ *   - validate：请求体（req.body）验证
+ *   - validateQuery：查询参数（req.query）验证
+ *   - validateParams：路径参数（req.params）验证
+ * ✅ 使用 Joi 库进行结构化校验
+ * ✅ 验证配置：
+ *   - abortEarly: false（返回所有错误）
+ *   - allowUnknown: true（允许未定义字段）
+ *   - stripUnknown: true（移除未定义字段）
+ * ✅ 错误响应结构：
+ *   - success: false
+ *   - error: 'ValidationError'
+ *   - message: 错误类型描述
+ *   - errors: 字段级错误明细
+ * ✅ 推荐 Future：
+ *   - 支持 headers 验证
+ *   - 错误 message 多语言处理（国际化）
+ *   - 每个字段 message 支持本地化字段别名（如 username → 用户名）
+ */
+
 const Joi = require('joi');
 
 /**
- * 数据验证中间件集合
- * 使用Joi库提供数据验证功能，包括：
- * - 请求体验证
- * - 查询参数验证
- * - 路径参数验证
+ * validate
+ * - 校验 req.body 数据结构是否合法
+ * - 使用 schema.validate 校验结构
  */
-
-// 通用验证中间件
 const validate = (schema) => {
     return (req, res, next) => {
         const { error } = schema.validate(req.body, {
@@ -35,7 +54,10 @@ const validate = (schema) => {
     };
 };
 
-// 查询参数验证中间件
+/**
+ * validateQuery
+ * - 校验 req.query 查询字符串结构是否合法
+ */
 const validateQuery = (schema) => {
     return (req, res, next) => {
         const { error } = schema.validate(req.query, {
@@ -62,7 +84,10 @@ const validateQuery = (schema) => {
     };
 };
 
-// 路径参数验证中间件
+/**
+ * validateParams
+ * - 校验 req.params 中路径参数是否合法
+ */
 const validateParams = (schema) => {
     return (req, res, next) => {
         const { error } = schema.validate(req.params, {
@@ -89,6 +114,7 @@ const validateParams = (schema) => {
     };
 };
 
+// Joi：用于外部定义校验 schema
 module.exports = {
     validate,
     validateQuery,

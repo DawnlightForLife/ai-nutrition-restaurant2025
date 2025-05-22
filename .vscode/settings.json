@@ -17,5 +17,6 @@
   "javascript.format.enable": true,
   "eslint.validate": [
     "javascript"
-  ]
+  ],
+  "git.ignoreLimitWarning": true
 }

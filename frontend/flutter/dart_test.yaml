@@ -1,0 +1,23 @@
+tags:
+  # 标记Golden UI测试
+  golden:
+    timeout: 60s
+  
+  # 标记Widget测试
+  widget:
+    timeout: 45s
+  
+  # 标记单元测试
+  unit:
+    timeout: 30s
+  
+  # 标记集成测试
+  integration:
+    timeout: 120s
+    skip: "集成测试需要单独运行，不在CI过程中执行"
+
+timeout: 30s # 默认超时时间
+
+# Golden测试相关配置
+goldens_dir: test/goldens
+reported_dir: test/failures 

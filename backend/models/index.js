@@ -1,32 +1,93 @@
 const mongoose = require('mongoose');
-const config = require('../config/db.config');
-const dbManager = require('../config/database');
+const config = require('../config/modules/db.config');
+const dbManager = require('../services/database/database');
 const ModelFactory = require('./modelFactory');
 
 // 导入所有模型
-const User = require('./core/userModel');
-const UserRole = require('./core/userRoleModel');
-const Admin = require('./core/adminModel');
-const NutritionProfile = require('./health/nutritionProfileModel');
-const HealthData = require('./health/healthDataModel');
-const Nutritionist = require('./nutrition/nutritionistModel');
-const Merchant = require('./merchant/merchantModel');
-const Dish = require('./merchant/ProductDishModel');
-const Order = require('./order/orderModel');
-const AiRecommendation = require('./nutrition/aiRecommendationModel');
-const Subscription = require('./order/subscriptionModel');
-const AuditLog = require('./core/auditLogModel');
+const User = require('../models/user/userModel');
+const UserRole = require('../models/user/userRoleModel');
+const Admin = require('../models/user/adminModel');
+const NutritionProfile = require('../models/nutrition/nutritionProfileModel');
+const Nutritionist = require('../models/nutrition/nutritionistModel');
+const Merchant = require('../models/merchant/merchantModel');
+const MerchantTypes = require('../models/merchant/merchantTypeEnum');
+const Dish = require('../models/merchant/productDishModel');
+const Order = require('../models/order/orderModel');
+const AiRecommendation = require('../models/nutrition/aiRecommendationModel');
+const Subscription = require('../models/order/subscriptionModel');
+const AuditLog = require('../models/core/auditLogModel');
 const DataAccessControl = require('./core/dataAccessControlModel');
 const ForumPost = require('./forum/forumPostModel');
 const ForumComment = require('./forum/forumCommentModel');
-const Consultation = require('./order/consultationModel');
-const MerchantStats = require('./merchant/merchantStatsModel');
-const Store = require('./merchant/storeModel');
-const StoreDish = require('./merchant/storeDishModel');
-const UserFavorite = require('./nutrition/userFavoriteModel');
-const DbMetrics = require('./core/dbMetricsModel');
-const Notification = require('./misc/notificationModel');
-const OAuthAccount = require('./core/oauthAccountModel');
+const ForumTag = require('./forum/forumTagModel');
+const Consultation = require('../models/consult/consultationModel');
+const MerchantStats = require('../models/merchant/merchantStatsModel');
+const Store = require('../models/merchant/storeModel');
+const StoreDish = require('../models/merchant/storeDishModel');
+const UserFavorite = require('../models/nutrition/FavoriteModel');
+const DbMetrics = require('../models/core/dbMetricsModel');
+const Notification = require('../models/notification/notificationModel');
+const OAuthAccount = require('../models/user/oauthAccountModel');
+const UsageLog = require('../models/analytics/usageLogModel');
+const UserNotificationStatus = require('../models/notification/userNotificationStatusModel');
+// 添加新位置的模型
+const ExportTask = require('../models/analytics/exportTaskModel');
+const FileUpload = require('../models/common/fileUploadModel');
+const Session = require('../models/common/sessionModel');
+// 新增或修复以下导入
+const feedbackModel = require('../models/feedback/feedbackModel');
+const paymentModel = require('../models/order/paymentModel');
+const promotionModel = require('../models/promotion/promotionModel');
+
+const models = {
+  core: {
+    User,
+    UserRole,
+    Admin,
+    OAuthAccount,
+    DataAccessControl,
+    AuditLog,
+    DbMetrics
+  },
+  nutrition: {
+    NutritionProfile,
+    Nutritionist,
+    AiRecommendation,
+    UserFavorite
+  },
+  merchant: {
+    Merchant,
+    MerchantTypes,
+    Dish,
+    Store,
+    StoreDish,
+    MerchantStats
+  },
+  order: {
+    Order,
+    Subscription,
+    Consultation
+  },
+  forum: {
+    ForumPost,
+    ForumComment,
+    ForumTag
+  },
+  misc: {
+    Notification
+  },
+  analytics: {
+    UsageLog,
+    ExportTask // 添加到 analytics 分组
+  },
+  notification: {
+    UserNotificationStatus
+  },
+  common: { // 添加 common 分组
+    FileUpload,
+    Session
+  }
+};
 
 // 连接数据库 - 使用新的数据库管理器
 const connectDB = async () => {
@@ -140,110 +201,109 @@ const setupConnectionListeners = async () => {
   }
 };
 
+// 便捷的数据库操作方法
+const createIndexes = async () => {
+  try {
+    console.log('开始创建数据库索引...');
+    
+    // 获取主连接
+    const primaryConn = await dbManager.getPrimaryConnection();
+    
+    // 检查是否已经创建过索引
+    const collections = await primaryConn.db.listCollections().toArray();
+    const collectionNames = collections.map(c => c.name);
+    
+    // 创建所有集合的索引（在部署时可以调用）
+    await Promise.all([
+      User.createIndexes(),
+      UserRole.createIndexes(),
+      Admin.createIndexes(),
+      NutritionProfile.createIndexes(),
+      Nutritionist.createIndexes(),
+      Merchant.createIndexes(),
+      Dish.createIndexes(),
+      Order.createIndexes(),
+      AiRecommendation.createIndexes(),
+      Subscription.createIndexes(),
+      AuditLog.createIndexes(),
+      DataAccessControl.createIndexes(),
+      ForumPost.createIndexes(),
+      ForumComment.createIndexes(),
+      ForumTag.createIndexes(),
+      Consultation.createIndexes(),
+      MerchantStats.createIndexes(),
+      Store.createIndexes(),
+      StoreDish.createIndexes(),
+      UserFavorite.createIndexes(),
+      DbMetrics.createIndexes(),
+      Notification.createIndexes(),
+      OAuthAccount.createIndexes(),
+      UsageLog.createIndexes(),
+      UserNotificationStatus.createIndexes(),
+      ExportTask.createIndexes(),
+      FileUpload.createIndexes(),
+      Session.createIndexes()
+    ]);
+    console.log('所有数据库索引创建完成');
+  } catch (error) {
+    console.error('创建索引失败:', error);
+    throw error;
+  }
+};
+
+// 数据库清理方法（测试环境使用）
+const clearDatabase = async () => {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('此方法只能在测试环境中使用');
+  }
+  
+  await Promise.all([
+    User.deleteMany({}),
+    UserRole.deleteMany({}),
+    Admin.deleteMany({}),
+    NutritionProfile.deleteMany({}),
+    Nutritionist.deleteMany({}),
+    Merchant.deleteMany({}),
+    Dish.deleteMany({}),
+    Order.deleteMany({}),
+    AiRecommendation.deleteMany({}),
+    Subscription.deleteMany({}),
+    AuditLog.deleteMany({}),
+    DataAccessControl.deleteMany({}),
+    ForumPost.deleteMany({}),
+    ForumComment.deleteMany({}),
+    ForumTag.deleteMany({}),
+    Consultation.deleteMany({}),
+    MerchantStats.deleteMany({}),
+    Store.deleteMany({}),
+    StoreDish.deleteMany({}),
+    UserFavorite.deleteMany({}),
+    DbMetrics.deleteMany({}),
+    Notification.deleteMany({}),
+    OAuthAccount.deleteMany({}),
+    UsageLog.deleteMany({}),
+    UserNotificationStatus.deleteMany({}),
+    ExportTask.deleteMany({}),
+    FileUpload.deleteMany({}),
+    Session.deleteMany({})
+  ]);
+  console.log('数据库清理完成');
+};
+
 // 导出所有模型和数据库连接函数
 module.exports = {
   connectDB,
   dbManager, // 导出数据库管理器以便其他模块使用
-  User,
-  UserRole,
-  Admin,
-  NutritionProfile,
-  HealthData,
-  Nutritionist,
-  Merchant,
-  Dish,
-  Order,
-  AiRecommendation,
-  Subscription,
-  AuditLog,
-  DataAccessControl,
-  ForumPost,
-  ForumComment,
-  Consultation,
-  MerchantStats,
-  Store,
-  StoreDish,
-  UserFavorite,
-  DbMetrics,
-  Notification,
-  OAuthAccount,
-  
-  // 便捷的数据库操作方法
-  createIndexes: async () => {
-    try {
-      console.log('开始创建数据库索引...');
-      
-      // 获取主连接
-      const primaryConn = await dbManager.getPrimaryConnection();
-      
-      // 检查是否已经创建过索引
-      const collections = await primaryConn.db.listCollections().toArray();
-      const collectionNames = collections.map(c => c.name);
-      
-      // 创建所有集合的索引（在部署时可以调用）
-      await Promise.all([
-        User.createIndexes(),
-        UserRole.createIndexes(),
-        Admin.createIndexes(),
-        NutritionProfile.createIndexes(),
-        HealthData.createIndexes(),
-        Nutritionist.createIndexes(),
-        Merchant.createIndexes(),
-        Dish.createIndexes(),
-        Order.createIndexes(),
-        AiRecommendation.createIndexes(),
-        Subscription.createIndexes(),
-        AuditLog.createIndexes(),
-        DataAccessControl.createIndexes(),
-        ForumPost.createIndexes(),
-        ForumComment.createIndexes(),
-        Consultation.createIndexes(),
-        MerchantStats.createIndexes(),
-        Store.createIndexes(),
-        StoreDish.createIndexes(),
-        UserFavorite.createIndexes(),
-        DbMetrics.createIndexes(),
-        Notification.createIndexes(),
-        OAuthAccount.createIndexes()
-      ]);
-      console.log('所有数据库索引创建完成');
-    } catch (error) {
-      console.error('创建索引失败:', error);
-      throw error;
-    }
-  },
-  
-  // 数据库清理方法（测试环境使用）
-  clearDatabase: async () => {
-    if (process.env.NODE_ENV !== 'test') {
-      throw new Error('此方法只能在测试环境中使用');
-    }
-    
-    await Promise.all([
-      User.deleteMany({}),
-      UserRole.deleteMany({}),
-      Admin.deleteMany({}),
-      NutritionProfile.deleteMany({}),
-      HealthData.deleteMany({}),
-      Nutritionist.deleteMany({}),
-      Merchant.deleteMany({}),
-      Dish.deleteMany({}),
-      Order.deleteMany({}),
-      AiRecommendation.deleteMany({}),
-      Subscription.deleteMany({}),
-      AuditLog.deleteMany({}),
-      DataAccessControl.deleteMany({}),
-      ForumPost.deleteMany({}),
-      ForumComment.deleteMany({}),
-      Consultation.deleteMany({}),
-      MerchantStats.deleteMany({}),
-      Store.deleteMany({}),
-      StoreDish.deleteMany({}),
-      UserFavorite.deleteMany({}),
-      DbMetrics.deleteMany({}),
-      Notification.deleteMany({}),
-      OAuthAccount.deleteMany({})
-    ]);
-    console.log('数据库清理完成');
-  }
-}; 
+  ...models.core,
+  ...models.nutrition,
+  ...models.merchant,
+  ...models.order,
+  ...models.forum,
+  ...models.misc,
+  ...models.analytics,
+  ...models.notification,
+  ...models.common, // 导出新的 common 模型
+  models, // 新增结构化导出（推荐使用）
+  createIndexes,
+  clearDatabase
+};
