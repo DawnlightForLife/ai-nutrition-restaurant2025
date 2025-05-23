@@ -40,6 +40,7 @@ android {
         }
     }
     
+    // 使用以下配置禁用Java编译器过时选项警告
     tasks.withType<JavaCompile>().configureEach {
         options.compilerArgs.add("-Xlint:-options")
     }
