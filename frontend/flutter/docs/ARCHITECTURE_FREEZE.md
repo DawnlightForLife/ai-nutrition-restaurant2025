@@ -5,17 +5,17 @@
 作者：系统架构组（助手 + Cursor）
 适用平台：iOS / Android / Web / Desktop（Flutter 多端统一）
 
-> **注释**：当前架构采用模块优先结构，不再使用 DDD。
-
 1. 架构设计目标
- • 采用模块优先结构，精确映射业务模块和数据接口
- • 实现清晰的分层架构和高内聚低耦合的模块结构
- • 支持组件化、模块化开发，提高代码可维护性和扩展性
- • 支持离线优先原则、依赖注入和跨端部署能力
- • 实现高性能渲染和流畅用户体验，确保数据密集型交互场景的性能
- • 支持AI驱动的个性化推荐和数据分析可视化展示
- • 集成代码模板生成工具，提高开发效率和一致性
- • 提供组件预览和文档系统，促进设计与开发协作
+	•	采用领域驱动设计(DDD)架构，精确映射业务领域模型
+	•	实现清晰的分层架构和高内聚低耦合的模块结构
+	•	支持组件化、模块化开发，提高代码可维护性和扩展性
+	•	支持离线优先原则、依赖注入和跨端部署能力
+	•	实现高性能渲染和流畅用户体验，确保数据密集型交互场景的性能
+	•	支持AI驱动的个性化推荐和数据分析可视化展示
+	•	集成代码模板生成工具，提高开发效率和一致性
+	•	提供组件预览和文档系统，促进设计与开发协作
+
+⸻
 
 2. 技术栈说明
 
@@ -39,91 +39,120 @@ AI集成            tflite_flutter + 自研AI推荐引擎桥接器
 组件预览系统       widgetbook + widgetbook_test（组件库与Golden测试联动）
 架构模板生成器     mason + 自定义砖块模板（一致性代码生成工具）
 
-4. 详细目录结构和职责边界（模块优先结构核心说明）
 
-本项目当前采用“模块优先结构”为核心架构设计原则，旨在提升模块聚合能力、提升开发效率，并保持业务职责的清晰划分。每个业务模块为一个独立单元，自包含其 `models`、`providers`、`screens`、`services`、`widgets` 等核心功能目录。
+3. 项目架构分层（Clean Architecture + DDD）
 
-所有 modules/{module}/ 下的目录结构必须保持统一，包括 models、providers、screens、services、widgets 等五大子目录，每个子目录职责如下：
-- models：定义该模块核心数据结构、DTO、模型转换逻辑
-- providers：封装状态管理逻辑（如 ChangeNotifier 或 riverpod）
-- screens：完整页面，负责 UI 呈现和交互响应
-- services：模块内服务层，调用全局或本地 API，聚合数据
-- widgets：该模块的通用组件，供 screens 复用
+📁 lib/
+├── domain/               // 领域层：实体、接口和业务规则（核心业务模型）
+│   ├── abstractions/     // 抽象接口定义（仓库、服务接口）
+│   ├── common/           // 领域通用组件（基类、枚举、常量）
+│   └── {module}/         // 按模块分组的领域模型（实体、值对象、聚合）
+├── application/          // 应用层：用例实现和业务流程协调
+│   ├── core/             // 用例基础类（基类、执行器）
+│   └── {module}/         // 按模块分组的用例（业务操作封装）
+├── infrastructure/       // 基础设施层：技术实现和外部资源访问
+│   ├── repositories/     // 仓库实现（数据访问控制）
+│   ├── services/         // 服务实现（API、本地服务）
+│   ├── datasources/      // 数据源实现（远程、本地）
+│   └── mappers/          // 数据转换和映射（DTO-Entity转换）
+├── presentation/         // 表现层：UI组件和用户交互
+│   ├── screens/          // 页面组件（完整页面）
+│   ├── components/       // UI组件（可复用组件）
+│   ├── viewmodels/       // 视图模型（状态和UI逻辑）
+│   ├── providers/        // 状态提供者（状态管理）
+│   └── utils/            // UI辅助工具（格式化、验证）
+├── core/                 // 核心组件：DI容器、基础类、工具函数
+├── common/               // 通用组件：常量、工具、主题
+├── widgetbook/           // 组件预览和文档系统
 
-模块结构强调模块自包含，适配多端，且与后端 API 数据结构保持一致，方便维护和扩展。
+4. 详细目录结构和职责边界
 
-#### 📁 lib/
-```
-├── app/                    // 应用入口与核心配置封装
-│   ├── app.dart            // 应用根组件
-│   ├── main.dart           // 应用入口（main 函数）
-│   ├── router.dart         // 路由声明（自动路由）
-│   └── router.gr.dart      // 自动生成的路由文件
-├── config/                 // 全局配置（环境、注入、国际化等）
-│   ├── config.dart
-│   ├── env_config.dart
-│   ├── l10n_config.dart
-│   ├── locator_config.dart
-│   ├── route_config.dart
-│   └── widgetbook_config.dart
-├── common/                 // 通用基础工具与样式
-│   ├── constants/          // 常量定义
-│   ├── exceptions/         // 错误封装
-│   ├── styles/             // 样式定义（颜色、间距、阴影）
-│   ├── utils/              // 工具函数（日志、格式化、缓存）
-│   └── widgets/            // 可复用组件（按钮、加载框、图片等）
-├── environment/            // 不同环境变量配置（开发 / 生产）
-│   ├── dev.dart
-│   └── prod.dart
-├── gen/                    // 自动生成文件目录（如 FlutterGen）
-├── hooks/                  // 自定义 Hook 工具
-├── l10n/                   // 国际化资源与生成文件（可选）
-├── mason_bricks/           // Mason 模板砖配置（模块代码生成）
-├── modules/                // 业务模块集合（核心结构）
-│   ├── user/               // 用户模块（如注册、登录）
-│   │   ├── models/
-│   │   ├── providers/
-│   │   ├── screens/
-│   │   ├── services/
-│   │   └── widgets/
-│   ├── order/              // 订单模块
-│   ├── nutrition/          // 营养模块
-│   ├── auth/               // 鉴权模块
-│   ├── forum/              // 社区模块
-│   ├── consult/            // 咨询模块
-│   ├── merchant/           // 商户模块
-│   ├── settings/           // 设置模块（如语言/主题）
-│   ├── onboarding/         // 引导模块（欢迎页、入门页）
-│   ├── analytics/          // 分析模块（使用日志、统计）
-│   ├── core/               // 核心模块（如 MainPage、SplashPage）
-│   └── notification/       // 通知模块
-├── plugins/                // 插件系统封装（如 Web 插件适配）
-├── providers/              // 全局 Provider 统一注册入口
-│   └── app_providers.dart
-├── repositories/           // 可选的仓库层抽象封装
-├── services/               // 全局服务接口与 openapi 生成文件
-│   ├── generated/          // OpenAPI Generator 自动生成接口
-│   │   ├── api/
-│   │   ├── auth/
-│   │   ├── model/
-│   │   └── api_client.dart 等
-│   └── api_client.dart     // 封装 API 请求客户端
-```
+📁 lib/
+├── app.dart              // 应用根组件
+├── main.dart             // 应用入口和初始化
+├── common/               // 通用组件和工具
+├── components/           // 可复用UI组件库
+├── config/               // 全局配置（环境、路由等）
+├── core/                 // 核心功能
+│   └── di/               // 依赖注入相关
+├── domain/               // 领域层
+│   ├── abstractions/     // 接口定义
+│   ├── common/           // 领域共享组件
+│   ├── user/             // 用户领域
+│   ├── restaurant/       // 餐厅领域
+│   ├── order/            // 订单领域
+│   └── nutrition/        // 营养领域
+├── application/          // 应用层用例
+│   ├── core/             // 用例基础类
+│   ├── user/             // 用户相关用例
+│   ├── auth/             // 认证相关用例
+│   ├── nutrition/        // 营养相关用例
+│   └── order/            // 订单相关用例
+├── models/               // 数据模型（视图模型）
+├── providers/            // 状态管理
+├── repositories/         // 数据仓库实现
+├── routes/               // 路由定义和配置
+├── screens/              // UI页面组件
+├── services/             // 服务实现层
+│   ├── core/             // 核心服务
+│   ├── api/              // API服务
+│   └── plugins/          // 插件服务
+│       ├── sms/          // 短信服务
+│       ├── payment/      // 支付服务
+│       ├── email/        // 邮件服务
+│       ├── storage/      // 文件存储
+│       ├── export/       // 数据导出
+│       ├── llm/          // AI模型
+│       └── platform/     // 第三方平台
+├── storage/              // 存储相关服务
+├── extensions/           // 扩展方法
+├── hooks/                // 自定义Hooks
+├── l10n/                 // 国际化资源
+├── widgetbook/           // 组件预览系统
+│   ├── widgetbook_main.dart // 预览系统入口
+│   ├── app_widgetbook.dart  // 组件注册中心
+│   └── categories/          // 组件分类
 
-#### 🎯 模块内部结构标准（以 user 模块为例）
+5. 模块映射关系（DDD ↔ 项目结构）
 
-```
-modules/user/
-├── models/           // 领域数据结构（如 User、UserRole）
-├── providers/        // 状态管理类（ChangeNotifier / Riverpod）
-├── screens/          // 页面组件（LoginPage、RegisterPage）
-├── services/         // 与 API 的交互封装（UserService）
-└── widgets/          // 模块专属可复用组件（如头像组件）
-```
-
-> 每个模块完全自包含，具备独立开发、测试、维护能力。模块中目录结构统一，方便团队协作和代码管理。
+DDD层                    项目目录
+实体 (Entity)           domain/{module}/entities/
+值对象 (Value Object)    domain/{module}/value_objects/
+聚合 (Aggregate)        domain/{module}/aggregates/
+聚合根 (Root)           domain/{module}/aggregates/{name}_root.dart
+仓库接口 (Repository)    domain/abstractions/repositories/
+服务接口 (Service)       domain/abstractions/services/
+领域事件 (Domain Event)  domain/events/
+领域服务 (Domain Service) domain/{module}/services/
+用例 (Use Case)         application/{module}/
+DTO (数据传输对象)       infrastructure/dtos/
+仓库实现                repositories/
+服务实现                services/
+UI控制器                screens/
+视图模型                viewmodels/ 和 providers/
 
 6. 后端与前端映射关系
+
+后端（Node.js + DDD）        前端（Flutter + DDD）
+────────────────────────────────────────────────────
+
+后端 domain/                 前端 domain/                    // 领域模型映射
+后端 application/            前端 application/               // 应用层用例映射
+后端 models/                 前端 models/                    // 数据模型定义
+后端 controllers/            前端 screens/                   // 控制器与UI映射
+后端 services/               前端 services/                  // 服务层实现
+后端 repositories/           前端 repositories/              // 存储库实现
+后端 routes/                 前端 routes/                    // 路由结构映射
+后端 middleware/             前端 core/di/ + services/       // 中间件功能映射
+后端 plugins/                前端 services/plugins/          // 三方服务映射
+后端 hooks/                  前端 hooks/                     // 钩子系统映射
+后端 constants/              前端 common/constants/          // 常量定义映射
+后端 types/                  前端 domain/ + models/          // 类型系统映射
+后端 utils/                  前端 common/utils/              // 工具函数映射
+后端 config/                 前端 config/                    // 配置文件映射
+后端 jobs/                   前端 services/background/       // 后台任务映射
+
+业务模块映射（按领域划分）:
 
 后端模块                     前端模块
 ────────────────────────────────────────────────────
@@ -133,11 +162,6 @@ restaurant/                 restaurant/                   // 餐厅模块
 order/                      order/                        // 订单模块
 forum/                      forum/                        // 社区模块
 merchant/                   merchant/                     // 商户模块
-
-19. 架构冻结说明与版本标记
-	•	本文档标志当前前端架构已达成稳定版本
-	•	当前架构版本号：v1.5.0
-	•	架构变更需要提交RFC并经架构评审通过
 
 7. 命名规范
 	•	领域实体：xxx.dart
@@ -333,6 +357,12 @@ merchant/                   merchant/                     // 商户模块
 		- 平台特定视觉风格（Material/Cupertino）
 		- 动态颜色系统（Material You支持）
 
+19. 冻结说明与版本标记
+	•	本文档标志当前前端架构已达成稳定版本
+	•	当前架构版本号：v1.5.0
+	•	架构冻结标识文件：.architecture-frozen 和 .structure-frozen
+	•	架构变更需要提交RFC并经架构评审通过
+
 20. 组件预览系统（Widgetbook）
 	•	所有UI组件必须在Widgetbook中注册并提供预览
 	•	组件按功能分类：按钮、卡片、输入控件、指示器、导航
@@ -350,7 +380,7 @@ merchant/                   merchant/                     // 商户模块
 21. 架构模板系统（Mason）
 	•	使用Mason模板引擎生成标准化代码结构
 	•	核心模板包括：
-		- 功能模块模板(feature_module)：生成完整的模块优先结构代码
+		- 功能模块模板(feature_module)：生成完整的Clean Architecture + DDD结构
 		- UI组件模板(widget)：生成组件及关联测试
 	•	使用预定义脚本简化模板使用：
 		- scripts/init_mason.sh：初始化Mason环境
@@ -363,15 +393,8 @@ merchant/                   merchant/                     // 商户模块
 		- 文件位置必须符合目录结构规范
 	•	详细文档参考：docs/MASON_TEMPLATES.md
 
-22. 架构未来演进建议
-• 采用更细粒度依赖注入容器分区，提升模块隔离性；
-• 将 `domain/` 层实体与 API Model 显式解耦，提升复用性；
-• 引入 sealed class / union 类型优化状态管理与错误处理表达；
-• 引入 Freezed 等代码生成器提升模型一致性；
-• 逐步整合 riverpod v3，并统一 Provider 声明规范。
-
 变更记录:
-- v1.5.0 (2025-06-10): 增加组件预览系统(Widgetbook)和架构模板系统(Mason)章节，切换至模块优先结构
+- v1.5.0 (2025-06-10): 增加组件预览系统(Widgetbook)和架构模板系统(Mason)章节
 - v1.4.0 (2025-06-15): 增加性能优化策略、安全实践、多平台适配和数据库模型映射
 - v1.3.0 (2025-06-01): 添加插件系统架构规范，完善第三方服务集成
 - v1.2.1 (2025-05-25): 更新依赖注入规范，添加Provider和仓库接口使用指南

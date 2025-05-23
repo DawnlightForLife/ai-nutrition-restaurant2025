@@ -7,15 +7,18 @@
 | 目录路径 | 说明 | 状态 | 备注 |
 |---------|------|------|------|
 | `lib/` | 主要源代码目录 | □ 已完成 □ 部分完成 □ 未创建 | |
-| `lib/modules/` | 模块目录根目录 | □ 已完成 □ 部分完成 □ 未创建 | |
-| `lib/modules/{模块}/screens/` | 页面组件 | □ 已完成 □ 部分完成 □ 未创建 | |
-| `lib/modules/{模块}/widgets/` | UI子组件 | □ 已完成 □ 部分完成 □ 未创建 | |
-| `lib/modules/{模块}/providers/` | 状态管理类 | □ 已完成 □ 部分完成 □ 未创建 | |
-| `lib/modules/{模块}/services/` | 网络与逻辑服务 | □ 已完成 □ 部分完成 □ 未创建 | |
-| `lib/modules/{模块}/models/` | 模块数据模型 | □ 已完成 □ 部分完成 □ 未创建 | |
+| `lib/application/` | 应用层：用例和业务流程 | □ 已完成 □ 部分完成 □ 未创建 | |
+| `lib/application/core/` | 核心用例组件 | □ 已完成 □ 部分完成 □ 未创建 | |
+| `lib/domain/` | 领域层：抽象接口和领域模型 | □ 已完成 □ 部分完成 □ 未创建 | |
+| `lib/domain/abstractions/` | 抽象接口 | □ 已完成 □ 部分完成 □ 未创建 | |
 | `lib/repositories/` | 仓库实现：数据访问实现 | □ 已完成 □ 部分完成 □ 未创建 | |
 | `lib/services/` | 服务实现：外部系统交互 | □ 已完成 □ 部分完成 □ 未创建 | |
 | `lib/providers/` | 状态管理：Provider类 | □ 已完成 □ 部分完成 □ 未创建 | |
+| `lib/screens/` | UI页面：应用页面组件 | □ 已完成 □ 部分完成 □ 未创建 | |
+| `lib/components/` | UI组件：可复用界面组件 | □ 已完成 □ 部分完成 □ 未创建 | |
+| `lib/models/` | 数据模型：DTO和领域模型 | □ 已完成 □ 部分完成 □ 未创建 | |
+| `lib/core/` | 核心功能：通用基础设施 | □ 已完成 □ 部分完成 □ 未创建 | |
+| `lib/core/di/` | 依赖注入 | □ 已完成 □ 部分完成 □ 未创建 | |
 | `lib/config/` | 配置文件：应用配置 | □ 已完成 □ 部分完成 □ 未创建 | |
 | `lib/common/` | 通用工具：工具类和扩展方法 | □ 已完成 □ 部分完成 □ 未创建 | |
 | `test/` | 测试目录 | □ 已完成 □ 部分完成 □ 未创建 | |
@@ -36,9 +39,9 @@
 | `lib/app.dart` | 应用组件 | □ 已完成 □ 部分完成 □ 未创建 | |
 | `lib/core/di/injection.dart` | 依赖注入配置 | □ 已完成 □ 部分完成 □ 未创建 | |
 | `lib/core/di/service_locator.dart` | 服务定位器 | □ 已完成 □ 部分完成 □ 未创建 | |
-| `lib/modules/core/use_case.dart` | 基础用例抽象类 | □ 已完成 □ 部分完成 □ 未创建 | |
-| `lib/modules/core/result.dart` | 结果处理类 | □ 已完成 □ 部分完成 □ 未创建 | |
-| `lib/modules/core/app_use_cases.dart` | 用例协调器 | □ 已完成 □ 部分完成 □ 未创建 | |
+| `lib/application/core/use_case.dart` | 基础用例抽象类 | □ 已完成 □ 部分完成 □ 未创建 | |
+| `lib/application/core/result.dart` | 结果处理类 | □ 已完成 □ 部分完成 □ 未创建 | |
+| `lib/application/app_use_cases.dart` | 用例协调器 | □ 已完成 □ 部分完成 □ 未创建 | |
 | `lib/services/core/api_service.dart` | 网络请求服务 | □ 已完成 □ 部分完成 □ 未创建 | |
 | `lib/services/cache/offline_sync_service.dart` | 离线同步服务 | □ 已完成 □ 部分完成 □ 未创建 | |
 | `lib/services/api/enhanced_http_client.dart` | 增强型HTTP客户端 | □ 已完成 □ 部分完成 □ 未创建 | |
@@ -53,8 +56,8 @@
 | 架构组件 | 说明 | 状态 | 备注 |
 |---------|------|------|------|
 | **表现层(UI)** | | | |
-| 页面组件 | 屏幕和视图 | □ 已完成 □ 部分完成 □ 未实现 | 位于 `lib/modules/**/screens/` |
-| 可复用组件 | 通用UI组件 | □ 已完成 □ 部分完成 □ 未实现 | 位于 `lib/common/widgets/`，模块组件位于 `lib/modules/**/widgets/` |
+| 页面组件 | 屏幕和视图 | □ 已完成 □ 部分完成 □ 未实现 | |
+| 可复用组件 | 通用UI组件 | □ 已完成 □ 部分完成 □ 未实现 | |
 | Provider | 状态管理 | □ 已完成 □ 部分完成 □ 未实现 | |
 | **应用层** | | | |
 | 用例(Use Cases) | 业务流程协调 | □ 已完成 □ 部分完成 □ 未实现 | |
@@ -80,7 +83,6 @@
 | `docs/architecture/testing_architecture.md` | 测试架构指南 | □ 已完成 □ 部分完成 □ 未创建 | |
 | `docs/architecture/quick_start.md` | 快速入门指南 | □ 已完成 □ 部分完成 □ 未创建 | |
 | `docs/architecture/checklist.md` | 代码审查清单 | □ 已完成 □ 部分完成 □ 未创建 | |
-| `docs/architecture/architecture_integrity_scan.md` | 架构完整性扫描表 | ☑ 已完成 | 当前文档 |
 | `test/README.md` | 测试指南 | □ 已完成 □ 部分完成 □ 未创建 | |
 
 ## 测试架构完整性检查
@@ -114,7 +116,6 @@
 | 文档 | ___% | |
 | 测试架构 | ___% | |
 | 开发工具和环境 | ___% | |
-| 架构风格 | 模块化 + 自动路由 + 插件机制 | |
 | **总体完成度** | ___% | |
 
 ## 冻结前需要完成的项目

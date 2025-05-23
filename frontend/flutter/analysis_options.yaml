@@ -52,7 +52,6 @@ linter:
     
     # 风格规则
     always_declare_return_types: true
-    always_require_non_null_named_parameters: true
     annotate_overrides: true
     avoid_bool_literals_in_conditional_expressions: true
     avoid_catching_errors: true
