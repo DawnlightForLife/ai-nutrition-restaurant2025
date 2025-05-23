@@ -256,7 +256,7 @@ const gracefulShutdown = async () => {
     console.log('Mongoose连接已关闭');
     
     // 关闭缓存服务
-    const cacheService = require('./services/core/cacheService');
+    const cacheService = require('./services/cache/cacheService');
     if (cacheService.initialized) {
       await cacheService.close();
       console.log('缓存服务已关闭');
