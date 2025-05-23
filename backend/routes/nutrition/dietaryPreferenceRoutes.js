@@ -8,7 +8,7 @@ const router = express.Router();
 const controller = require('../../controllers/nutrition/dietaryPreferenceController');
 
 /** TODO: 添加具体的路由逻辑 */
-router.get('/', controller.getUserPreferences); // 获取用户饮食偏好
-router.post('/', controller.updateUserPreferences); // 更新用户饮食偏好
+router.get('/', controller.getDietaryPreferenceList); // 获取用户饮食偏好
+router.post('/', controller.createDietaryPreference); // 更新用户饮食偏好
 
 module.exports = router;

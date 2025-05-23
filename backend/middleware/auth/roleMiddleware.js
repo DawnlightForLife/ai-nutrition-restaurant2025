@@ -13,7 +13,7 @@
  * @param {string|string[]} requiredRoles - 需要的角色名称或角色列表
  * @returns {Function} Express中间件函数
  */
-const roleMiddleware = (requiredRoles) => {
+const requireRole = (requiredRoles) => {
   return (req, res, next) => {
     try {
       // 确保用户已通过身份验证
@@ -60,4 +60,6 @@ const roleMiddleware = (requiredRoles) => {
   };
 };
 
-module.exports = roleMiddleware; 
+module.exports = {
+  requireRole,
+};

@@ -11,7 +11,7 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
-const SchemaGuardService = require('../services/core/schemaGuardService');
+const SchemaGuardService = require('../../services/model/schemaGuardService');
 const config = require('../../config');
 
 // 默认日志函数

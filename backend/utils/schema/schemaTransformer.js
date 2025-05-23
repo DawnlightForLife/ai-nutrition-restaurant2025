@@ -383,4 +383,4 @@ class SchemaTransformer {
   }
 }
 
-module.exports = SchemaTransformer; 
+module.exports = SchemaTransformer;

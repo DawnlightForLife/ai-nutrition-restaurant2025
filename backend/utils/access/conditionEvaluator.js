@@ -21,7 +21,7 @@
  * @module utils/access/conditionEvaluator
  */
 
-const logger = require('../logger');
+const logger = require('../logger/winstonLogger');
 
 /**
  * 评估条件是否满足

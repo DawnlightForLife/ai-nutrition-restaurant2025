@@ -23,8 +23,19 @@ const createPromotion = async (req, res) => {
   /** TODO: 实现创建促销活动的逻辑 */
 };
 
+/**
+ * 获取促销活动详情
+ * @param {Object} req - Express请求对象
+ * @param {Object} res - Express响应对象
+ * @returns {Promise<void>}
+ */
+const getPromotionDetail = async (req, res) => {
+  /** TODO: 实现获取促销活动详情的逻辑 */
+};
+
 // 导出控制器方法
 module.exports = {
   getPromotionList,
-  createPromotion
+  createPromotion,
+  getPromotionDetail, // 添加此行
 };

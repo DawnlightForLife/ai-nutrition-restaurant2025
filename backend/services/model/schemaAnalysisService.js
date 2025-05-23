@@ -8,7 +8,7 @@
 
 const mongoose = require('mongoose');
 const { logger } = require('../../utils/logger/winstonLogger.js');
-const SchemaTransformer = require('../data/schemaTransformer').getInstance();
+const schemaTransformer = require('../../utils/schema/schemaTransformer');
 const EventEmitter = require('events');
 
 /**
@@ -54,7 +54,7 @@ class SchemaAnalysisService extends EventEmitter {
       this.logger.info('正在初始化SchemaAnalysisService...');
       
       // 确保SchemaTransformer可用
-      if (!SchemaTransformer) {
+      if (!schemaTransformer) {
         throw new Error('SchemaTransformer服务不可用');
       }
       
@@ -127,7 +127,7 @@ class SchemaAnalysisService extends EventEmitter {
       };
       
       // 获取所有模型数据
-      const schemaData = await SchemaTransformer.transformAllModels({
+      const schemaData = await schemaTransformer.transformAllModels({
         includeVirtuals: true,
         includeIndexes: true,
         includeHistory: true
@@ -183,8 +183,8 @@ class SchemaAnalysisService extends EventEmitter {
   async _analyzeStructuralIssues(schemaData) {
     this.logger.info('分析模式结构问题...');
     
-    // 使用SchemaTransformer的检测功能
-    const structuralIssues = await SchemaTransformer.detectSchemaIssues();
+    // 使用schemaTransformer的检测功能
+    const structuralIssues = await schemaTransformer.detectSchemaIssues();
     
     // 添加到结果中
     this.analysisResults.issues.push(...structuralIssues);

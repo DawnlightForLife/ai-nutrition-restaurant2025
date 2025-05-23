@@ -6,7 +6,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { createConsultation, getConsultationList, getConsultationById, updateConsultation, deleteConsultation } = require('../../controllers/order/consultationController');
+const { createConsultation, getConsultationList, getConsultationById, updateConsultation, deleteConsultation } = require('../../controllers/order/consultationOrderController');
 
 // [POST] 创建咨询
 router.post('/', createConsultation);

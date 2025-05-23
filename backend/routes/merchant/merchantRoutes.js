@@ -6,7 +6,9 @@
 const express = require('express');
 const router = express.Router();
 const { createMerchant, getMerchantList, getMerchantById, updateMerchant, deleteMerchant, verifyMerchant } = require('../../controllers/merchant/merchantController');
-const { auth, authorize } = require('../../middleware/auth');
+const authMiddleware = require('../../middleware/auth');
+const auth = authMiddleware.auth || authMiddleware.authenticateUser;
+const authorize = authMiddleware.authorize;
 
 // [POST] 创建商家
 router.post('/', auth(), createMerchant);

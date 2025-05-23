@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createNotification, getNotificationList, getNotificationById, updateNotification, deleteNotification } = require('../../controllers/misc/notificationController');
+const { createNotification, getNotificationList, getNotificationById, updateNotification, deleteNotification } = require('../../controllers/notification/notificationController');
 
 /**
  * 通知管理路由

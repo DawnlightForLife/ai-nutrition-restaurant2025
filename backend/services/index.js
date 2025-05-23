@@ -58,7 +58,7 @@ module.exports = {
   // database
   shardAccessService: require('./database/shardAccessService'),
   shardAdvisorService: require('./database/shardAdvisorService'),
-  adaptiveShardingService: require('./database/adaptiveShardingService'),
+  adaptiveShardingService: require('../services/database/adaptiveShardingService'),
   connectionPoolManager: require('./database/connectionPoolManager'),
   asyncConnectionPoolManager: require('./database/asyncConnectionPoolManager'),
   readConsistencyService: require('./database/readConsistencyService'),
@@ -77,7 +77,7 @@ module.exports = {
   schemaAnalysisService: require('./model/schemaAnalysisService'),
   schemaGuardService: require('./model/schemaGuardService'),
   schemaJsonConverter: require('./model/schemaJsonConverter'),
-  schemaTransformer: require('./model/schemaTransformer'),
+  schemaTransformer: require('../utils/schema/schemaTransformer'),
   migrationManagerService: require('./model/migrationManagerService'),
 
   // performance
@@ -85,6 +85,7 @@ module.exports = {
   circuitBreakerService: require('./performance/circuitBreakerService'),
   retryStrategyService: require('./performance/retryStrategyService'),
   batchProcessService: require('./performance/batchProcessService'),
+  performanceMonitoringService: require('./performance/performanceMonitoringService'),
 
   // messaging
   emailService: require('./messaging/emailService'),

@@ -6,7 +6,7 @@
  * @module utils/encryption/mongooseEncryptionPlugin
  */
 
-const logger = require('../logger');
+const logger = require('../logger/winstonLogger');
 
 /**
  * 创建字段加密Mongoose插件

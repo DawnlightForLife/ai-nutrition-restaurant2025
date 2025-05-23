@@ -5,15 +5,16 @@
 
 const express = require('express');
 const router = express.Router();
-const { logger } = require('../../utils/logger/winstonLogger.js');
-const { isAdmin } = require('../../middleware/authMiddleware');
+const logger = require('../../utils/logger/winstonLogger.js');
+const { isAdmin } = require('../../middleware/auth/authMiddleware');
 
 // 获取服务实例
-const schemaTransformer = require('../../services/model/schemaTransformer').getInstance();
+const schemaTransformer = require('../../utils/schema/schemaTransformer');
 let schemaGuardService;
 
 try {
-  schemaGuardService = require('../../services/model/schemaGuardService').getInstance();
+  const SchemaGuardService = require('../../services/model/schemaGuardService');
+  schemaGuardService = new SchemaGuardService();
 } catch (error) {
   logger.warn('无法加载SchemaGuardService：', error.message);
 }

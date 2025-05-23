@@ -6,15 +6,13 @@
  *   - 集中导出所有认证相关中间件（auth、authorize、checkPermission）
  * ✅ 模块组成：
  *   - ./auth/authMiddleware → 用户身份认证（JWT）
- *   - ./auth/roleMiddleware → 角色校验（如 admin、merchant 等）
- *   - ./auth/permissionMiddleware → 权限校验（基于 RBAC）
+ *   - ./security/authorizationMiddleware → 角色和权限校验
  * ✅ 向后兼容：
  *   - 支持 const { auth } = require('middleware/auth') 老版本用法
  */
 
 const authMiddleware = require('./auth/authMiddleware');
-const roleMiddleware = require('./auth/roleMiddleware');
-const permissionMiddleware = require('./auth/permissionMiddleware');
+const { authorize, checkPermission, checkResourceOwner } = require('./security/authorizationMiddleware');
 
 // 向后兼容中间件引用方式，返回 authenticateUser 函数
 const auth = () => {
@@ -24,6 +22,7 @@ const auth = () => {
 // 导出统一认证相关中间件集合
 module.exports = {
   auth,
-  authorize: roleMiddleware,
-  checkPermission: permissionMiddleware
+  authorize,
+  checkPermission,
+  checkResourceOwner
 };

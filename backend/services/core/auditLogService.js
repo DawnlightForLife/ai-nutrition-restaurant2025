@@ -3,7 +3,7 @@
  * 提供系统操作日志记录和查询功能
  * @module services/audit/auditLogService
  */
-const AuditLog = require('../../models/misc/auditLogModel');
+const AuditLog = require('../../models/core/auditLogModel');
 
 /**
  * 记录审计日志

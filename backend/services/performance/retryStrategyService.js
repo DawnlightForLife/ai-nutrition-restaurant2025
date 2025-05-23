@@ -9,7 +9,7 @@
 
 const EventEmitter = require('events');
 const logger = require('../../utils/logger/winstonLogger.js');
-const config = require('../../../config');
+const config = require('../../config');
 
 /**
  * 退避策略枚举

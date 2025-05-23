@@ -10,11 +10,11 @@ const logger = require('../../utils/logger/winstonLogger.js');
 const config = require('../../config');
 
 // 导入优化服务
-const cacheService = require('./cacheService');
+const cacheService = require('../cache/cacheService');
 const batchProcessService = require('./batchProcessService');
-const adaptiveShardingService = require('./adaptiveShardingService');
-const connectionPoolManager = require('./connectionPoolManager');
-const { circuitBreakerService } = require('../core/circuitBreakerService');
+const adaptiveShardingService = require('../database/adaptiveShardingService');
+const connectionPoolManager = require('../database/connectionPoolManager');
+const { circuitBreakerService } = require('../performance/circuitBreakerService');
 
 // 导入模型工厂
 const ModelFactory = require('../../models/modelFactory');

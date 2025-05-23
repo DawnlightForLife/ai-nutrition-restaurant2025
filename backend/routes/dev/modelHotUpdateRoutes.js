@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../../middleware/auth/authMiddleware');
 const logger = require('../../utils/logger/winstonLogger.js');
-const DynamicModelLoaderService = require('../../services/core/dynamicModelLoaderService');
+const DynamicModelLoaderService = require('../../services/model/dynamicModelLoaderService');
 
 // 创建动态模型加载服务实例
 const dynamicModelLoader = new DynamicModelLoaderService({

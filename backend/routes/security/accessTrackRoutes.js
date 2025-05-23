@@ -9,6 +9,7 @@ const { getAccessTrackingService } = require('../../middleware/access/accessTrac
 const AccessTrack = require('../../models/security/accessTrackModel');
 const authMiddleware = require('../../middleware/auth/authMiddleware');
 const roleMiddleware = require('../../middleware/auth/roleMiddleware');
+const requireRole = roleMiddleware.requireRole;
 const logger = require('../../utils/logger/winstonLogger.js');
 
 // 获取访问轨迹服务
@@ -27,7 +28,7 @@ const getService = () => {
  */
 router.get('/status', 
   authMiddleware.requireAuth, 
-  roleMiddleware.requireRole(['admin', 'security']), 
+  requireRole(['admin', 'security']), 
   async (req, res) => {
     try {
       const service = getService();
@@ -61,7 +62,7 @@ router.get('/status',
  */
 router.get('/anomalies', 
   authMiddleware.requireAuth, 
-  roleMiddleware.requireRole(['admin', 'security']), 
+  requireRole(['admin', 'security']), 
   async (req, res) => {
     try {
       // 分页参数
@@ -121,7 +122,7 @@ router.get('/anomalies',
  */
 router.get('/user/:userId', 
   authMiddleware.requireAuth, 
-  roleMiddleware.requireRole(['admin', 'security']), 
+  requireRole(['admin', 'security']), 
   async (req, res) => {
     try {
       const { userId } = req.params;
@@ -171,7 +172,7 @@ router.get('/user/:userId',
  */
 router.get('/resource/:type/:id', 
   authMiddleware.requireAuth, 
-  roleMiddleware.requireRole(['admin', 'security']), 
+  requireRole(['admin', 'security']), 
   async (req, res) => {
     try {
       const { type, id } = req.params;
@@ -224,7 +225,7 @@ router.get('/resource/:type/:id',
  */
 router.get('/ip/:ip', 
   authMiddleware.requireAuth, 
-  roleMiddleware.requireRole(['admin', 'security']), 
+  requireRole(['admin', 'security']), 
   async (req, res) => {
     try {
       const { ip } = req.params;
@@ -279,7 +280,7 @@ router.get('/ip/:ip',
  */
 router.post('/ban-ip', 
   authMiddleware.requireAuth, 
-  roleMiddleware.requireRole(['admin', 'security']), 
+  requireRole(['admin', 'security']), 
   async (req, res) => {
     try {
       const { ip, duration, reason } = req.body;
@@ -353,7 +354,7 @@ router.post('/ban-ip',
  */
 router.post('/unban-ip', 
   authMiddleware.requireAuth, 
-  roleMiddleware.requireRole(['admin', 'security']), 
+  requireRole(['admin', 'security']), 
   async (req, res) => {
     try {
       const { ip } = req.body;
@@ -416,7 +417,7 @@ router.post('/unban-ip',
  */
 router.get('/stats/user/:userId', 
   authMiddleware.requireAuth, 
-  roleMiddleware.requireRole(['admin', 'security']), 
+  requireRole(['admin', 'security']), 
   async (req, res) => {
     try {
       const { userId } = req.params;
@@ -456,7 +457,7 @@ router.get('/stats/user/:userId',
  */
 router.get('/stats/general', 
   authMiddleware.requireAuth, 
-  roleMiddleware.requireRole(['admin', 'security']), 
+  requireRole(['admin', 'security']), 
   async (req, res) => {
     try {
       // 查询时间范围

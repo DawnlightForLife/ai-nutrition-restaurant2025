@@ -13,7 +13,7 @@ const path = require('path');
 const handlebars = require('handlebars');
 const chalk = require('chalk');
 const config = require('../../config');
-const SchemaGuardService = require('../services/core/schemaGuardService');
+const SchemaGuardService = require('../../services/model/schemaGuardService');
 
 // 默认配置
 const DEFAULT_CONFIG = {

@@ -74,7 +74,7 @@ router.use('/sessions', require('./common/sessionRoutes'));
 // =================== Dev 工具模块（仅开发环境启用） ===================
 if (process.env.NODE_ENV === 'development') {
   router.use('/dev/schema-admin', require('./dev/schemaAdminRoutes'));
-  router.use('/dev/schema-explorer', require('./dev/schemaRoutes'));
+  router.use('/dev/schema-explorer', require('./dev/schemaExplorerRoutes'));
   router.use('/dev/schema-visualization', require('./dev/schemaVisualizationRoutes'));
   router.use('/dev/model-hot-update', require('./dev/modelHotUpdateRoutes'));
 }

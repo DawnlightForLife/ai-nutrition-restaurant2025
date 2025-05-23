@@ -6,7 +6,7 @@
 require('dotenv').config({ path: process.env.NODE_ENV === 'production' ? '../.env' : './.env.local' });
 const mongoose = require('mongoose');
 const dbManager = require('../services/database/database');
-const shardingConfig = require('../config/shardingConfig');
+const shardingConfig = require('../config/modules/shardingConfig');
 const { shardingService } = require('../services/shardingService');
 
 // 输出环境变量以进行调试

@@ -23,8 +23,19 @@ const getPaymentStatus = async (req, res) => {
   /** TODO: 实现查询支付状态的逻辑 */
 };
 
+/**
+ * 支付回调处理
+ * @param {Object} req - Express请求对象
+ * @param {Object} res - Express响应对象
+ * @returns {Promise<void>}
+ */
+const handlePaymentCallback = async (req, res) => {
+  /** TODO: 实现支付回调逻辑 */
+};
+
 // 导出控制器方法
 module.exports = {
   createPayment,
-  getPaymentStatus
+  getPaymentStatus,
+  handlePaymentCallback
 };

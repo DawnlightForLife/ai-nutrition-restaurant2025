@@ -13,7 +13,7 @@ const modelFactory = require('../../models/modelFactory');
 const cacheService = require('../cache/cacheService');
 const adaptiveShardingService = require('./adaptiveShardingService');
 const auditLogService = require('../core/auditLogService');
-const performanceMonitoringService = require('./performanceMonitoringService');
+const performanceMonitoringService = require('../performance/performanceMonitoringService');
 
 class DbProxyService extends EventEmitter {
   constructor() {

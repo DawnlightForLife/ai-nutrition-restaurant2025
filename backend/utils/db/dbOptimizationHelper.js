@@ -7,7 +7,7 @@
  * ✅ 适用对象：管理员后台数据库状态页面、自动健康检测任务、开发调试阶段
  */
 const mongoose = require('mongoose');
-const logger = require('../logger');
+const logger = require('../logger/winstonLogger');
 const dbManager = require('../../services/database/dbProxyService');
 
 /**

@@ -60,6 +60,7 @@ const authenticateUser = (req, res, next) => {
 
 // 兼容性别名
 const authenticate = authenticateUser;
+const requireAuth = authenticateUser; // 添加兼容性别名，用于路由中的requireAuth调用
 
 /**
  * 管理员权限验证中间件
@@ -82,6 +83,9 @@ const requireAdmin = (req, res, next) => {
   });
 };
 
+// 兼容性别名
+const isAdmin = requireAdmin; // 添加兼容性别名，用于路由中的isAdmin调用
+
 // TODO: 支持刷新令牌机制（Refresh Token）
 // TODO: 增加用户状态检查（如 isActive）防止封禁用户访问
 // TODO: 可集成日志记录（如验证失败原因）
@@ -89,5 +93,7 @@ const requireAdmin = (req, res, next) => {
 module.exports = { 
   authenticateUser,
   authenticate,
-  requireAdmin
+  requireAdmin,
+  requireAuth,  // 导出requireAuth别名
+  isAdmin       // 导出isAdmin别名
 }; 

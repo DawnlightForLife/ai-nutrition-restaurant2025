@@ -9,7 +9,7 @@
 const mongoose = require('mongoose');
 const EventEmitter = require('events');
 const logger = require('../../utils/logger/winstonLogger.js');
-const config = require('../../../config');
+const config = require('../../config');
 const circuitBreakerService = require('../performance/circuitBreakerService');
 
 /**

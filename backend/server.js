@@ -116,15 +116,15 @@ const startServer = async () => {
     const orderRoutes = require('./routes/order/orderRoutes');
     
     // 导入服务
-    const { appConfigService } = require('./services/misc/appConfigService');
-    const { dataAccessControlService } = require('./services/misc/dataAccessControlService');
-    const { shardingConfig, shardingService } = require('./config/shardingConfig');
-    const ScheduledTasks = require('./utils/scheduledTasks');
+    const { appConfigService } = require('./services/core/appConfigService');
+    const { dataAccessControlService } = require('./services/security/dataAccessControlService');
+    const { shardingConfig, shardingService } = require('./config/modules/shardingConfig');
+    const ScheduledTasks = require('./utils/scheduler/scheduledTasks');
     
     // 导入数据库优化服务
-    const dbOptimizationManager = require('./services/core/dbOptimizationManager');
+    const dbOptimizationManager = require('./services/performance/dbOptimizationManager');
     const ModelFactory = require('./models/modelFactory');
-    const { circuitBreakerService } = require('./services/core/circuitBreakerService');
+    const { circuitBreakerService } = require('./services/performance/circuitBreakerService');
 
     // 设置其他路由（可选，因为大部分路由已经通过routes/index.js注册）
     // 如果这些路由在index.js中已注册，则可以考虑移除这些冗余项

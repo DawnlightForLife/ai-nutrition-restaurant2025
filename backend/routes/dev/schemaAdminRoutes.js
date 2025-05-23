@@ -6,12 +6,12 @@
 
 const express = require('express');
 const router = express.Router();
-const SchemaTransformer = require('../utils/schemaTransformer');
-const SchemaGuardService = require('../services/core/schemaGuardService');
-const authMiddleware = require('../middleware/auth');
+const SchemaTransformer = require('../../utils/schema/schemaTransformer');
+const SchemaGuardService = require('../../services/model/schemaGuardService');
+const { requireAdmin } = require('../../middleware/auth/authMiddleware');
 const logger = require('../../utils/logger/winstonLogger');
 
-// 创建SchemaGuardService实例
+// 获取 SchemaGuardService 实例
 const schemaGuard = new SchemaGuardService({
   autoFreeze: false,
   validateOnInit: true,
@@ -23,7 +23,7 @@ const schemaGuard = new SchemaGuardService({
  * 路径: /api/schema/models
  * 权限: requireAdmin
  */
-router.get('/models', authMiddleware.requireAdmin, async (req, res) => {
+router.get('/models', requireAdmin, async (req, res) => {
   try {
     const options = {
       includeVirtuals: req.query.includeVirtuals !== 'false',
@@ -52,7 +52,7 @@ router.get('/models', authMiddleware.requireAdmin, async (req, res) => {
  * 路径: /api/schema/models/:modelName
  * 权限: requireAdmin
  */
-router.get('/models/:modelName', authMiddleware.requireAdmin, async (req, res) => {
+router.get('/models/:modelName', requireAdmin, async (req, res) => {
   try {
     const { modelName } = req.params;
     const options = {
@@ -89,7 +89,7 @@ router.get('/models/:modelName', authMiddleware.requireAdmin, async (req, res) =
  * 路径: /api/schema/history
  * 权限: requireAdmin
  */
-router.get('/history', authMiddleware.requireAdmin, async (req, res) => {
+router.get('/history', requireAdmin, async (req, res) => {
   try {
     const { modelName, limit = 20, skip = 0 } = req.query;
     
@@ -118,7 +118,7 @@ router.get('/history', authMiddleware.requireAdmin, async (req, res) => {
  * 路径: /api/schema/diff
  * 权限: requireAdmin
  */
-router.get('/diff', authMiddleware.requireAdmin, async (req, res) => {
+router.get('/diff', requireAdmin, async (req, res) => {
   try {
     const { modelName, oldVersion, newVersion } = req.query;
     
@@ -175,7 +175,7 @@ router.get('/diff', authMiddleware.requireAdmin, async (req, res) => {
  * 路径: /api/schema/freeze/:modelName
  * 权限: requireAdmin
  */
-router.post('/freeze/:modelName', authMiddleware.requireAdmin, async (req, res) => {
+router.post('/freeze/:modelName', requireAdmin, async (req, res) => {
   try {
     const { modelName } = req.params;
     const reason = req.body.reason || '管理员冻结';
@@ -205,7 +205,7 @@ router.post('/freeze/:modelName', authMiddleware.requireAdmin, async (req, res) 
  * 路径: /api/schema/unfreeze/:modelName
  * 权限: requireAdmin
  */
-router.post('/unfreeze/:modelName', authMiddleware.requireAdmin, async (req, res) => {
+router.post('/unfreeze/:modelName', requireAdmin, async (req, res) => {
   try {
     const { modelName } = req.params;
     const reason = req.body.reason || '管理员解冻';
@@ -235,7 +235,7 @@ router.post('/unfreeze/:modelName', authMiddleware.requireAdmin, async (req, res
  * 路径: /api/schema/status/:modelName
  * 权限: requireAdmin
  */
-router.get('/status/:modelName', authMiddleware.requireAdmin, async (req, res) => {
+router.get('/status/:modelName', requireAdmin, async (req, res) => {
   try {
     const { modelName } = req.params;
     const status = await schemaGuard.getSchemaStatus(modelName);
@@ -267,7 +267,7 @@ router.get('/status/:modelName', authMiddleware.requireAdmin, async (req, res) =
  * 路径: /api/schema/status
  * 权限: requireAdmin
  */
-router.get('/status', authMiddleware.requireAdmin, async (req, res) => {
+router.get('/status', requireAdmin, async (req, res) => {
   try {
     const allStatus = await schemaGuard.getAllSchemaStatuses();
     
@@ -291,7 +291,7 @@ router.get('/status', authMiddleware.requireAdmin, async (req, res) => {
  * 路径: /api/schema/security-check
  * 权限: requireAdmin
  */
-router.get('/security-check', authMiddleware.requireAdmin, async (req, res) => {
+router.get('/security-check', requireAdmin, async (req, res) => {
   try {
     const securityIssues = await schemaGuard.checkSchemaSecurity();
     

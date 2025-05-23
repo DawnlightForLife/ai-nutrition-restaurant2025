@@ -8,19 +8,32 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
-const handlebars = require('handlebars');
 const { promisify } = require('util');
-const schemaHelper = require('../../templates/schema-visualization-helper');
+const logger = require('../../utils/logger/winstonLogger.js');
 
 // 权限检查中间件
-const { requireAdmin } = require('../../middleware/auth');
+const { requireAdmin } = require('../../middleware/auth/authMiddleware');
 
 // 读取模板文件
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 
-// 注册Handlebars助手函数
-schemaHelper.registerHelpers(handlebars);
+// 尝试加载handlebars和模板助手
+let handlebars = null;
+let schemaHelper = null;
+let handlebarsLoaded = false;
+
+try {
+  handlebars = require('handlebars');
+  schemaHelper = require('../../templates/schema-visualization-helper');
+  // 注册Handlebars助手函数
+  schemaHelper.registerHelpers(handlebars);
+  handlebarsLoaded = true;
+  logger.info('Handlebars模板引擎加载成功');
+} catch (error) {
+  logger.error('加载Handlebars模板引擎失败:', error.message);
+  logger.warn('请运行 npm install handlebars 安装依赖');
+}
 
 /**
  * 获取所有可用模型的架构信息
@@ -43,18 +56,18 @@ async function getAllSchemas() {
       
       // 从SchemaGuardService获取冻结状态(如果可用)
       try {
-        const SchemaGuardService = require('../../services/core/schemaGuardService');
+        const SchemaGuardService = require('../../services/model/schemaGuardService');
         if (SchemaGuardService.getInstance && SchemaGuardService.getInstance().isSchemFrozen) {
           schema.isFrozen = await SchemaGuardService.getInstance().isSchemaFrozen(modelName);
           schema.history = await SchemaGuardService.getInstance().getSchemaHistory(modelName);
         }
       } catch (error) {
-        console.warn(`无法获取模式${modelName}的保护状态:`, error.message);
+        logger.warn(`无法获取模式${modelName}的保护状态:`, error.message);
       }
       
       schemas.push(schema);
     } catch (error) {
-      console.error(`获取模型${modelName}时出错:`, error);
+      logger.error(`获取模型${modelName}时出错:`, error);
     }
   }
   
@@ -68,6 +81,11 @@ async function getAllSchemas() {
  * @returns {String} 生成的HTML内容
  */
 async function generateVisualization(schemas, outputPath) {
+  // 检查handlebars是否可用
+  if (!handlebarsLoaded) {
+    throw new Error('Handlebars模板引擎未加载，无法生成可视化');
+  }
+  
   try {
     // 读取Handlebars模板
     const templatePath = path.join(__dirname, '../../templates/schema-visualization.hbs');
@@ -93,7 +111,7 @@ async function generateVisualization(schemas, outputPath) {
     
     return html;
   } catch (error) {
-    console.error('生成可视化时出错:', error);
+    logger.error('生成可视化时出错:', error);
     throw error;
   }
 }
@@ -107,6 +125,16 @@ async function generateVisualization(schemas, outputPath) {
  * @apiSuccess {String} html 数据库架构可视化的HTML页面
  */
 router.get('/', requireAdmin, async (req, res) => {
+  // 检查handlebars是否可用
+  if (!handlebarsLoaded) {
+    return res.status(503).json({
+      success: false,
+      message: 'Handlebars模板引擎未加载，无法生成可视化',
+      error: 'MODULE_NOT_LOADED',
+      solution: '请在服务器上运行 npm install handlebars 安装依赖'
+    });
+  }
+  
   try {
     const schemas = await getAllSchemas();
     const outputPath = path.join(__dirname, '../../../public/reports/schema-visualization.html');
@@ -116,7 +144,7 @@ router.get('/', requireAdmin, async (req, res) => {
     
     res.send(html);
   } catch (error) {
-    console.error('生成架构可视化时出错:', error);
+    logger.error('生成架构可视化时出错:', error);
     res.status(500).json({
       success: false,
       message: '生成架构可视化时出错',
@@ -137,6 +165,19 @@ router.get('/', requireAdmin, async (req, res) => {
 router.get('/json', requireAdmin, async (req, res) => {
   try {
     const schemas = await getAllSchemas();
+    
+    // 如果handlebars不可用，至少返回原始架构数据
+    if (!handlebarsLoaded) {
+      return res.json({
+        success: true,
+        data: {
+          schemas: schemas,
+          handlebarsAvailable: false
+        },
+        message: 'Handlebars模板引擎未加载，仅返回原始架构数据'
+      });
+    }
+    
     const templateData = schemaHelper.prepareTemplateContext(schemas);
     
     res.json({
@@ -144,7 +185,7 @@ router.get('/json', requireAdmin, async (req, res) => {
       data: templateData
     });
   } catch (error) {
-    console.error('获取架构数据时出错:', error);
+    logger.error('获取架构数据时出错:', error);
     res.status(500).json({
       success: false,
       message: '获取架构数据时出错',
@@ -164,6 +205,16 @@ router.get('/json', requireAdmin, async (req, res) => {
  * @apiSuccess {String} url 生成的报告URL
  */
 router.post('/refresh', requireAdmin, async (req, res) => {
+  // 检查handlebars是否可用
+  if (!handlebarsLoaded) {
+    return res.status(503).json({
+      success: false,
+      message: 'Handlebars模板引擎未加载，无法生成可视化',
+      error: 'MODULE_NOT_LOADED',
+      solution: '请在服务器上运行 npm install handlebars 安装依赖'
+    });
+  }
+  
   try {
     const schemas = await getAllSchemas();
     const outputPath = path.join(__dirname, '../../../public/reports/schema-visualization.html');
@@ -180,7 +231,7 @@ router.post('/refresh', requireAdmin, async (req, res) => {
       url: reportUrl
     });
   } catch (error) {
-    console.error('刷新架构可视化时出错:', error);
+    logger.error('刷新架构可视化时出错:', error);
     res.status(500).json({
       success: false,
       message: '刷新架构可视化时出错',

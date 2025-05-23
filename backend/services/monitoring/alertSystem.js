@@ -9,7 +9,7 @@
 const EventEmitter = require('events');
 const mongoose = require('mongoose');
 const logger = require('../../utils/logger/winstonLogger.js');
-const config = require('../../../config');
+const config = require('../../config');
 
 /**
  * 告警级别枚举

@@ -3,7 +3,7 @@
  * 实现断路器设计模式以防止系统级级联故障
  * 支持自动故障检测、状态转换（CLOSED、OPEN、HALF_OPEN）
  * 提供事件机制通知外部系统状态变更
- * @module services/core/circuitBreakerService
+ * @module services/performance/circuitBreakerService
  */
 
 /**
