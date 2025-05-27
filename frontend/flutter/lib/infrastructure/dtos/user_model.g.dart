@@ -9,26 +9,24 @@ part of 'user_model.dart';
 PrivacySettings _$PrivacySettingsFromJson(Map<String, dynamic> json) =>
     PrivacySettings(
       shareNutritionDataWithNutritionist:
-          json['share_nutrition_data_with_nutritionist'] as bool? ?? false,
+          json['shareNutritionDataWithNutritionist'] as bool? ?? false,
       shareOrderHistoryWithMerchant:
-          json['share_order_history_with_merchant'] as bool? ?? false,
-      shareProfileInCommunity:
-          json['share_profile_in_community'] as bool? ?? true,
+          json['shareOrderHistoryWithMerchant'] as bool? ?? false,
+      shareProfileInCommunity: json['shareProfileInCommunity'] as bool? ?? true,
       allowRecommendationBasedOnHistory:
-          json['allow_recommendation_based_on_history'] as bool? ?? true,
-      dataDeletionRequested: json['data_deletion_requested'] as bool? ?? false,
+          json['allowRecommendationBasedOnHistory'] as bool? ?? true,
+      dataDeletionRequested: json['dataDeletionRequested'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$PrivacySettingsToJson(PrivacySettings instance) =>
     <String, dynamic>{
-      'share_nutrition_data_with_nutritionist':
+      'shareNutritionDataWithNutritionist':
           instance.shareNutritionDataWithNutritionist,
-      'share_order_history_with_merchant':
-          instance.shareOrderHistoryWithMerchant,
-      'share_profile_in_community': instance.shareProfileInCommunity,
-      'allow_recommendation_based_on_history':
+      'shareOrderHistoryWithMerchant': instance.shareOrderHistoryWithMerchant,
+      'shareProfileInCommunity': instance.shareProfileInCommunity,
+      'allowRecommendationBasedOnHistory':
           instance.allowRecommendationBasedOnHistory,
-      'data_deletion_requested': instance.dataDeletionRequested,
+      'dataDeletionRequested': instance.dataDeletionRequested,
     };
 
 UserModel _$UserModelFromJson(Map<String, dynamic> json) => UserModel(
@@ -39,28 +37,28 @@ UserModel _$UserModelFromJson(Map<String, dynamic> json) => UserModel(
       nickname: json['nickname'] as String? ?? '',
       avatar: json['avatar'] as String? ?? '',
       role: json['role'] as String? ?? 'customer',
-      profileCompleted: json['profile_completed'] as bool? ?? false,
-      autoRegistered: json['auto_registered'] as bool? ?? false,
-      franchiseStoreId: json['franchise_store_id'] as String?,
-      userType: json['user_type'] as String?,
-      realName: json['real_name'] as String?,
+      profileCompleted: json['profileCompleted'] as bool? ?? false,
+      autoRegistered: json['autoRegistered'] as bool? ?? false,
+      franchiseStoreId: json['franchiseStoreId'] as String?,
+      userType: json['userType'] as String?,
+      realName: json['realName'] as String?,
       email: json['email'] as String?,
-      avatarUrl: json['avatar_url'] as String?,
+      avatarUrl: json['avatarUrl'] as String?,
       gender: json['gender'] as String?,
-      birthDate: json['birth_date'] == null
+      birthDate: json['birthDate'] == null
           ? null
-          : DateTime.parse(json['birth_date'] as String),
+          : DateTime.parse(json['birthDate'] as String),
       height: (json['height'] as num?)?.toDouble(),
       weight: (json['weight'] as num?)?.toDouble(),
       age: (json['age'] as num?)?.toInt(),
-      healthGoal: json['health_goal'] as String?,
-      activityLevel: json['activity_level'] as String?,
-      authType: json['auth_type'] as String?,
-      accountStatus: json['account_status'] as String?,
-      lastLogin: json['last_login'] == null
+      healthGoal: json['healthGoal'] as String?,
+      activityLevel: json['activityLevel'] as String?,
+      authType: json['authType'] as String?,
+      accountStatus: json['accountStatus'] as String?,
+      lastLogin: json['lastLogin'] == null
           ? null
-          : DateTime.parse(json['last_login'] as String),
-      privacySettings: _privacySettingsFromJson(json['privacy_settings']),
+          : DateTime.parse(json['lastLogin'] as String),
+      privacySettings: _privacySettingsFromJson(json['privacySettings']),
     );
 
 Map<String, dynamic> _$UserModelToJson(UserModel instance) {
@@ -79,24 +77,24 @@ Map<String, dynamic> _$UserModelToJson(UserModel instance) {
   val['nickname'] = instance.nickname;
   val['avatar'] = instance.avatar;
   val['role'] = instance.role;
-  val['profile_completed'] = instance.profileCompleted;
-  val['auto_registered'] = instance.autoRegistered;
-  writeNotNull('franchise_store_id', instance.franchiseStoreId);
-  writeNotNull('user_type', instance.userType);
-  writeNotNull('real_name', instance.realName);
+  val['profileCompleted'] = instance.profileCompleted;
+  val['autoRegistered'] = instance.autoRegistered;
+  writeNotNull('franchiseStoreId', instance.franchiseStoreId);
+  writeNotNull('userType', instance.userType);
+  writeNotNull('realName', instance.realName);
   writeNotNull('email', instance.email);
-  writeNotNull('avatar_url', instance.avatarUrl);
+  writeNotNull('avatarUrl', instance.avatarUrl);
   writeNotNull('gender', instance.gender);
-  writeNotNull('birth_date', instance.birthDate?.toIso8601String());
+  writeNotNull('birthDate', instance.birthDate?.toIso8601String());
   writeNotNull('height', instance.height);
   writeNotNull('weight', instance.weight);
   writeNotNull('age', instance.age);
-  writeNotNull('health_goal', instance.healthGoal);
-  writeNotNull('activity_level', instance.activityLevel);
-  writeNotNull('auth_type', instance.authType);
-  writeNotNull('account_status', instance.accountStatus);
-  writeNotNull('last_login', instance.lastLogin?.toIso8601String());
+  writeNotNull('healthGoal', instance.healthGoal);
+  writeNotNull('activityLevel', instance.activityLevel);
+  writeNotNull('authType', instance.authType);
+  writeNotNull('accountStatus', instance.accountStatus);
+  writeNotNull('lastLogin', instance.lastLogin?.toIso8601String());
   writeNotNull(
-      'privacy_settings', _privacySettingsToJson(instance.privacySettings));
+      'privacySettings', _privacySettingsToJson(instance.privacySettings));
   return val;
 }

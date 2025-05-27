@@ -52,6 +52,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // 添加调试配置
+            isDebuggable = true
+        }
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
@@ -62,6 +66,15 @@ android {
     // 使用以下配置禁用Java编译器过时选项警告
     tasks.withType<JavaCompile>().configureEach {
         options.compilerArgs.add("-Xlint:-options")
+    }
+    
+    // 确保APK输出路径一致
+    applicationVariants.all {
+        outputs.all {
+            // 设置统一的输出文件名格式
+            val outputImpl = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            outputImpl.outputFileName = "app-${name}.apk"
+        }
     }
 }
 

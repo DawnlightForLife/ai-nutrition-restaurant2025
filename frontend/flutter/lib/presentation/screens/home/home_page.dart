@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:auto_route/auto_route.dart';
 import '../../../config/theme/yuanqi_colors.dart';
 import '../../providers/auth_state_provider.dart';
 import '../../providers/nutrition_profile_provider.dart';
 import '../../../infrastructure/dtos/nutrition_profile_model.dart';
 import '../profile/profile_page.dart';
+import '../../../core/navigation/app_router.dart';
+import '../nutrition/recommendation_entry_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -19,7 +22,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   final List<Map<String, dynamic>> _navItems = [
     {'icon': Icons.home, 'label': '首页'},
     {'icon': Icons.restaurant_menu, 'label': '点餐'},
-    {'icon': Icons.assignment, 'label': '营养档案'},
+    {'icon': Icons.smart_toy_outlined, 'label': '元气'},
     {'icon': Icons.receipt_long, 'label': '订单'},
     {'icon': Icons.person, 'label': '我的'},
   ];
@@ -64,9 +67,19 @@ class _HomePageState extends ConsumerState<HomePage> {
                 return Expanded(
                   child: InkWell(
                     onTap: () {
-                      setState(() {
-                        _selectedIndex = index;
-                      });
+                      // 如果点击的是元气AI（index=2），跳转到推荐入口页
+                      if (index == 2) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RecommendationEntryPage(),
+                          ),
+                        );
+                      } else {
+                        setState(() {
+                          _selectedIndex = index;
+                        });
+                      }
                     },
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
@@ -74,13 +87,32 @@ class _HomePageState extends ConsumerState<HomePage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            item['icon'] as IconData,
-                            color: isSelected 
-                                ? YuanqiColors.primaryOrange 
-                                : YuanqiColors.textHint,
-                            size: 24,
-                          ),
+                          // 元气AI特殊图标
+                          if (index == 2)
+                            Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                gradient: isSelected 
+                                    ? YuanqiColors.primaryGradient 
+                                    : null,
+                                color: !isSelected ? YuanqiColors.textHint : null,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.auto_awesome,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            )
+                          else
+                            Icon(
+                              item['icon'] as IconData,
+                              color: isSelected 
+                                  ? YuanqiColors.primaryOrange 
+                                  : YuanqiColors.textHint,
+                              size: 24,
+                            ),
                           const SizedBox(height: 4),
                           Text(
                             item['label'] as String,

@@ -15,6 +15,22 @@ abstract class _$AppRouter extends RootStackRouter {
 
   @override
   final Map<String, PageFactory> pagesMap = {
+    AiRecommendationChatRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const AiRecommendationChatPage(),
+      );
+    },
+    AiRecommendationResultRoute.name: (routeData) {
+      final args = routeData.argsAs<AiRecommendationResultRouteArgs>();
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: AiRecommendationResultPage(
+          key: args.key,
+          recommendations: args.recommendations,
+        ),
+      );
+    },
     ConsultationRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -45,6 +61,26 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const NotFoundPage(),
       );
     },
+    NutritionProfileListRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const NutritionProfileListPage(),
+      );
+    },
+    NutritionProfileManagementRoute.name: (routeData) {
+      final pathParams = routeData.inheritedPathParams;
+      final args = routeData.argsAs<NutritionProfileManagementRouteArgs>(
+          orElse: () => NutritionProfileManagementRouteArgs(
+              profileId: pathParams.optString('id')));
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: NutritionProfileManagementPage(
+          key: args.key,
+          profileId: args.profileId,
+          isNewProfile: args.isNewProfile,
+        ),
+      );
+    },
     NutritionRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -67,6 +103,12 @@ abstract class _$AppRouter extends RootStackRouter {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: const ProfileScreen(),
+      );
+    },
+    RecommendationEntryRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const RecommendationEntryPage(),
       );
     },
     RegisterRoute.name: (routeData) {
@@ -100,6 +142,59 @@ abstract class _$AppRouter extends RootStackRouter {
       );
     },
   };
+}
+
+/// generated route for
+/// [AiRecommendationChatPage]
+class AiRecommendationChatRoute extends PageRouteInfo<void> {
+  const AiRecommendationChatRoute({List<PageRouteInfo>? children})
+      : super(
+          AiRecommendationChatRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'AiRecommendationChatRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [AiRecommendationResultPage]
+class AiRecommendationResultRoute
+    extends PageRouteInfo<AiRecommendationResultRouteArgs> {
+  AiRecommendationResultRoute({
+    Key? key,
+    required List<RecommendationItem> recommendations,
+    List<PageRouteInfo>? children,
+  }) : super(
+          AiRecommendationResultRoute.name,
+          args: AiRecommendationResultRouteArgs(
+            key: key,
+            recommendations: recommendations,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'AiRecommendationResultRoute';
+
+  static const PageInfo<AiRecommendationResultRouteArgs> page =
+      PageInfo<AiRecommendationResultRouteArgs>(name);
+}
+
+class AiRecommendationResultRouteArgs {
+  const AiRecommendationResultRouteArgs({
+    this.key,
+    required this.recommendations,
+  });
+
+  final Key? key;
+
+  final List<RecommendationItem> recommendations;
+
+  @override
+  String toString() {
+    return 'AiRecommendationResultRouteArgs{key: $key, recommendations: $recommendations}';
+  }
 }
 
 /// generated route for
@@ -173,6 +268,65 @@ class NotFoundRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [NutritionProfileListPage]
+class NutritionProfileListRoute extends PageRouteInfo<void> {
+  const NutritionProfileListRoute({List<PageRouteInfo>? children})
+      : super(
+          NutritionProfileListRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'NutritionProfileListRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [NutritionProfileManagementPage]
+class NutritionProfileManagementRoute
+    extends PageRouteInfo<NutritionProfileManagementRouteArgs> {
+  NutritionProfileManagementRoute({
+    Key? key,
+    String? profileId,
+    bool isNewProfile = false,
+    List<PageRouteInfo>? children,
+  }) : super(
+          NutritionProfileManagementRoute.name,
+          args: NutritionProfileManagementRouteArgs(
+            key: key,
+            profileId: profileId,
+            isNewProfile: isNewProfile,
+          ),
+          rawPathParams: {'id': profileId},
+          initialChildren: children,
+        );
+
+  static const String name = 'NutritionProfileManagementRoute';
+
+  static const PageInfo<NutritionProfileManagementRouteArgs> page =
+      PageInfo<NutritionProfileManagementRouteArgs>(name);
+}
+
+class NutritionProfileManagementRouteArgs {
+  const NutritionProfileManagementRouteArgs({
+    this.key,
+    this.profileId,
+    this.isNewProfile = false,
+  });
+
+  final Key? key;
+
+  final String? profileId;
+
+  final bool isNewProfile;
+
+  @override
+  String toString() {
+    return 'NutritionProfileManagementRouteArgs{key: $key, profileId: $profileId, isNewProfile: $isNewProfile}';
+  }
+}
+
+/// generated route for
 /// [NutritionScreen]
 class NutritionRoute extends PageRouteInfo<void> {
   const NutritionRoute({List<PageRouteInfo>? children})
@@ -224,6 +378,20 @@ class ProfileRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'ProfileRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [RecommendationEntryPage]
+class RecommendationEntryRoute extends PageRouteInfo<void> {
+  const RecommendationEntryRoute({List<PageRouteInfo>? children})
+      : super(
+          RecommendationEntryRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'RecommendationEntryRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
 }

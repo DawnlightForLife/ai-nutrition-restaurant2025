@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:logger/logger.dart';
+
 import '../../domain/events/nutrition_events.dart';
 import '../../domain/events/user_events.dart';
 import '../../domain/nutrition/entities/nutrition_profile.dart';
@@ -11,6 +13,7 @@ import '../services/event_bus.dart';
 class NutritionEventHandlers {
   final NutritionFacade _nutritionFacade;
   final EventBus _eventBus = EventBus();
+  final Logger _logger = Logger();
   
   final List<StreamSubscription<dynamic>> _subscriptions = [];
   

@@ -14,15 +14,19 @@ import 'package:injectable/injectable.dart' as _i2;
 import '../../application/auth/sign_in_use_case.dart' as _i20;
 import '../../application/auth/use_cases/login_use_case.dart' as _i16;
 import '../../application/auth/use_cases/logout_use_case.dart' as _i17;
-import '../../application/nutrition/use_cases/get_ai_recommendations_use_case.dart'
+import '../../application/nutrition/use_cases/create_nutrition_profile_use_case.dart'
     as _i23;
-import '../../application/nutrition/use_cases/get_nutrition_profile_use_case.dart'
+import '../../application/nutrition/use_cases/delete_nutrition_profile_use_case.dart'
+    as _i24;
+import '../../application/nutrition/use_cases/get_ai_recommendations_use_case.dart'
     as _i25;
+import '../../application/nutrition/use_cases/get_nutrition_profile_use_case.dart'
+    as _i27;
 import '../../application/nutrition/use_cases/update_nutrition_profile_use_case.dart'
     as _i21;
-import '../../application/user/get_current_user_use_case.dart' as _i24;
+import '../../application/user/get_current_user_use_case.dart' as _i26;
 import '../../application/user/use_cases/get_user_profile_use_case.dart'
-    as _i26;
+    as _i28;
 import '../../application/user/use_cases/update_user_profile_use_case.dart'
     as _i22;
 import '../../domain/abstractions/repositories/i_auth_repository.dart' as _i6;
@@ -82,14 +86,18 @@ extension GetItInjectableX on _i1.GetIt {
         _i21.UpdateNutritionProfileUseCase(gh<_i9.INutritionRepository>()));
     gh.factory<_i22.UpdateUserProfileUseCase>(
         () => _i22.UpdateUserProfileUseCase(gh<_i14.IUserRepository>()));
-    gh.factory<_i23.GetAiRecommendationsUseCase>(
-        () => _i23.GetAiRecommendationsUseCase(gh<_i9.INutritionRepository>()));
-    gh.factory<_i24.GetCurrentUserUseCase>(
-        () => _i24.GetCurrentUserUseCase(gh<_i14.IUserRepository>()));
-    gh.factory<_i25.GetNutritionProfileUseCase>(
-        () => _i25.GetNutritionProfileUseCase(gh<_i9.INutritionRepository>()));
-    gh.factory<_i26.GetUserProfileUseCase>(
-        () => _i26.GetUserProfileUseCase(gh<_i14.IUserRepository>()));
+    gh.factory<_i23.CreateNutritionProfileUseCase>(() =>
+        _i23.CreateNutritionProfileUseCase(gh<_i9.INutritionRepository>()));
+    gh.factory<_i24.DeleteNutritionProfileUseCase>(() =>
+        _i24.DeleteNutritionProfileUseCase(gh<_i9.INutritionRepository>()));
+    gh.factory<_i25.GetAiRecommendationsUseCase>(
+        () => _i25.GetAiRecommendationsUseCase(gh<_i9.INutritionRepository>()));
+    gh.factory<_i26.GetCurrentUserUseCase>(
+        () => _i26.GetCurrentUserUseCase(gh<_i14.IUserRepository>()));
+    gh.factory<_i27.GetNutritionProfileUseCase>(
+        () => _i27.GetNutritionProfileUseCase(gh<_i9.INutritionRepository>()));
+    gh.factory<_i28.GetUserProfileUseCase>(
+        () => _i28.GetUserProfileUseCase(gh<_i14.IUserRepository>()));
     return this;
   }
 }

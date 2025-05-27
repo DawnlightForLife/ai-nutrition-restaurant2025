@@ -26,6 +26,6 @@ class UpdateUserProfileUseCase extends UseCase<User, UpdateUserProfileParams> {
 
   @override
   Future<Either<Failure, User>> call(UpdateUserProfileParams params) async {
-    return _repository.updateUserProfile(params.user);
+    return _repository.updateUser(params.user);
   }
 }

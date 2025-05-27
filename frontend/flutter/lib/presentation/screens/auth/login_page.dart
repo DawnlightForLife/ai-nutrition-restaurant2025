@@ -521,47 +521,63 @@ class _LoginPageState extends ConsumerState<LoginPage>
       // 发送验证码
       try {
         print('开始发送验证码: ${_phoneController.text}');
-        final success = await authNotifier.sendVerificationCode(_phoneController.text);
         
-        print('发送验证码结果: $success, mounted: $mounted');
+        // 保存手机号和context，避免在异步操作后widget被dispose导致无法访问
+        final phone = _phoneController.text;
+        final navigator = Navigator.of(context);
+        final scaffoldMessenger = ScaffoldMessenger.of(context);
+        
+        final success = await authNotifier.sendVerificationCode(phone);
+        
+        print('发送验证码结果: $success');
         
         if (success) {
           print('验证码发送成功，准备跳转到验证码页面');
           
-          if (mounted) {
-            // 先跳转，再显示Toast
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => VerificationCodePage(
-                  phone: _phoneController.text,
-                ),
+          // 直接使用之前保存的navigator进行导航
+          navigator.push(
+            MaterialPageRoute(
+              builder: (context) => VerificationCodePage(
+                phone: phone,
               ),
-            );
-            print('导航到验证码页面完成');
-            
-            // 延迟显示Toast，避免干扰导航
-            Future.delayed(const Duration(milliseconds: 100), () {
-              if (mounted) {
-                Toast.success(context, '验证码已发送');
-              }
-            });
-          }
+            ),
+          );
+          print('导航到验证码页面完成');
+          
+          // 使用ScaffoldMessenger显示提示
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('验证码已发送'),
+              backgroundColor: Colors.green,
+            ),
+          );
         } else {
           print('验证码发送失败');
-          if (mounted) {
-            Toast.error(context, '验证码发送失败，请重试');
-          }
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('验证码发送失败，请重试'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       } catch (e) {
         // 跟踪错误
         trackError('发送验证码失败', error: e);
-        if (mounted) {
-          String errorMessage = '发送验证码失败';
-          if (e is AppException) {
-            errorMessage = e.message;
-          }
-          Toast.error(context, errorMessage);
+        print('发送验证码异常: $e');
+        
+        String errorMessage = '发送验证码失败';
+        if (e is AppException) {
+          errorMessage = e.message;
+        }
+        
+        // 使用ScaffoldMessenger显示错误
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       }
     }

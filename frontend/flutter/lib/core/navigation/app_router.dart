@@ -6,6 +6,11 @@ import '../../presentation/screens/auth/register_screen.dart';
 import '../../presentation/screens/home/home_screen.dart';
 import '../../presentation/screens/profile/profile_screen.dart';
 import '../../presentation/screens/nutrition/nutrition_screen.dart';
+import '../../presentation/screens/nutrition/recommendation_entry_page.dart';
+import '../../presentation/screens/nutrition/nutrition_profile_management_page.dart';
+import '../../presentation/screens/nutrition/nutrition_profile_list_page.dart';
+import '../../presentation/screens/nutrition/ai_recommendation_chat_page.dart';
+import '../../presentation/screens/nutrition/ai_recommendation_result_page.dart';
 import '../../presentation/screens/restaurant/restaurant_screen.dart';
 import '../../presentation/screens/menu/menu_screen.dart';
 import '../../presentation/screens/order/order_screen.dart';
@@ -61,6 +66,26 @@ class AppRouter extends _$AppRouter {
     AutoRoute(
       page: NutritionRoute.page,
       path: '/nutrition',
+    ),
+    AutoRoute(
+      page: RecommendationEntryRoute.page,
+      path: '/nutrition/recommendation',
+    ),
+    AutoRoute(
+      page: NutritionProfileListRoute.page,
+      path: '/nutrition/profiles',
+    ),
+    AutoRoute(
+      page: NutritionProfileManagementRoute.page,
+      path: '/nutrition/profile/:id',
+    ),
+    AutoRoute(
+      page: AiRecommendationChatRoute.page,
+      path: '/nutrition/ai-chat',
+    ),
+    AutoRoute(
+      page: AiRecommendationResultRoute.page,
+      path: '/nutrition/ai-result',
     ),
     
     // 餐厅相关页面

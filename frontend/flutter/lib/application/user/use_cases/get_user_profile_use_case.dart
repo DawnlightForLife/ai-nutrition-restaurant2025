@@ -27,6 +27,6 @@ class GetUserProfileUseCase extends UseCase<User, GetUserProfileParams> {
 
   @override
   Future<Either<Failure, User>> call(GetUserProfileParams params) async {
-    return _repository.getUserById(params.userId);
+    return _repository.getUserById(params.userId.getOrCrash());
   }
 }

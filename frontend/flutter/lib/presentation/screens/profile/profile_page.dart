@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:auto_route/auto_route.dart';
 import '../../../config/theme/yuanqi_colors.dart';
 import '../../providers/auth_state_provider.dart';
+import '../nutrition/nutrition_profile_list_page.dart';
+import '../../../core/navigation/app_router.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
@@ -156,11 +159,16 @@ class ProfilePage extends ConsumerWidget {
                         },
                       ),
                       _buildMenuItem(
-                        icon: Icons.favorite_outline,
-                        title: '营养偏好',
-                        subtitle: '设置饮食偏好和过敏原',
+                        icon: Icons.assignment,
+                        title: '营养档案',
+                        subtitle: '管理您的营养信息',
                         onTap: () {
-                          // TODO(dev): 导航到营养偏好页面
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NutritionProfileListPage(),
+                            ),
+                          );
                         },
                       ),
                       _buildMenuItem(

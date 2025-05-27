@@ -5,19 +5,19 @@ part 'user_model.g.dart';
 // Privacy settings to handle nested booleans
 @JsonSerializable()
 class PrivacySettings {
-  @JsonKey(defaultValue: false)
+  @JsonKey(name: 'shareNutritionDataWithNutritionist', defaultValue: false)
   final bool shareNutritionDataWithNutritionist;
   
-  @JsonKey(defaultValue: false)
+  @JsonKey(name: 'shareOrderHistoryWithMerchant', defaultValue: false)
   final bool shareOrderHistoryWithMerchant;
   
-  @JsonKey(defaultValue: true)
+  @JsonKey(name: 'shareProfileInCommunity', defaultValue: true)
   final bool shareProfileInCommunity;
   
-  @JsonKey(defaultValue: true)
+  @JsonKey(name: 'allowRecommendationBasedOnHistory', defaultValue: true)
   final bool allowRecommendationBasedOnHistory;
   
-  @JsonKey(defaultValue: false)
+  @JsonKey(name: 'dataDeletionRequested', defaultValue: false)
   final bool dataDeletionRequested;
   
   PrivacySettings({
@@ -55,32 +55,52 @@ class UserModel {
   @JsonKey(defaultValue: 'customer')
   final String role;
   
-  @JsonKey(defaultValue: false)
+  @JsonKey(name: 'profileCompleted', defaultValue: false)
   final bool profileCompleted;
   
-  @JsonKey(defaultValue: false)
+  @JsonKey(name: 'autoRegistered', defaultValue: false)
   final bool autoRegistered;
   
+  @JsonKey(name: 'franchiseStoreId')
   final String? franchiseStoreId;
+  
+  @JsonKey(name: 'userType')
   final String? userType;
   
   // 额外的个人信息
+  @JsonKey(name: 'realName')
   final String? realName;
   final String? email;
+  
+  @JsonKey(name: 'avatarUrl')
   final String? avatarUrl;
+  
   final String? gender;
+  
+  @JsonKey(name: 'birthDate')
   final DateTime? birthDate;
+  
   final double? height;
   final double? weight;
   final int? age;
+  
+  @JsonKey(name: 'healthGoal')
   final String? healthGoal;
+  
+  @JsonKey(name: 'activityLevel')
   final String? activityLevel;
+  
+  @JsonKey(name: 'authType')
   final String? authType;
+  
+  @JsonKey(name: 'accountStatus')
   final String? accountStatus;
+  
+  @JsonKey(name: 'lastLogin')
   final DateTime? lastLogin;
   
   // Handle privacy settings safely
-  @JsonKey(fromJson: _privacySettingsFromJson, toJson: _privacySettingsToJson)
+  @JsonKey(name: 'privacySettings', fromJson: _privacySettingsFromJson, toJson: _privacySettingsToJson)
   final PrivacySettings? privacySettings;
   
   // Ignore complex nested objects that might cause issues
