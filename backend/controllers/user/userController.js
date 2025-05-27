@@ -174,16 +174,23 @@ exports.updateUser = async (req, res) => {
     }
 
     // 更新用户信息
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      { $set: req.body },
-      { new: true, runValidators: true }
-    ).select('-password -__v');
+    Object.assign(user, req.body);
+    
+    // 检查资料是否完成
+    user.checkProfileCompletion();
+    
+    // 保存更新
+    await user.save();
+    
+    // 去除敏感信息
+    const userObject = user.toObject();
+    delete userObject.password;
+    delete userObject.__v;
 
     res.json({
       success: true,
       message: '用户信息更新成功',
-      data: updatedUser
+      data: userObject
     });
   } catch (error) {
     handleError(res, error);

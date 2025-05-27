@@ -1,6 +1,7 @@
 # 智能营养餐厅系统 - 数据库模型冻结文档
 
-**文档日期**: `2025-05-17`
+**文档日期**: `2025-05-17`  
+**最后更新**: `2025-01-26` (v2.0.0 - 元气立方品牌转型)
 
 ## 目录
 1. [模型设计概述](#模型设计概述)
@@ -34,7 +35,9 @@ models/
 ├── core/               # 核心模型（用户、权限等）
 ├── feedback/           # 用户反馈相关模型
 ├── forum/              # 论坛相关模型
-├── merchant/           # 商家相关模型
+├── franchise/          # 加盟店相关模型 (新增 v2.0.0)
+├── menu/               # 标准菜单相关模型 (新增 v2.0.0)
+├── merchant/           # 商家相关模型 (已废弃，保留兼容)
 ├── notification/       # 通知系统相关模型
 ├── nutrition/          # 营养相关模型
 ├── order/              # 订单相关模型
@@ -87,14 +90,24 @@ models/
 - **Nutritionist**: 营养师信息
 - **UserFavorite**: 用户收藏
 
-### 商家相关模型 (merchant/)
+### 加盟店相关模型 (franchise/) - v2.0.0 新增
 
-- **Merchant**: 商家基本信息
-- **MerchantTypes**: 商家类型枚举（健身房、月子中心、营养餐厅、团体用户）
-- **Store**: 门店信息
-- **StoreDish**: 门店菜品
-- **Dish**: 菜品信息
-- **MerchantStats**: 商家统计数据
+- **FranchiseStore**: 加盟店基本信息
+- **StaffManagement**: 员工管理（集成在FranchiseStore中）
+
+### 标准菜单模型 (menu/) - v2.0.0 新增
+
+- **StandardDish**: 标准化菜品信息
+- **MenuCategory**: 菜单分类管理
+
+### 商家相关模型 (merchant/) - 已废弃
+
+- **Merchant**: 商家基本信息（已被FranchiseStore替代）
+- **MerchantTypes**: 商家类型枚举（已统一为加盟店）
+- **Store**: 门店信息（已整合到FranchiseStore）
+- **StoreDish**: 门店菜品（已被StandardDish替代）
+- **Dish**: 菜品信息（已被StandardDish替代）
+- **MerchantStats**: 商家统计数据（已整合到FranchiseStore）
 
 ### 订单相关模型 (order/)
 
@@ -279,4 +292,57 @@ User ──────┬───► NutritionProfile ◄──── AiRecomm
 
 | 模型名称 | 主要功能 | 关键字段 | 关联模型 |
 |---------|--------|---------|---------|
-| promotionModel | 促销活动 | merchantId, type, discount, startDate, endDate, conditions | Merchant, Order | 
+| promotionModel | 促销活动 | merchantId, type, discount, startDate, endDate, conditions | Merchant, Order |
+
+---
+
+## 版本更新记录
+
+### v2.0.0 (2025-01-26) - 元气立方品牌转型
+
+#### 重大变更
+1. **商家模型重构**
+   - 废弃原有的多商家类型模型 (merchant/)
+   - 新增统一的加盟店模型 (franchise/franchiseStoreModel.js)
+   - 整合门店管理、员工管理功能
+
+2. **用户角色调整**
+   - 原角色：user, admin, nutritionist, merchant
+   - 新角色：customer, store_manager, store_staff, nutritionist, admin, area_manager, system
+   - 用户模型新增：franchiseStoreId, managedStores 字段
+
+3. **菜单标准化**
+   - 新增标准菜品模型 (menu/standardDishModel.js)
+   - 统一的营养成分结构
+   - 标准化的菜品分类体系
+
+4. **认证系统优化**
+   - 支持自动注册机制
+   - 新增员工认证服务
+   - 用户模型新增：profileCompleted, autoRegistered 字段
+
+#### 新增模型
+
+**加盟店模型 (FranchiseStore)**
+- 基本信息：storeCode, storeName, managerId
+- 加盟信息：franchiseDate, contractDates, franchiseStatus
+- 服务配置：supportedServices, targetCustomers
+- 员工管理：staff数组
+- 运营数据：订单统计、营收数据、评分
+
+**标准菜品模型 (StandardDish)**
+- 基本信息：dishCode, dishName, description
+- 分类信息：category (main/sub), mealType
+- 营养信息：详细营养成分、营养标签
+- 制作信息：准备时间、烹饪时间、制作步骤
+- 定价信息：成本、基础价格、建议零售价
+
+#### 兼容性说明
+- 保留原有角色映射：USER → CUSTOMER, MERCHANT → STORE_MANAGER
+- 原商家模型保留但标记为废弃
+- API接口保持向后兼容
+
+### v1.0.0 (2025-05-17) - 初始版本
+- 建立基础模型架构
+- 支持多商家类型平台
+- 实现用户、商家、订单、营养等核心模型 

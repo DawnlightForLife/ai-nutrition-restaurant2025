@@ -19,7 +19,7 @@ exports.createToken = (user, additionalClaims = {}) => {
     // 准备payload
     const payload = {
       sub: typeof user === 'object' ? user._id : user,
-      role: user.role || 'user',
+      role: user.role || 'customer',
       ...additionalClaims
     };
 

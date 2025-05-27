@@ -75,39 +75,71 @@ const tempVerificationCodes = new Map();
  */
 const validateTempCode = async (phone, code) => {
   try {
+    logger.info(`开始验证手机号 ${phone} 的验证码: ${code}`);
+    
     // 开发环境测试码处理
     if (process.env.NODE_ENV === 'development' && code === '123456') {
       logger.info('开发环境中使用测试验证码');
       return true;
     }
     
-    // 检查数据库中的验证码
+    // 优先检查临时存储的验证码（内存中，更快）
+    const tempCodeData = tempVerificationCodes.get(phone);
+    if (tempCodeData) {
+      logger.info(`找到临时验证码数据: ${JSON.stringify({
+        code: tempCodeData.code,
+        expiresAt: tempCodeData.expiresAt,
+        now: new Date(),
+        isExpired: tempCodeData.expiresAt < new Date()
+      })}`);
+      
+      if (tempCodeData.code === code) {
+        const isExpired = tempCodeData.expiresAt < new Date();
+        if (!isExpired) {
+          logger.info(`临时验证码验证成功: ${phone}`);
+          return true;
+        } else {
+          logger.warn(`临时验证码已过期: ${phone}`);
+          // 清除过期的验证码
+          tempVerificationCodes.delete(phone);
+          return false;
+        }
+      } else {
+        logger.warn(`临时验证码不匹配: 输入=${code}, 存储=${tempCodeData.code}`);
+      }
+    } else {
+      logger.info(`未找到手机号 ${phone} 的临时验证码`);
+    }
+    
+    // 检查数据库中的验证码（备用方案）
     const UserModel = getUserModel();
     const user = await UserModel.findOne({ phone });
     
     if (user && user.verification && user.verification.code) {
-      // 验证码是否过期
+      logger.info(`找到数据库验证码数据: ${JSON.stringify({
+        code: user.verification.code,
+        expiresAt: user.verification.expiresAt,
+        now: new Date(),
+        isExpired: user.verification.expiresAt < new Date()
+      })}`);
+      
       const isExpired = user.verification.expiresAt < new Date();
-      
-      // 验证码是否匹配
       if (!isExpired && user.verification.code === code) {
+        logger.info(`数据库验证码验证成功: ${phone}`);
         return true;
+      } else if (isExpired) {
+        logger.warn(`数据库验证码已过期: ${phone}`);
+      } else {
+        logger.warn(`数据库验证码不匹配: 输入=${code}, 存储=${user.verification.code}`);
       }
+    } else {
+      logger.info(`未找到手机号 ${phone} 的数据库验证码`);
     }
     
-    // 检查临时存储的验证码
-    const tempCodeData = tempVerificationCodes.get(phone);
-    if (tempCodeData && tempCodeData.code === code) {
-      const isExpired = tempCodeData.expiresAt < new Date();
-      
-      if (!isExpired) {
-        return true;
-      }
-    }
-    
+    logger.warn(`验证码验证失败: ${phone}, 输入验证码: ${code}`);
     return false;
   } catch (error) {
-    logger.error('验证临时验证码失败:', { error });
+    logger.error('验证临时验证码失败:', { error, phone, code });
     return false;
   }
 };
@@ -128,24 +160,17 @@ const clearTempCode = async (phone) => {
     const user = await UserModel.findOne({ phone });
     
     if (user && user.verification) {
-      if (typeof user.save === 'function') {
-        user.verification.code = null;
-        user.verification.expiresAt = null;
-        await user.save();
-        logger.info(`成功清除用户${phone}的验证码`);
-      } else {
-        // 使用findOneAndUpdate作为备选方案
-        await UserModel.findOneAndUpdate(
-          { phone },
-          { 
-            $set: { 
-              'verification.code': null, 
-              'verification.expiresAt': null 
-            }
+      // 统一使用findOneAndUpdate避免验证问题
+      await UserModel.findOneAndUpdate(
+        { phone },
+        { 
+          $set: { 
+            'verification.code': null, 
+            'verification.expiresAt': null 
           }
-        );
-        logger.info(`使用findOneAndUpdate清除用户${phone}的验证码`);
-      }
+        }
+      );
+      logger.info(`成功清除用户${phone}的验证码`);
     }
   } catch (error) {
     logger.error(`清除临时验证码失败: ${phone}`, { error });
@@ -185,7 +210,8 @@ const register = async (userData) => {
       phone,
       password,
       nickname,
-      authType = 'password'
+      authType = 'password',
+      autoRegistered = false
     } = userData;
     
     // 获取用户模型
@@ -202,7 +228,10 @@ const register = async (userData) => {
       password,
       nickname,
       authType,
-      accountStatus: 'active' // 确保账户状态为active
+      role: 'customer', // 明确设置角色为顾客
+      accountStatus: 'active', // 确保账户状态为active
+      autoRegistered, // 标记是否为自动注册
+      profileCompleted: false // 新用户资料未完成
     });
     
     // 对验证码登录的用户设置空密码
@@ -219,7 +248,9 @@ const register = async (userData) => {
         password: authType === 'code' ? undefined : password,
         nickname,
         authType,
-        accountStatus: 'active'
+        accountStatus: 'active',
+        autoRegistered,
+        profileCompleted: false
       });
       
       logger.info(`使用Model.create方法创建用户成功: ${newUser._id}`);
@@ -248,7 +279,7 @@ const register = async (userData) => {
 };
 
 /**
- * 用户登录
+ * 用户登录（支持自动注册）
  * @async
  * @param {string} phone - 手机号
  * @param {string} password - 密码
@@ -258,11 +289,25 @@ const register = async (userData) => {
 const login = async (phone, password) => {
   try {
     // 查找用户
-    const user = await getUserModel().findOne({ phone });
+    let user = await getUserModel().findOne({ phone });
     if (!user) {
-      const error = new Error('用户不存在');
-      error.statusCode = 401;
-      throw error;
+      // 自动注册新用户
+      logger.info(`用户${phone}不存在，自动注册新用户`);
+      const userData = {
+        phone,
+        password,
+        authType: 'password',
+        autoRegistered: true // 标记为自动注册用户
+      };
+      const registeredUser = await register(userData);
+      
+      // 重新查询用户以获取完整的mongoose文档
+      user = await getUserModel().findOne({ phone });
+      if (!user) {
+        const error = new Error('用户创建失败');
+        error.statusCode = 500;
+        throw error;
+      }
     }
     
     // 检查用户状态
@@ -300,7 +345,11 @@ const login = async (phone, password) => {
         username: userObject.username || '',
         nickname: userObject.nickname || '',
         avatar: userObject.avatar || '',
-        role: userObject.role
+        role: userObject.role,
+        profileCompleted: userObject.profileCompleted || false,
+        autoRegistered: userObject.autoRegistered || false,
+        franchiseStoreId: userObject.franchiseStoreId || null,
+        userType: getUserType(userObject.role) // 新增：用户类型（customer/staff）
       }
     };
   } catch (error) {
@@ -344,6 +393,7 @@ const loginWithCode = async (phone, code) => {
       const userData = {
         phone,
         authType: 'code', // 标记是通过验证码注册
+        autoRegistered: true // 标记为自动注册用户
       };
       
       const newUser = await register(userData);
@@ -423,9 +473,21 @@ const loginWithCode = async (phone, code) => {
  */
 const sendVerificationCode = async (phone) => {
   try {
+    // 检查是否在60秒内已发送过验证码（防重复发送）
+    const existingCodeData = tempVerificationCodes.get(phone);
+    if (existingCodeData) {
+      const timeSinceLastSent = Date.now() - (existingCodeData.expiresAt.getTime() - 120 * 1000);
+      const cooldownTime = 60 * 1000; // 60秒冷却时间
+      
+      if (timeSinceLastSent < cooldownTime) {
+        const remainingTime = Math.ceil((cooldownTime - timeSinceLastSent) / 1000);
+        throw new AppError(`请等待 ${remainingTime} 秒后再次获取验证码`, 429);
+      }
+    }
+    
     // 生成6位随机验证码
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10分钟后过期
+    const expiresAt = new Date(Date.now() + 120 * 1000); // 120秒后过期，符合主流APP规则
     
     logger.info(`为手机号 ${phone} 生成验证码: ${code}`);
 
@@ -435,17 +497,22 @@ const sendVerificationCode = async (phone) => {
     // 存储验证码到临时Map中
     tempVerificationCodes.set(phone, {
       code,
-      expiresAt
+      expiresAt,
+      sentAt: new Date() // 记录发送时间
     });
     logger.info(`临时存储验证码: ${code} 到 ${phone}`);
 
     if (user) {
-      // 更新用户的验证码信息
-      user.verification = {
-        code,
-        expiresAt
-      };
-      await user.save();
+      // 使用findOneAndUpdate避免触发整个文档的验证
+      await getUserModel().findOneAndUpdate(
+        { phone },
+        { 
+          $set: { 
+            'verification.code': code,
+            'verification.expiresAt': expiresAt
+          }
+        }
+      );
       logger.info(`更新用户 ${user._id} 的验证码信息`);
     }
 
@@ -600,10 +667,14 @@ const generateToken = (user) => {
  */
 const loginOrRegisterWithCode = async (phone, code) => {
   try {
+    // 先验证验证码
     const isValid = await validateTempCode(phone, code);
     if (!isValid) {
       throw new AppError('验证码无效或已过期', 401);
     }
+
+    // 验证成功后立即清除验证码，防止重复使用
+    await clearTempCode(phone);
 
     const UserModel = getUserModel();
     let user = await UserModel.findOne({ phone });
@@ -612,24 +683,19 @@ const loginOrRegisterWithCode = async (phone, code) => {
       // 自动注册流程
       const userData = {
         phone,
-        authType: 'code'
+        authType: 'code',
+        autoRegistered: true // 标记为自动注册用户
       };
       user = await register(userData);
     }
 
-    await clearTempCode(phone);
-
-    // 更新最后登录时间
-    if (typeof user.save === 'function') {
-      user.lastLogin = new Date();
-      await user.save();
-    } else {
-      await UserModel.findOneAndUpdate(
-        { _id: user._id || user.id },
-        { $set: { lastLogin: new Date() } }
-      );
-      user = await UserModel.findById(user._id || user.id);
-    }
+    // 更新最后登录时间，使用findOneAndUpdate避免验证问题
+    const updatedUser = await UserModel.findOneAndUpdate(
+      { _id: user._id || user.id },
+      { $set: { lastLogin: new Date() } },
+      { new: true }
+    );
+    user = updatedUser || user;
 
     const userObject = user.toObject ? user.toObject() : { ...user };
     delete userObject.password;
@@ -640,6 +706,21 @@ const loginOrRegisterWithCode = async (phone, code) => {
     logger.error('验证码登录失败:', { error });
     throw new AppError(error.message || '登录失败', error.statusCode || 500);
   }
+};
+
+/**
+ * 获取用户类型
+ * @private
+ * @param {string} role - 用户角色
+ * @returns {string} 用户类型（customer/staff/admin）
+ */
+const getUserType = (role) => {
+  const staffRoles = ['store_manager', 'store_staff', 'nutritionist'];
+  const adminRoles = ['admin', 'area_manager', 'system'];
+  
+  if (staffRoles.includes(role)) return 'staff';
+  if (adminRoles.includes(role)) return 'admin';
+  return 'customer';
 };
 
 // 模块导出

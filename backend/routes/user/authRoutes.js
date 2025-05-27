@@ -14,6 +14,7 @@ const {
   updateAuth, 
   verifyToken 
 } = require('../../controllers/user/authController');
+const { authenticate } = require('../../middleware/auth/authMiddleware');
 
 // [POST] 用户登录（账号+密码）
 router.post('/login', login);
@@ -32,5 +33,22 @@ router.post('/reset-password', updateAuth);
 
 // [GET] 校验 token 是否有效
 router.get('/verify-token', verifyToken);
+
+// [GET] 获取当前用户信息
+router.get('/me', authenticate, (req, res) => {
+  try {
+    const user = req.user;
+    res.json({
+      success: true,
+      user: user
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '获取用户信息失败',
+      error: error.message
+    });
+  }
+});
 
 module.exports = router;

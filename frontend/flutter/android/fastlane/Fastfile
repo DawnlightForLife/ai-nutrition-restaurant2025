@@ -1,0 +1,72 @@
+default_platform(:android)
+
+platform :android do
+  desc "Build Development APK"
+  lane :build_dev do
+    gradle(
+      task: "clean assembleDevDebug",
+      print_command: false,
+      properties: {
+        "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
+        "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
+        "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
+        "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
+      }
+    )
+  end
+
+  desc "Build Staging APK"
+  lane :build_staging do
+    gradle(
+      task: "clean assembleStagingRelease",
+      print_command: false,
+      properties: {
+        "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
+        "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
+        "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
+        "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
+      }
+    )
+  end
+
+  desc "Build Production APK"
+  lane :build_prod do
+    gradle(
+      task: "clean assembleProdRelease",
+      print_command: false,
+      properties: {
+        "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
+        "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
+        "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
+        "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
+      }
+    )
+  end
+
+  desc "Deploy to Google Play Store"
+  lane :deploy do |options|
+    flavor = options[:flavor] || "prod"
+    
+    # Build the APK
+    case flavor
+    when "staging"
+      build_staging
+      track = "internal"
+    when "prod"
+      build_prod
+      track = "production"
+    else
+      UI.user_error!("Invalid flavor: #{flavor}")
+    end
+    
+    # Upload to Play Store
+    upload_to_play_store(
+      track: track,
+      release_status: "draft",
+      skip_upload_metadata: true,
+      skip_upload_screenshots: true,
+      skip_upload_images: true,
+      apk: lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
+    )
+  end
+end

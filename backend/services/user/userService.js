@@ -131,14 +131,28 @@ const updateUser = async (userId, updateData) => {
       }
     }
     
-    // 更新用户信息
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { $set: updateData },
-      { new: true, runValidators: true }
-    ).select('-password');
+    // 先获取用户实例
+    const user = await User.findById(userId);
+    if (!user) {
+      const error = new Error('用户不存在');
+      error.statusCode = 404;
+      throw error;
+    }
     
-    return updatedUser;
+    // 更新用户信息
+    Object.assign(user, updateData);
+    
+    // 检查资料是否完成
+    user.checkProfileCompletion();
+    
+    // 保存更新
+    await user.save();
+    
+    // 返回不含密码的用户信息
+    const userObject = user.toObject();
+    delete userObject.password;
+    
+    return userObject;
   } catch (error) {
     logger.error('更新用户信息失败', { error });
     if (!error.statusCode) {

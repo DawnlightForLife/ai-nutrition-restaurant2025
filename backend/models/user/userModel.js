@@ -50,17 +50,22 @@ const userSchema = new mongoose.Schema({
   // 用户角色
   role: {
     type: String,
-    enum: ['user', 'admin', 'nutritionist', 'merchant'],
-    default: 'user',
+    enum: ['customer', 'store_manager', 'store_staff', 'nutritionist', 'admin', 'area_manager', 'system'],
+    default: 'customer',
     description: '用户角色'
   },
-  // 当前活跃角色
-  currentRole: {
-    type: String,
-    enum: ['user', 'nutritionist', 'merchant'],
-    default: 'user',
-    description: '当前活跃角色'
+  // 关联加盟店（仅限店员工）
+  franchiseStoreId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'FranchiseStore',
+    description: '所属加盟店ID（仅店长、店员、营养师需要）'
   },
+  // 管理的加盟店（区域经理）
+  managedStores: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'FranchiseStore',
+    description: '管理的加盟店列表（区域经理）'
+  }],
   // 用户基本信息
   nickname: {
     type: String,
@@ -279,6 +284,18 @@ const userSchema = new mongoose.Schema({
     default: 'active',
     description: '账户状态'
   },
+  // 用户资料是否完成
+  profileCompleted: {
+    type: Boolean,
+    default: false,
+    description: '用户资料是否填写完成'
+  },
+  // 是否是自动注册的用户
+  autoRegistered: {
+    type: Boolean,
+    default: false,
+    description: '是否通过自动注册创建'
+  },
   // 用户同意的服务条款版本
   termsVersion: {
     type: String,
@@ -421,8 +438,30 @@ userSchema.methods.getBasicProfile = function() {
     nickname: this.nickname,
     avatarUrl: this.avatarUrl,
     role: this.role,
-    currentRole: this.currentRole
+    currentRole: this.currentRole,
+    profileCompleted: this.profileCompleted,
+    autoRegistered: this.autoRegistered
   };
+};
+
+// 检查用户资料是否完成
+userSchema.methods.checkProfileCompletion = function() {
+  // 必填项：真实姓名、年龄、性别、身高、体重
+  const isComplete = !!(
+    this.realName &&
+    this.age > 0 &&
+    this.gender &&
+    this.gender !== 'other' &&
+    this.height > 0 &&
+    this.weight > 0
+  );
+  
+  // 更新资料完成状态
+  if (this.profileCompleted !== isComplete) {
+    this.profileCompleted = isComplete;
+  }
+  
+  return isComplete;
 };
 
 // 添加静态方法
@@ -461,7 +500,7 @@ userSchema.index(
 
 // 确保密码在返回JSON时被排除
 userSchema.set('toJSON', {
-  transform: function(doc, ret, options) {
+  transform: function(doc, ret) {
     delete ret.password;
     return ret;
   }
@@ -550,7 +589,6 @@ userSchema.statics.findOneFromShards = async function(query) {
   if (!query) return null;
   
   try {
-    const { getDb } = require('../../utils/db');
     const { getShardName } = require('../../utils/shardingConfig');
     const dbManager = require('../../config/modules/db.config');
     
@@ -655,10 +693,10 @@ userSchema.methods.getOrderHistory = async function() {
   return await Order.find({ userId: this._id }).sort({ createdAt: -1 });
 };
 
-// 获取用户的营养数据
-userSchema.methods.getNutritionData = async function() {
-  if (!NutritionData) NutritionData = require('../nutrition/nutritionDataModel.js');
-  return await NutritionData.find({ userId: this._id }).sort({ recordedAt: -1 });
+// 获取用户的营养档案
+userSchema.methods.getNutritionProfile = async function() {
+  if (!NutritionProfile) NutritionProfile = require('../nutrition/nutritionProfileModel.js');
+  return await NutritionProfile.findOne({ userId: this._id });
 };
 
 // 获取用户的AI推荐历史

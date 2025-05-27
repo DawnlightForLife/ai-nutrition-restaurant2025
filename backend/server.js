@@ -88,7 +88,7 @@ const startServer = async () => {
           email: 'user@example.com',
           password: userPass,
           nickname: '测试用户',
-          role: 'user',
+          role: 'customer',
           gender: 'female',
           age: 28
         });

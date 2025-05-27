@@ -29,4 +29,13 @@ router.delete('/:id', authenticate, nutritionProfileController.deleteProfile);
 // [PUT] 设置指定营养档案为主档案
 router.put('/:id/primary', authenticate, nutritionProfileController.setPrimaryProfile);
 
+// [GET] 获取档案完成度统计
+router.get('/stats/completion', authenticate, nutritionProfileController.getCompletionStats);
+
+// [GET] 为AI推荐准备数据
+router.get('/ai/data', authenticate, nutritionProfileController.getProfileForAI);
+
+// [POST] 验证营养档案数据
+router.post('/validate', authenticate, nutritionProfileController.validateProfile);
+
 module.exports = router;

@@ -12,6 +12,11 @@ abstract class Failure extends Equatable {
     this.code,
   });
   
+  /// 创建意外失败
+  factory Failure.unexpected(String message, {String? code}) {
+    return UnexpectedFailure(message: message, code: code);
+  }
+  
   @override
   List<Object?> get props => [message, code];
 }

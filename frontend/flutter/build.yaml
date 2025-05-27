@@ -5,3 +5,20 @@ targets:
         options:
           build_extensions:
             '^lib/{{}}.dart': 'lib/{{}}.g.dart'
+      json_serializable:
+        options:
+          field_rename: snake
+          create_to_json: true
+          explicit_to_json: true
+          include_if_null: false
+      freezed:
+        options:
+          generate_comparisons: true
+          copy_with: true
+          map: true
+      # Custom mapper builder (future enhancement)
+      # mapper_generator|mapper_builder:
+      #   enabled: true
+      #   options:
+      #     input_folder: lib/infrastructure/dtos/generated
+      #     output_folder: lib/infrastructure/mappers/generated

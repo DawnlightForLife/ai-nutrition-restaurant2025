@@ -326,6 +326,226 @@ const setPrimaryProfile = async (req, res) => {
   }
 };
 
+/**
+ * 营养档案完成度计算
+ */
+const calculateCompletionPercentage = (profile) => {
+  const requiredFields = [
+    'profileName', 'gender', 'height', 'weight', 'activityLevel',
+    'nutritionGoals'
+  ];
+  
+  const optionalButImportantFields = [
+    'targetWeight', 'dietaryPreferences', 'medicalConditions',
+    'dailyCalorieTarget', 'hydrationGoal'
+  ];
+
+  let totalFields = requiredFields.length + optionalButImportantFields.length;
+  let completedFields = 0;
+
+  // 检查必填字段
+  requiredFields.forEach(field => {
+    if (profile[field] && 
+        (Array.isArray(profile[field]) ? profile[field].length > 0 : true)) {
+      completedFields++;
+    }
+  });
+
+  // 检查重要可选字段
+  optionalButImportantFields.forEach(field => {
+    if (field === 'dietaryPreferences') {
+      const prefs = profile.dietaryPreferences;
+      if (prefs && (
+        prefs.allergies?.length > 0 || 
+        prefs.taboos?.length > 0 || 
+        prefs.tastePreference?.length > 0
+      )) {
+        completedFields++;
+      }
+    } else if (profile[field] && 
+               (Array.isArray(profile[field]) ? profile[field].length > 0 : true)) {
+      completedFields++;
+    }
+  });
+
+  return Math.round((completedFields / totalFields) * 100);
+};
+
+/**
+ * 数据验证函数
+ */
+const validateNutritionProfile = (data) => {
+  const errors = [];
+
+  // BMI合理性检查
+  if (data.height && data.weight) {
+    const bmi = data.weight / Math.pow(data.height / 100, 2);
+    if (bmi < 10 || bmi > 60) {
+      errors.push('BMI值不在合理范围内，请检查身高体重数据');
+    }
+  }
+
+  // 年龄组和目标体重合理性
+  if (data.targetWeight && data.weight) {
+    const weightDiff = Math.abs(data.targetWeight - data.weight);
+    if (weightDiff > 50) {
+      errors.push('目标体重与当前体重差异过大，请重新评估');
+    }
+  }
+
+  // 热量目标合理性
+  if (data.dailyCalorieTarget) {
+    if (data.dailyCalorieTarget < 800 || data.dailyCalorieTarget > 5000) {
+      errors.push('每日热量目标不在合理范围内(800-5000kcal)');
+    }
+  }
+
+  // 饮水目标合理性
+  if (data.hydrationGoal) {
+    if (data.hydrationGoal < 500 || data.hydrationGoal > 5000) {
+      errors.push('每日饮水目标不在合理范围内(500-5000ml)');
+    }
+  }
+
+  return errors;
+};
+
+/**
+ * 获取档案完成度统计
+ */
+const getCompletionStats = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const profile = await NutritionProfile.findOne({ 
+      userId, 
+      isPrimary: true
+    });
+
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: '未找到主要营养档案'
+      });
+    }
+
+    const completionPercentage = calculateCompletionPercentage(profile);
+    
+    // 分析缺失的重要信息
+    const missingInfo = [];
+    
+    if (!profile.targetWeight) missingInfo.push('目标体重');
+    if (!profile.dailyCalorieTarget) missingInfo.push('每日热量目标');
+    if (!profile.hydrationGoal) missingInfo.push('饮水目标');
+    if (!profile.dietaryPreferences?.allergies?.length) missingInfo.push('过敏信息');
+    if (!profile.medicalConditions?.length) missingInfo.push('健康状况');
+
+    res.status(200).json({
+      success: true,
+      data: {
+        completionPercentage,
+        missingInfo,
+        profileId: profile._id,
+        lastUpdated: profile.updatedAt
+      }
+    });
+  } catch (error) {
+    logger.error('获取档案完成度统计失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '服务器错误，获取完成度统计失败',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * 为AI推荐准备数据
+ */
+const getProfileForAI = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const profile = await NutritionProfile.findOne({ 
+      userId, 
+      isPrimary: true
+    }).select('-nutritionStatus -relatedHealthRecords'); // 排除敏感信息
+
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: '未找到营养档案，请先完善基础信息'
+      });
+    }
+
+    // 准备AI推荐所需的数据结构
+    const aiData = {
+      basicInfo: {
+        gender: profile.gender,
+        ageGroup: profile.ageGroup,
+        height: profile.height,
+        weight: profile.weight,
+        targetWeight: profile.targetWeight,
+        activityLevel: profile.activityLevel,
+        bmi: profile.bmi
+      },
+      goals: {
+        nutritionGoals: profile.nutritionGoals,
+        dailyCalorieTarget: profile.dailyCalorieTarget,
+        hydrationGoal: profile.hydrationGoal
+      },
+      preferences: {
+        dietaryPreferences: profile.dietaryPreferences,
+        mealFrequency: profile.mealFrequency,
+        preferredMealTimes: profile.preferredMealTimes,
+        cookingTimeBudget: profile.cookingTimeBudget
+      },
+      restrictions: {
+        medicalConditions: profile.medicalConditions,
+        allergies: profile.dietaryPreferences?.allergies || [],
+        taboos: profile.dietaryPreferences?.taboos || []
+      },
+      region: profile.region,
+      lifestyle: profile.lifestyle
+    };
+
+    res.status(200).json({
+      success: true,
+      data: aiData,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('获取AI推荐数据失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '服务器错误，获取AI推荐数据失败',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * 验证营养档案数据
+ */
+const validateProfile = async (req, res) => {
+  try {
+    const validationErrors = validateNutritionProfile(req.body);
+    
+    res.status(200).json({
+      success: true,
+      isValid: validationErrors.length === 0,
+      errors: validationErrors
+    });
+  } catch (error) {
+    logger.error('验证营养档案数据失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '服务器错误，数据验证失败',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllProfiles,
   getProfileById,
@@ -333,5 +553,10 @@ module.exports = {
   createProfile,
   updateProfile,
   deleteProfile,
-  setPrimaryProfile
+  setPrimaryProfile,
+  getCompletionStats,
+  getProfileForAI,
+  validateProfile,
+  calculateCompletionPercentage,
+  validateNutritionProfile
 };

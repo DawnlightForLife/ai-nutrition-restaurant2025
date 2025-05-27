@@ -1,0 +1,54 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Build Development IPA"
+  lane :build_dev do
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "dev",
+      export_method: "development",
+      output_directory: "./build",
+      output_name: "yuanqi_dev.ipa"
+    )
+  end
+
+  desc "Build Staging IPA"
+  lane :build_staging do
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "staging",
+      export_method: "ad-hoc",
+      output_directory: "./build",
+      output_name: "yuanqi_staging.ipa"
+    )
+  end
+
+  desc "Build Production IPA"
+  lane :build_prod do
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "prod",
+      export_method: "app-store",
+      output_directory: "./build",
+      output_name: "yuanqi_prod.ipa"
+    )
+  end
+
+  desc "Deploy to TestFlight"
+  lane :beta do
+    build_prod
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true
+    )
+  end
+
+  desc "Deploy to App Store"
+  lane :release do
+    build_prod
+    upload_to_app_store(
+      skip_metadata: true,
+      skip_screenshots: true,
+      force: true
+    )
+  end
+end

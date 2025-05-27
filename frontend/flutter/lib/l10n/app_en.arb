@@ -1,0 +1,27 @@
+{
+  "@@locale": "en",
+  "appTitle": "AI Nutrition Restaurant",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  "home": "Home",
+  "profile": "Profile",
+  "settings": "Settings",
+  "logout": "Logout",
+  "login": "Login",
+  "register": "Register",
+  "email": "Email",
+  "password": "Password",
+  "confirmPassword": "Confirm Password",
+  "welcome": "Welcome",
+  "networkError": "Network error occurred",
+  "serverError": "Server error occurred",
+  "unknownError": "An unknown error occurred",
+  "retry": "Retry",
+  "cancel": "Cancel",
+  "ok": "OK",
+  "loading": "Loading...",
+  "noData": "No data available",
+  "offline": "You are offline",
+  "online": "You are online"
+}

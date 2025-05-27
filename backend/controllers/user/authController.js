@@ -9,29 +9,9 @@
 
 const authService = require('../../services/user/authService');
 const { handleError, handleUnauthorized, handleValidationError } = require('../../utils/errors/errorHandler');
-const logger = require('../../utils/logger/winstonLogger'); // @optional: 结构化日志记录
 
-/**
- * 用户注册
- * @async
- * @param {Object} req - Express请求对象
- * @param {Object} res - Express响应对象
- * @returns {Object} 包含新创建用户信息的JSON响应
- */
-exports.createAuth = async (req, res) => {
-  try {
-    const userData = req.body;
-    const newUser = await authService.register(userData);
-    
-    res.status(201).json({
-      success: true,
-      message: '用户注册成功',
-      data: newUser
-    });
-  } catch (error) {
-    handleError(res, error, error.statusCode || 500);
-  }
-};
+// 注册功能已废弃，所有用户通过登录时自动注册
+// exports.createAuth 已移除
 
 /**
  * 用户登录
@@ -109,12 +89,11 @@ exports.sendVerificationCode = async (req, res) => {
     }
     
     // 根据不同类型调用不同的服务方法
-    let result = false;
     if (type === 'reset') {
-      result = await authService.sendPasswordResetCode(phone);
+      await authService.sendPasswordResetCode(phone);
     } else {
       // 假设默认为登录/注册验证码
-      result = await authService.sendVerificationCode(phone);
+      await authService.sendVerificationCode(phone);
     }
     
     res.status(200).json({

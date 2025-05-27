@@ -1,0 +1,47 @@
+generatorName: dart-dio
+inputSpec: ../../docs/openapi/openapi.yaml
+outputDir: lib/infrastructure/dtos/generated
+additionalProperties:
+  pubName: smart_nutrition_api
+  pubVersion: 1.0.0
+  pubDescription: Smart Nutrition Restaurant API Client
+  # Dart specific configurations
+  nullableFields: true
+  enumPropertyNaming: camelCase
+  nullSafeArrayDefault: true
+  # Enable equality and json serialization
+  generateEquality: true
+  generateToJson: true
+  # Use freezed for immutable models
+  useFreezed: true
+  # Split models into separate files
+  splitModels: true
+  # Enable null safety
+  nullSafe: true
+  # Configure date formatting
+  dateLibrary: core
+  # Use dart:io for file operations
+  useIOLibrary: true
+  # Configure serialization
+  serializationLibrary: json_serializable
+  # Enable collection equality
+  collectionListEquals: true
+  # Additional model features
+  generateBuilders: true
+  generateCopyWith: true
+typeMappings:
+  # Map common types to Dart equivalents
+  DateTime: DateTime
+  Date: DateTime
+  UUID: String
+  File: Uint8List
+importMappings:
+  # Custom import mappings if needed
+languageSpecificPrimitives:
+  - String
+  - bool
+  - int
+  - double
+  - num
+  - DateTime
+  - Uint8List

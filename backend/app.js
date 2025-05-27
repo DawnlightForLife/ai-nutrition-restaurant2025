@@ -375,7 +375,7 @@ app.use('/api/nutrition-profiles', require('./routes/api/nutritionProfiles'));
 app.use('/api/dishes', require('./routes/api/dishes'));
 app.use('/api/stores', require('./routes/api/stores'));
 app.use('/api/recommendations', require('./routes/api/recommendations'));
-app.use('/api/auth', require('./routes/api/auth'));
+app.use('/api/auth', require('./routes/user/authRoutes'));
 app.use('/api/admin', require('./routes/api/admin'));
 app.use('/api/schema', require('./routes/api/schema'));
 app.use('/api/access-tracking', require('./routes/api/accessTracking'));

@@ -1,7 +1,7 @@
-📦 智能营养餐厅 Flutter 前端架构冻结文档（v1.5.0）
+📦 智能营养餐厅 Flutter 前端架构冻结文档（v1.8.0）
 
-状态：✅ 已冻结
-日期：2025-06-10
+状态：✅ 已冻结 - 基础设施完成阶段
+日期：2025-05-27
 作者：系统架构组（助手 + Cursor）
 适用平台：iOS / Android / Web / Desktop（Flutter 多端统一）
 
@@ -25,7 +25,7 @@
 状态管理          Provider / flutter_riverpod（已实现平滑过渡）
 路由系统          auto_route（支持声明式路由、嵌套路由和路径参数）
 本地存储          Hive / SharedPreferences / flutter_secure_storage
-网络             dio + retrofit + connectivity_plus + 自定义拦截器
+网络             dio + retrofit + connectivity_plus + 自定义拦截器 + OpenAPI Generator
 依赖注入          get_it + injectable（完全接入）
 测试框架          flutter_test / mockito / mocktail / golden_toolkit
 构建系统          flutter_flavors + fastlane（支持多环境自动打包）
@@ -35,9 +35,13 @@ UI框架           Material 3 + 自定义主题系统（支持动态主题）
 图表与可视化      fl_chart + syncfusion_flutter_charts（营养数据可视化）
 分析与跟踪        firebase_analytics + custom_event_tracking（自定义行为分析）
 AI集成            tflite_flutter + 自研AI推荐引擎桥接器
+                  （当前阶段仅提供AI模型测试占位接口，正式AI模型将在后续训练完成后集成。）
 三方集成          自研Plugin适配器（标准化第三方服务集成）
 组件预览系统       widgetbook + widgetbook_test（组件库与Golden测试联动）
 架构模板生成器     mason + 自定义砖块模板（一致性代码生成工具）
+事件驱动架构      领域事件总线（EventBus）+ 跨模块通信机制
+API同步          OpenAPI Generator + 前后端模型自动同步
+代码生成         build_runner + freezed + json_serializable + 自定义Mapper生成器
 
 
 3. 项目架构分层（Clean Architecture + DDD）
@@ -54,7 +58,14 @@ AI集成            tflite_flutter + 自研AI推荐引擎桥接器
 │   ├── repositories/     // 仓库实现（数据访问控制）
 │   ├── services/         // 服务实现（API、本地服务）
 │   ├── datasources/      // 数据源实现（远程、本地）
-│   └── mappers/          // 数据转换和映射（DTO-Entity转换）
+│   ├── mappers/          // 数据转换和映射（DTO-Entity转换）
+│   │   ├── base_mapper.dart  // Mapper基类
+│   │   └── generated/    // 自动生成的Mapper
+│   ├── dtos/             // 数据传输对象
+│   │   └── generated/    // OpenAPI生成的DTO
+│   └── api/              // API相关
+│       ├── error_handler.dart // 统一错误处理
+│       └── generated/    // OpenAPI生成的客户端
 ├── presentation/         // 表现层：UI组件和用户交互
 │   ├── screens/          // 页面组件（完整页面）
 │   ├── components/       // UI组件（可复用组件）
@@ -78,18 +89,30 @@ AI集成            tflite_flutter + 自研AI推荐引擎桥接器
 ├── domain/               // 领域层
 │   ├── abstractions/     // 接口定义
 │   ├── common/           // 领域共享组件
+│   │   ├── failures/     // 失败类型定义
+│   │   └── facade/       // 模块Facade接口
+│   ├── events/           // 领域事件
 │   ├── user/             // 用户领域
 │   ├── restaurant/       // 餐厅领域
 │   ├── order/            // 订单领域
 │   └── nutrition/        // 营养领域
 ├── application/          // 应用层用例
 │   ├── core/             // 用例基础类
+│   ├── facades/          // 模块Facade实现
+│   ├── services/         // 应用服务
+│   │   └── event_bus.dart // 事件总线
+│   ├── event_handlers/   // 事件处理器
 │   ├── user/             // 用户相关用例
 │   ├── auth/             // 认证相关用例
 │   ├── nutrition/        // 营养相关用例
 │   └── order/            // 订单相关用例
 ├── models/               // 数据模型（视图模型）
-├── providers/            // 状态管理
+├── presentation/         // 表现层
+│   ├── providers/        // 状态管理
+│   │   ├── {module}/     // Provider模式
+│   │   └── riverpod/     // Riverpod模式
+│   └── components/       // UI组件
+│       └── charts/       // 图表组件
 ├── repositories/         // 数据仓库实现
 ├── routes/               // 路由定义和配置
 ├── screens/              // UI页面组件
@@ -174,7 +197,8 @@ merchant/                   merchant/                     // 商户模块
 	•	插件类：xxx_plugin.dart / xxx_adapter.dart
 
 8. 状态管理说明
-	•	主要使用 Provider + ChangeNotifier 管理各模块状态
+	•	最终统一使用Riverpod进行状态管理，逐步完成Provider迁移，新的模块开发需使用Riverpod。
+	•	主要使用 Provider + ChangeNotifier 管理各模块状态（历史模块）
 	•	集成了 flutter_riverpod 的支持，新模块推荐使用
 	•	所有Provider统一在 providers/ 目录下按模块分组管理
 	•	提供了 Provider ↔ UseCase 的优雅集成模式
@@ -207,6 +231,7 @@ merchant/                   merchant/                     // 商户模块
 	•	支持缓存过期、自动更新和冲突解决机制
 	•	实现自动数据同步服务，处理离线操作队列
 	•	实现增量更新，优化流量和存储空间使用
+	•	详细的离线数据同步机制与冲突解决策略（如Last-Write-Wins、版本冲突检测等）。
 
 11. 错误处理与日志
 	•	统一的错误处理机制：Result<T> 类型封装操作结果
@@ -216,6 +241,7 @@ merchant/                   merchant/                     // 商户模块
 	•	基于环境的日志级别控制
 	•	用户行为采集：提供用户使用情况分析
 	•	错误聚合与分析：按类型和频率聚合错误
+	•	明确日志聚合与分析工具（推荐Firebase Crashlytics/Sentry），明确报警阈值、报警渠道（如企业微信、钉钉）和自动响应机制。
 
 12. 测试策略
 	•	单元测试：针对领域层和应用层
@@ -233,6 +259,10 @@ merchant/                   merchant/                     // 商户模块
 		- 首屏加载时间
 		- 列表滚动性能
 		- 图表渲染性能
+	•	测试覆盖率要求：
+		- 核心业务逻辑单元测试覆盖率必须≥90%
+		- UI组件测试覆盖率必须≥70%
+		- 关键业务流程必须实现100%集成测试覆盖
 	•	测试覆盖率报告生成：
 		- 使用lcov生成覆盖率报告
 		- CI环境自动发布覆盖率报告
@@ -261,6 +291,7 @@ merchant/                   merchant/                     // 商户模块
 	•	通用插件必须提供适配器类，支持不同的外部服务实现
 	•	插件配置应通过依赖注入管理，不得硬编码
 	•	主要插件类必须使用@LazySingleton注解注册为接口实现
+	•	明确插件生命周期管理细节与插件失败回退策略，需定义版本控制和回滚方案。
 	•	第三方服务插件分类：
 		- sms: 短信服务(阿里云、腾讯云)
 		- payment: 支付服务(微信、支付宝、Stripe)
@@ -393,7 +424,133 @@ merchant/                   merchant/                     // 商户模块
 		- 文件位置必须符合目录结构规范
 	•	详细文档参考：docs/MASON_TEMPLATES.md
 
+22. API集成与模型同步系统
+	•	基于OpenAPI Generator实现前后端模型自动同步
+	•	配置文件：openapi-generator-config.yaml定义生成策略
+	•	生成内容包括：
+		- DTO模型：lib/infrastructure/dtos/generated/
+		- API客户端：lib/infrastructure/api_client/generated/
+		- 支持Freezed不可变模型和JSON序列化
+	•	自动化同步流程：
+		- 执行脚本：scripts/generate-openapi-models.sh
+		- CI/CD集成：.github/workflows/sync-models.yml
+		- 变更检测：自动识别后端API变更并生成PR
+	•	Mapper自动生成系统：
+		- 基类定义：BaseMapper<DTO, Entity>
+		- 生成脚本：scripts/generate-mappers.sh
+		- 输出目录：lib/infrastructure/mappers/generated/
+	•	统一错误处理：
+		- ApiErrorHandler处理所有API错误
+		- 错误类型映射到领域失败类型
+		- 支持网络错误、验证错误、认证错误等
+
+23. 模块化Facade架构
+	•	每个业务模块通过Facade提供统一对外接口
+	•	基础接口：ModuleFacade定义标准生命周期
+	•	实现示例：
+		- UserFacade：用户模块所有操作入口
+		- NutritionFacade：营养模块所有操作入口
+		- OrderFacade：订单模块所有操作入口
+	•	模块注册器：ModuleRegistry统一管理所有模块
+	•	优势：
+		- 明确的模块边界，避免跨模块直接调用
+		- 统一的初始化和销毁机制
+		- 便于模块级别的测试和模拟
+		- 支持模块懒加载和按需初始化
+
+24. Riverpod状态管理迁移
+	•	保持与Provider的兼容性，支持渐进式迁移
+	•	新功能优先使用Riverpod，旧功能逐步迁移
+	•	AsyncNotifier模式处理异步状态：
+		- 自动处理loading/data/error状态
+		- 内置缓存和依赖追踪
+		- 支持状态持久化
+	•	Provider组织结构：
+		- lib/presentation/providers/riverpod/
+		- 按模块分组管理
+		- 支持代码生成(@riverpod注解)
+	•	最佳实践：
+		- 使用AsyncValue.guard处理异步操作
+		- 使用ref.invalidate刷新数据
+		- 避免在build方法中执行副作用
+
+25. 领域事件总线系统
+	•	实现基于发布-订阅模式的事件驱动架构
+	•	核心组件：
+		- DomainEvent：所有事件的基类
+		- EventBus：事件发布和订阅中心
+		- EventHandler：事件处理器类型定义
+	•	事件类型示例：
+		- UserLoggedInEvent：用户登录事件
+		- NutritionProfileUpdatedEvent：营养档案更新事件
+		- OrderCompletedEvent：订单完成事件
+	•	跨模块通信：
+		- 模块间通过事件解耦，避免直接依赖
+		- 支持异步事件处理
+		- 事件可携带领域数据
+	•	使用方式：
+		- 发布：event.publish() 或 EventBus().publish(event)
+		- 订阅：EventBus().on<EventType>(handler)
+		- 取消订阅：subscription.cancel()
+
+26. 数据可视化组件系统
+	•	统一的图表组件架构，支持多种图表库
+	•	基础配置：ChartConfig定义通用配置
+	•	主题系统：ChartTheme支持明暗主题
+	•	组件类型：
+		- NutritionPieChart：营养成分饼图
+		- NutritionTrendChart：营养趋势折线图
+		- 更多图表类型持续添加中
+	•	状态处理：
+		- BaseChart.loading()：加载状态
+		- BaseChart.error()：错误状态
+		- BaseChart.empty()：空数据状态
+	•	Widgetbook集成：
+		- 所有图表组件必须注册到Widgetbook
+		- 提供不同状态和配置的预览
+		- 支持Golden测试验证UI一致性
+
+27. 测试架构增强
+	•	模块化测试套件：test/modules/{module}/
+	•	Mock数据生成器：test/fixtures/mock_generator.dart
+	•	Golden测试支持：test/golden/
+	•	测试运行脚本：scripts/run-tests.sh
+	•	测试类型：
+		- 单元测试：业务逻辑测试
+		- 组件测试：UI组件测试
+		- 集成测试：模块间协作测试
+		- Golden测试：UI一致性测试
+	•	覆盖率目标：
+		- 核心业务逻辑 > 80%
+		- UI组件 > 60%
+		- 关键流程100%覆盖
+
 变更记录:
+- v1.8.0 (2025-05-27): 基础设施完成阶段
+  * ✅ 完成Flutter Flavors多环境配置 - 支持dev/staging/prod环境
+  * ✅ 集成Fastlane自动化打包 - Android/iOS双平台自动化构建
+  * ✅ 实现性能监控系统 - Performance Monitor + Analytics Mixins
+  * ✅ 创建用户行为分析系统 - 全面的用户行为追踪和事件上报
+  * ✅ 配置Golden测试框架 - UI视觉回归测试支持
+  * ✅ 集成Widgetbook 3.x - 组件预览和文档系统
+  * ✅ 升级NDK到27.0.12077973 - 解决rive/tflite兼容性问题
+  * ✅ 修复登录响应解析问题 - UserModel字段映射和默认值处理
+  * ✅ 创建统一构建脚本 - 简化多环境构建流程
+  * ✅ 实现测试覆盖率脚本 - 自动生成覆盖率报告
+- v1.7.0 (2025-01-24): 基础架构完善阶段
+  * ✅ 实现auto_route路由系统 - 支持声明式路由、路由守卫和错误页面
+  * ✅ 完善全局错误处理机制 - 统一异常类型、错误边界和错误展示
+  * ✅ 添加网络连接监测 - 实时网络状态监控、连接类型检测和网络可达性测试
+  * ✅ 实现离线模式支持 - 离线操作队列、数据缓存和自动同步机制
+  * ✅ 集成错误边界组件 - 全局错误捕获、错误展示和错误恢复
+  * ✅ 创建网络状态指示器 - 网络状态横幅、同步状态显示和连接类型指示
+- v1.6.0 (2025-01-24): 重大架构升级
+  * 集成OpenAPI Generator实现API模型自动化
+  * 引入模块Facade架构模式
+  * 添加Riverpod状态管理支持
+  * 实现领域事件总线系统
+  * 创建统一数据可视化组件
+  * 增强测试架构和自动化
 - v1.5.0 (2025-06-10): 增加组件预览系统(Widgetbook)和架构模板系统(Mason)章节
 - v1.4.0 (2025-06-15): 增加性能优化策略、安全实践、多平台适配和数据库模型映射
 - v1.3.0 (2025-06-01): 添加插件系统架构规范，完善第三方服务集成
