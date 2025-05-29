@@ -1,0 +1,91 @@
+{
+  // 隐藏生成的代码文件，提升阅读体验
+  "files.exclude": {
+    "**/*.g.dart": true,
+    "**/*.freezed.dart": true,
+    "**/*.config.dart": true,
+    "**/*.mocks.dart": true,
+    "**/pubspec.lock": false,
+    "**/.dart_tool": true,
+    "**/.packages": true,
+    "**/build/": true
+  },
+  
+  // 防止监听生成文件造成性能问题
+  "files.watcherExclude": {
+    "**/*.g.dart": true,
+    "**/*.freezed.dart": true,
+    "**/*.config.dart": true,
+    "**/*.mocks.dart": true,
+    "**/.dart_tool/**": true,
+    "**/build/**": true
+  },
+  
+  // Flutter 开发优化设置
+  "editor.formatOnSave": true,
+  "editor.formatOnType": true,
+  "editor.rulers": [80, 120],
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  
+  // Dart 特定设置
+  "dart.lineLength": 120,
+  "dart.closingLabels": true,
+  "dart.flutterOutline": true,
+  "dart.previewFlutterUiGuides": true,
+  "dart.flutterCreateAndroidLanguage": "kotlin",
+  "dart.flutterCreateIOSLanguage": "swift",
+  
+  // 文件关联
+  "files.associations": {
+    "*.dart": "dart",
+    "pubspec.yaml": "yaml",
+    "analysis_options.yaml": "yaml"
+  },
+  
+  // 搜索优化
+  "search.exclude": {
+    "**/*.g.dart": true,
+    "**/*.freezed.dart": true,
+    "**/*.config.dart": true,
+    "**/*.mocks.dart": true,
+    "**/build/": true,
+    "**/.dart_tool/": true,
+    "**/coverage/": true
+  },
+  
+  // 快速打开优化
+  "files.watcherExclude": {
+    "**/*.g.dart": true,
+    "**/*.freezed.dart": true
+  },
+  
+  // 推荐的扩展
+  "extensions.recommendations": [
+    "dart-code.dart-code",
+    "dart-code.flutter",
+    "usernamehw.errorlens",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.vscode-json"
+  ],
+  
+  // 代码提示优化
+  "editor.suggestSelection": "first",
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  
+  // Git 配置
+  "git.ignoreLimitWarning": true,
+  
+  // 终端配置
+  "terminal.integrated.shell.osx": "/bin/zsh",
+  
+  // 工作区特定设置
+  "dart.debugExternalPackageLibraries": false,
+  "dart.debugSdkLibraries": false,
+  
+  // 性能优化
+  "dart.analysisServerFolding": true,
+  "dart.previewLsp": true
+}

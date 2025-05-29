@@ -1,0 +1,47 @@
+repos:
+  # 架构检查
+  - repo: local
+    hooks:
+      - id: check-architecture
+        name: Check Architecture
+        entry: dart scripts/check_architecture.dart
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  # 禁止直接修改生成的文件
+  - repo: local
+    hooks:
+      - id: check-generated-files
+        name: Check Generated Files
+        entry: bash -c 'if git diff --cached --name-only | grep -E "\.(g|freezed|gr)\.dart$"; then echo "❌ 不要提交生成的文件"; exit 1; fi'
+        language: system
+        pass_filenames: false
+
+  # 检查是否有新的顶层目录
+  - repo: local
+    hooks:
+      - id: check-top-level-dirs
+        name: Check Top Level Directories
+        entry: bash -c 'if git diff --cached --name-only | grep -E "^lib/[^/]+/$" | grep -v "^lib/(core|features|shared|config)/"; then echo "❌ 不允许创建新的顶层目录"; exit 1; fi'
+        language: system
+        pass_filenames: false
+
+  # Flutter 分析
+  - repo: local
+    hooks:
+      - id: flutter-analyze
+        name: Flutter Analyze
+        entry: flutter analyze
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  # 格式化检查
+  - repo: local
+    hooks:
+      - id: dart-format
+        name: Dart Format
+        entry: dart format --set-exit-if-changed .
+        language: system
+        pass_filenames: false

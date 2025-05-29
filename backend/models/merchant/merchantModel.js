@@ -57,6 +57,7 @@ const merchantSchema = new mongoose.Schema({
     sensitivityLevel: 3, // 低度敏感数据
     description: '商家类型'
   },
+  // type 字段已移除
   registrationNumber: {
     type: String,
     required: true,
@@ -152,6 +153,16 @@ const merchantSchema = new mongoose.Schema({
       sensitivityLevel: 3, // 低度敏感数据
       description: '商家简介'
     },
+    // 新增字段（紧随 description 之后）
+    isFranchise: { type: Boolean, default: true },
+    franchiseInfo: {
+      contractNumber: { type: String },
+      startDate: { type: Date },
+      endDate: { type: Date },
+      franchiseLevel: { type: String, enum: ['basic', 'premium', 'flagship'], default: 'basic' },
+    },
+    businessFeatures: [{ type: String }], // e.g. ['nutrition_meal', 'school_meal', 'postpartum_meal']
+    employees: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     establishmentYear: {
       type: Number,
       sensitivityLevel: 3, // 低度敏感数据
@@ -986,4 +997,4 @@ const Merchant = require('../modelRegistrar')('Merchant', merchantSchema, {
   }
 });
 
-module.exports = Merchant; 
+module.exports = Merchant;

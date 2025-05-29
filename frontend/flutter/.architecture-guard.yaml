@@ -1,0 +1,71 @@
+# 架构守卫配置文件
+# 用于限制AI工具和开发者的文件操作
+
+# 锁定的目录（禁止在这些目录创建新文件）
+locked_directories:
+  - lib/core/di/         # 依赖注入核心，不允许随意修改
+  - lib/core/router/     # 路由配置，需要统一管理
+  - lib/core/base/       # 基础类，影响全局
+  - lib/shared/theme/    # 主题系统，需要设计评审
+
+# 受保护的文件（修改需要审核）
+protected_files:
+  - pubspec.yaml         # 依赖管理
+  - analysis_options.yaml # 代码规范
+  - lib/main.dart        # 应用入口
+  - lib/app.dart         # 应用配置
+  - "**/*.freezed.dart"  # 生成的文件
+  - "**/*.g.dart"        # 生成的文件
+  - "**/*.gr.dart"       # 生成的文件
+
+# 命名规范
+naming_rules:
+  # 文件命名规则
+  files:
+    - pattern: "^[a-z][a-z0-9_]*\\.dart$"
+      message: "文件名必须使用小写字母和下划线"
+    
+  # 特定目录的命名规则
+  directories:
+    "lib/features/*/presentation/pages/":
+      - pattern: ".*_page\\.dart$"
+        message: "页面文件必须以_page.dart结尾"
+    
+    "lib/features/*/presentation/widgets/":
+      - pattern: ".*_widget\\.dart$|.*_card\\.dart$|.*_button\\.dart$"
+        message: "组件文件必须以_widget、_card或_button等结尾"
+    
+    "lib/features/*/domain/usecases/":
+      - pattern: ".*_usecase\\.dart$"
+        message: "用例文件必须以_usecase.dart结尾"
+
+# 禁止的操作
+forbidden_actions:
+  # 禁止直接创建的文件类型
+  file_creation:
+    - "lib/features/*/data/repositories/*_repository.dart"
+      # 必须先创建接口: "请先在domain/repositories/创建接口"
+    
+  # 禁止的导入
+  forbidden_imports:
+    - from: "lib/features/*/presentation/"
+      to: "lib/features/*/data/"
+      message: "表现层不能直接导入数据层"
+    
+    - from: "lib/features/*/domain/"
+      to: "package:flutter/"
+      message: "领域层不能依赖Flutter"
+
+# 模板要求
+template_requirements:
+  # 新页面必须包含的结构
+  "lib/features/*/presentation/pages/*_page.dart":
+    must_contain:
+      - "@RoutePage()"  # 必须有路由注解
+      - "class.*Page extends"  # 必须是Page类
+    
+  # 新Provider必须包含的结构
+  "lib/features/*/presentation/providers/*_provider.dart":
+    must_contain:
+      - "@riverpod"  # 必须使用riverpod注解
+      - "class.*Notifier"  # 必须是Notifier类

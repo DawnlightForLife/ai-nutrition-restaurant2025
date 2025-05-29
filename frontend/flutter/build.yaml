@@ -1,24 +1,96 @@
+# 统一的代码生成配置
+# 优化生成文件的组织结构，提升代码阅读体验
+
 targets:
   $default:
     builders:
+      # 基础代码生成
       source_gen|combining_builder:
         options:
           build_extensions:
             '^lib/{{}}.dart': 'lib/{{}}.g.dart'
+        generate_for:
+          exclude:
+            - lib/generated/**
+            - test/**
+
+      # JSON Serializable 配置
       json_serializable:
         options:
           field_rename: snake
           create_to_json: true
           explicit_to_json: true
           include_if_null: false
+          any_map: false
+          checked: false
+          disallow_unrecognized_keys: false
+        generate_for:
+          include:
+            - lib/**
+          exclude:
+            - lib/generated/**
+            - lib/**.freezed.dart
+
+      # Freezed 配置
       freezed:
         options:
           generate_comparisons: true
           copy_with: true
           map: true
-      # Custom mapper builder (future enhancement)
-      # mapper_generator|mapper_builder:
-      #   enabled: true
-      #   options:
-      #     input_folder: lib/infrastructure/dtos/generated
-      #     output_folder: lib/infrastructure/mappers/generated
+          union_factory: true
+          equal: true
+          to_string: true
+        generate_for:
+          include:
+            - lib/**
+          exclude:
+            - lib/generated/**
+            - lib/**.g.dart
+
+      # Riverpod 生成器配置
+      riverpod_generator:
+        options:
+          class_based_mixins: true
+        generate_for:
+          include:
+            - lib/**
+          exclude:
+            - lib/generated/**
+            - lib/**.g.dart
+            - lib/**.freezed.dart
+
+      # Retrofit 配置
+      retrofit_generator:
+        generate_for:
+          include:
+            - lib/**/services/**_api_service.dart
+          exclude:
+            - lib/**.g.dart
+
+      # Hive 配置
+      hive_generator:
+        generate_for:
+          include:
+            - lib/**/models/**
+          exclude:
+            - lib/**.g.dart
+            - lib/**.freezed.dart
+
+      # Auto Route 配置
+      auto_route_generator:
+        generate_for:
+          include:
+            - lib/core/router/app_router.dart
+
+# IDE 优化建议（添加到 .vscode/settings.json）:
+# {
+#   "files.exclude": {
+#     "**/*.g.dart": true,
+#     "**/*.freezed.dart": true,
+#     "**/*.config.dart": true
+#   },
+#   "files.watcherExclude": {
+#     "**/*.g.dart": true,
+#     "**/*.freezed.dart": true
+#   }
+# }

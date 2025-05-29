@@ -62,6 +62,7 @@ API同步          OpenAPI Generator + 前后端模型自动同步
 │   │   ├── base_mapper.dart  // Mapper基类
 │   │   └── generated/    // 自动生成的Mapper
 │   ├── dtos/             // 数据传输对象
+│   │   ├── base_dto.dart     // DTO基类
 │   │   └── generated/    // OpenAPI生成的DTO
 │   └── api/              // API相关
 │       ├── error_handler.dart // 统一错误处理
@@ -73,6 +74,9 @@ API同步          OpenAPI Generator + 前后端模型自动同步
 │   ├── providers/        // 状态提供者（状态管理）
 │   └── utils/            // UI辅助工具（格式化、验证）
 ├── core/                 // 核心组件：DI容器、基础类、工具函数
+│   ├── plugins/          // 插件系统
+│   │   ├── plugin_manager.dart  // 插件管理器
+│   │   └── plugin.dart   // 插件接口
 ├── common/               // 通用组件：常量、工具、主题
 ├── widgetbook/           // 组件预览和文档系统
 
@@ -90,7 +94,8 @@ API同步          OpenAPI Generator + 前后端模型自动同步
 │   ├── abstractions/     // 接口定义
 │   ├── common/           // 领域共享组件
 │   │   ├── failures/     // 失败类型定义
-│   │   └── facade/       // 模块Facade接口
+│   │   ├── facade/       // 模块Facade接口
+│   │   └── value_objects/ // 通用值对象
 │   ├── events/           // 领域事件
 │   ├── user/             // 用户领域
 │   ├── restaurant/       // 餐厅领域
@@ -126,10 +131,13 @@ API同步          OpenAPI Generator + 前后端模型自动同步
 │       ├── storage/      // 文件存储
 │       ├── export/       // 数据导出
 │       ├── llm/          // AI模型
-│       └── platform/     // 第三方平台
+│       ├── platform/     // 第三方平台
+│       └── share/        // 分享服务
 ├── storage/              // 存储相关服务
 ├── extensions/           // 扩展方法
 ├── hooks/                // 自定义Hooks
+│   ├── app_hooks.dart    // 应用生命周期钩子
+│   └── hook_manager.dart // 钩子管理器
 ├── l10n/                 // 国际化资源
 ├── widgetbook/           // 组件预览系统
 │   ├── widgetbook_main.dart // 预览系统入口
@@ -188,10 +196,12 @@ merchant/                   merchant/                     // 商户模块
 
 7. 命名规范
 	•	领域实体：xxx.dart
+	•	值对象：xxx.dart (在value_objects目录下)
 	•	接口定义：i_xxx.dart
 	•	用例类：xxx_use_case.dart
 	•	仓库实现：xxx_repository.dart
 	•	服务实现：xxx_service.dart
+	•	DTO对象：xxx_dto.dart
 	•	视图组件：xxx_screen.dart / xxx_page.dart
 	•	Provider：xxx_provider.dart
 	•	插件类：xxx_plugin.dart / xxx_adapter.dart
@@ -525,7 +535,60 @@ merchant/                   merchant/                     // 商户模块
 		- UI组件 > 60%
 		- 关键流程100%覆盖
 
+28. 值对象（Value Objects）系统
+	•	实现领域驱动设计中的值对象概念
+	•	提供不可变性和业务规则验证
+	•	主要值对象：
+		- PhoneNumber：电话号码验证和格式化
+		- Email：邮箱地址验证
+		- Money：金额处理（待实现）
+		- Address：地址信息（待实现）
+	•	使用Either<Failure, ValueObject>处理创建失败
+	•	自动格式化和标准化输入数据
+
+29. DTO层架构
+	•	实现前后端数据传输的标准化
+	•	BaseDto提供通用响应结构：
+		- ApiResponse<T>：标准API响应包装
+		- PaginatedResponse<T>：分页数据响应
+		- ErrorResponse：错误响应格式
+	•	支持JSON序列化和类型安全
+	•	与领域实体完全解耦
+
+30. 插件系统架构
+	•	提供可扩展的第三方服务集成框架
+	•	核心接口：
+		- Plugin：插件基础接口
+		- PluginManager：插件生命周期管理
+	•	插件类型：
+		- PaymentPlugin：支付插件（支付宝、微信支付等）
+		- StoragePlugin：存储插件（OSS、本地存储等）
+		- SharePlugin：分享插件（微信、系统分享等）
+	•	插件注册和配置机制
+	•	插件失败回退和错误处理
+
+31. 生命周期钩子系统
+	•	提供应用级别的生命周期事件钩子
+	•	钩子类型：
+		- beforeUserLogin/afterUserLogin：用户登录钩子
+		- beforeUserLogout/afterUserLogout：用户登出钩子
+		- beforeDataCreate/afterDataCreate：数据创建钩子
+		- beforeDataUpdate/afterDataUpdate：数据更新钩子
+		- beforeDataDelete/afterDataDelete：数据删除钩子
+		- beforeApiCall/afterApiCall：API调用钩子
+		- onNetworkStatusChange：网络状态变化钩子
+		- onAppLifecycleChange：应用生命周期变化钩子
+	•	支持异步钩子处理
+	•	钩子执行顺序管理
+	•	错误隔离机制
+
 变更记录:
+- v1.9.0 (2025-05-29): 架构完善和优化
+  * ✅ 实现值对象系统 - PhoneNumber、Email等值对象
+  * ✅ 创建DTO层架构 - 标准化API数据传输
+  * ✅ 实现插件系统 - 可扩展的第三方服务集成
+  * ✅ 创建生命周期钩子系统 - 应用级别事件钩子
+  * ✅ 完成前后端架构对齐 - DDD模式完全实现
 - v1.8.0 (2025-05-27): 基础设施完成阶段
   * ✅ 完成Flutter Flavors多环境配置 - 支持dev/staging/prod环境
   * ✅ 集成Fastlane自动化打包 - Android/iOS双平台自动化构建

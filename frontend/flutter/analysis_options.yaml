@@ -15,6 +15,8 @@ analyzer:
     - "**/*.freezed.dart"
     - "lib/l10n/generated/**"
     - "lib/generated/**"
+  plugins:
+    - riverpod_lint
   errors:
     # 将以下错误视为警告
     invalid_annotation_target: warning

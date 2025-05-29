@@ -1,60 +1,35 @@
-import 'package:flutter/foundation.dart';
-
-enum Environment { dev, staging, prod }
-
-@immutable
 class AppConfig {
-  final Environment environment;
-  final String apiBaseUrl;
-  final String appName;
-  final bool enableLogging;
-  final bool enablePerformanceMonitoring;
+  // API配置
+  static const String developmentApiUrl = 'http://localhost:3002';
+  static const String stagingApiUrl = 'https://staging-api.yuanqi-nutrition.com';
+  static const String productionApiUrl = 'https://api.yuanqi-nutrition.com';
   
-  const AppConfig({
-    required this.environment,
-    required this.apiBaseUrl,
-    required this.appName,
-    required this.enableLogging,
-    required this.enablePerformanceMonitoring,
-  });
+  // API超时时间
+  static const Duration timeout = Duration(seconds: 30);
   
-  static late AppConfig _instance;
+  // 重试次数
+  static const int maxRetries = 3;
   
-  static AppConfig get instance => _instance;
+  // 分页配置
+  static const int pageSize = 20;
   
-  static void setEnvironment(Environment env) {
-    switch (env) {
-      case Environment.dev:
-        _instance = const AppConfig(
-          environment: Environment.dev,
-          apiBaseUrl: 'http://localhost:3000/api/v1',
-          appName: '元气立方 Dev',
-          enableLogging: true,
-          enablePerformanceMonitoring: false,
-        );
-        break;
-      case Environment.staging:
-        _instance = const AppConfig(
-          environment: Environment.staging,
-          apiBaseUrl: 'https://staging-api.ainutrition.com/api/v1',
-          appName: '元气立方 Staging',
-          enableLogging: true,
-          enablePerformanceMonitoring: true,
-        );
-        break;
-      case Environment.prod:
-        _instance = const AppConfig(
-          environment: Environment.prod,
-          apiBaseUrl: 'https://api.ainutrition.com/api/v1',
-          appName: '元气立方',
-          enableLogging: false,
-          enablePerformanceMonitoring: true,
-        );
-        break;
-    }
-  }
+  // 缓存配置
+  static const Duration cacheMaxAge = Duration(hours: 24);
+  static const int cacheMaxSize = 100; // MB
   
-  bool get isDev => environment == Environment.dev;
-  bool get isStaging => environment == Environment.staging;
-  bool get isProd => environment == Environment.prod;
+  // 文件上传配置
+  static const int maxFileSize = 10 * 1024 * 1024; // 10MB
+  static const List<String> allowedImageTypes = ['jpg', 'jpeg', 'png', 'gif'];
+  
+  // 功能开关
+  static const bool enableOfflineMode = true;
+  static const bool enableAnalytics = true;
+  static const bool enableCrashlytics = true;
+}
+
+// 保持向后兼容
+class ApiConfig {
+  static String get baseUrl => AppConfig.developmentApiUrl;
+  static Duration get timeout => AppConfig.timeout;
+  static int get maxRetries => AppConfig.maxRetries;
 }

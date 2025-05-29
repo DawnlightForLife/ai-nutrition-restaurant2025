@@ -1,135 +1,237 @@
-# Flutter前端架构说明
+# Flutter Clean Architecture 项目结构
 
-本项目采用**Clean Architecture + DDD（领域驱动设计）**架构，与后端架构保持一致。
-
-## 目录结构
+## 目录结构说明
 
 ```
 lib/
-├── app.dart                 # 应用根组件
-├── main.dart               # 应用入口
-├── domain/                 # 领域层（核心业务逻辑）
-│   ├── abstractions/       # 抽象接口定义
-│   │   ├── repositories/   # 仓储接口
-│   │   └── services/       # 服务接口
-│   ├── common/             # 通用领域组件
-│   ├── user/              # 用户领域
-│   ├── restaurant/        # 餐厅领域
-│   ├── order/             # 订单领域
-│   ├── nutrition/         # 营养领域
-│   ├── forum/             # 论坛领域
-│   └── merchant/          # 商户领域
-├── application/           # 应用层（用例/业务流程）
-│   ├── core/              # 核心用例组件
-│   └── {module}/          # 各模块用例
-├── infrastructure/        # 基础设施层（技术实现）
-│   ├── repositories/      # 仓储实现
-│   ├── services/          # 服务实现
-│   ├── datasources/       # 数据源
-│   ├── mappers/           # 数据映射
-│   └── dtos/              # 数据传输对象
-├── presentation/          # 表现层（UI）
-│   ├── screens/           # 页面
-│   ├── components/        # 组件
-│   ├── viewmodels/        # 视图模型
-│   └── providers/         # 状态管理
-├── services/              # 服务实现
-│   ├── api/               # API服务
-│   ├── cache/             # 缓存服务
-│   └── plugins/           # 插件服务
-├── core/                  # 核心功能
-│   ├── di/                # 依赖注入
-│   ├── navigation/        # 路由导航
-│   └── utils/             # 工具函数
-├── config/                # 配置
-│   ├── theme/             # 主题配置
-│   ├── routes/            # 路由配置
-│   └── env/               # 环境配置
-└── common/                # 通用资源
-    ├── constants/         # 常量
-    ├── utils/             # 工具类
-    ├── theme/             # 主题
-    └── extensions/        # 扩展方法
+├── core/                    # 核心模块：包含跨功能模块的共享代码
+│   ├── di/                  # 依赖注入配置
+│   ├── error/               # 统一错误处理（Failures, Exceptions）
+│   ├── network/             # 网络配置（Dio, 拦截器）
+│   ├── router/              # 路由配置（auto_route）
+│   ├── utils/               # 工具类（验证器、格式化器、扩展）
+│   └── base/                # 基础抽象类（UseCase, Repository, Entity）
+│
+├── features/                # 功能模块（按业务领域划分）
+│   ├── auth/                # 认证模块
+│   ├── user/                # 用户模块
+│   ├── nutrition/           # 营养档案模块
+│   ├── recommendation/      # AI推荐模块
+│   ├── forum/               # 论坛社区模块
+│   ├── order/               # 订单模块
+│   ├── consultation/        # 咨询模块
+│   ├── merchant/            # 商家模块
+│   ├── nutritionist/        # 营养师模块
+│   ├── admin/               # 管理后台模块
+│   └── common/              # 通用页面（隐私政策、关于我们等）
+│
+├── shared/                  # 共享资源
+│   ├── theme/               # 主题配置（颜色、文字样式、尺寸）
+│   ├── l10n/                # 国际化资源
+│   └── widgets/             # 通用UI组件
+│
+├── config/                  # 应用配置
+│   ├── env_config.dart      # 环境配置
+│   ├── flavor_config.dart   # 构建变体配置
+│   └── app_config.dart      # 应用配置
+│
+└── 入口文件
+    ├── main.dart            # 生产环境入口
+    ├── main_dev.dart        # 开发环境入口
+    ├── main_staging.dart    # 测试环境入口
+    └── app.dart             # 主应用
+```
+
+## 每个功能模块的标准结构
+
+```
+features/[module_name]/
+├── data/                    # 数据层
+│   ├── datasources/         # 数据源（远程API、本地缓存）
+│   ├── models/              # 数据模型（DTO）
+│   └── repositories/        # Repository实现
+│
+├── domain/                  # 领域层
+│   ├── entities/            # 业务实体
+│   ├── repositories/        # Repository接口
+│   ├── usecases/            # 用例（业务逻辑）
+│   └── value_objects/       # 值对象
+│
+└── presentation/            # 表现层
+    ├── providers/           # 状态管理（Riverpod）
+    ├── pages/               # 页面
+    └── widgets/             # 模块专用组件
 ```
 
 ## 架构原则
 
 ### 1. 依赖规则
-- 依赖方向：表现层 → 应用层 → 领域层 ← 基础设施层
-- 领域层不依赖任何外部框架
-- 使用接口进行依赖反转
+- **Presentation** → **Domain** ← **Data**
+- Domain层不依赖任何其他层
+- Data和Presentation层依赖Domain层
+- 依赖方向永远指向内部
 
-### 2. 领域驱动设计
-- **实体(Entity)**: 具有唯一标识的业务对象
-- **值对象(Value Object)**: 不可变的、无标识的对象
-- **聚合(Aggregate)**: 相关实体和值对象的集合
-- **领域服务(Domain Service)**: 跨实体的业务逻辑
-- **仓储(Repository)**: 数据访问抽象
-
-### 3. 分层职责
-
-#### 领域层 (Domain)
-- 包含核心业务逻辑和规则
-- 定义实体、值对象、领域服务
-- 定义仓储和服务接口（抽象）
-
-#### 应用层 (Application)
-- 协调领域对象完成业务用例
-- 不包含业务规则，只负责流程编排
-- 返回统一的Result类型处理成功/失败
-
-#### 基础设施层 (Infrastructure)
-- 实现领域层定义的接口
-- 处理技术细节（API调用、数据库访问等）
-- 数据模型转换（DTO ↔ Entity）
-
-#### 表现层 (Presentation)
-- UI组件和页面
-- 状态管理（Provider）
-- 用户交互处理
-
-## 与后端映射关系
-
-| 后端模块 | 前端模块 | 说明 |
-|---------|---------|-----|
-| domain/ | domain/ | 领域模型一对一映射 |
-| application/ | application/ | 用例逻辑对应 |
-| controllers/ | screens/ | 控制器对应UI页面 |
-| services/ | services/ | 服务层实现 |
-| repositories/ | repositories/ | 数据访问层 |
-| plugins/ | services/plugins/ | 第三方服务集成 |
-
-## 开发规范
-
-### 命名规范
-- 接口以`I`开头：`IUserRepository`
-- 值对象使用描述性名称：`Email`, `Phone`
-- 用例以动作命名：`SignInUseCase`
-- Provider后缀：`AuthProvider`
-
-### 文件组织
-- 每个领域模块独立文件夹
-- 相关文件就近放置
-- 公共组件放在common目录
-
-### 依赖注入
-- 使用get_it + injectable
-- 接口和实现分离
-- 通过构造函数注入依赖
-
-## 快速开始
-
-1. 运行代码生成
-```bash
-flutter pub run build_runner build --delete-conflicting-outputs
+### 2. 数据流
+```
+UI (Pages/Widgets) 
+    ↓ 触发事件
+Provider (StateNotifier)
+    ↓ 调用
+UseCase
+    ↓ 调用
+Repository Interface
+    ↓ 实现
+Repository Implementation
+    ↓ 调用
+DataSource (Remote/Local)
+    ↓ 返回
+Model → Entity 转换
+    ↓ 返回给UI
+State 更新
 ```
 
-2. 初始化依赖注入
+### 3. 命名规范
+
+#### 文件命名
+- 使用小写字母和下划线：`user_profile_page.dart`
+- 页面文件以`_page`结尾
+- 组件文件以`_widget`或具体组件类型结尾
+- Provider文件以`_provider`结尾
+- UseCase文件以`_usecase`结尾
+
+#### 类命名
+- 使用大驼峰命名：`UserProfilePage`
+- UseCase类以`UseCase`结尾：`GetUserProfileUseCase`
+- Provider类以`Provider`或`Notifier`结尾
+- Model类以`Model`结尾
+- Entity类不需要特殊后缀
+
+### 4. 状态管理
+
+使用Riverpod进行状态管理：
+
 ```dart
-await configureDependencies();
+// State定义（使用Freezed）
+@freezed
+class UserState with _$UserState {
+  const factory UserState.initial() = _Initial;
+  const factory UserState.loading() = _Loading;
+  const factory UserState.loaded(User user) = _Loaded;
+  const factory UserState.error(Failure failure) = _Error;
+}
+
+// StateNotifier
+class UserNotifier extends StateNotifier<UserState> {
+  final GetUserProfileUseCase _getUserProfile;
+  
+  UserNotifier(this._getUserProfile) : super(const UserState.initial());
+}
+
+// Provider定义
+final userProvider = StateNotifierProvider<UserNotifier, UserState>((ref) {
+  return UserNotifier(ref.watch(getUserProfileUseCaseProvider));
+});
 ```
 
-3. 运行应用
-```bash
-flutter run
+### 5. 错误处理
+
+统一使用`Either<Failure, Success>`模式：
+
+```dart
+// UseCase返回
+Future<Either<Failure, User>> call(String userId);
+
+// Repository返回
+Future<Either<Failure, User>> getUser(String userId);
+
+// 处理结果
+final result = await getUserProfile(userId);
+result.fold(
+  (failure) => showError(failure.message),
+  (user) => showUser(user),
+);
 ```
+
+## 开发流程
+
+1. **需求分析**：确定功能属于哪个模块
+2. **定义Entity**：在domain层定义业务实体
+3. **定义Repository接口**：在domain层定义数据操作接口
+4. **实现UseCase**：在domain层实现业务逻辑
+5. **实现Model**：在data层定义数据模型
+6. **实现Repository**：在data层实现数据操作
+7. **实现DataSource**：在data层实现具体的数据获取
+8. **创建Provider**：在presentation层创建状态管理
+9. **创建UI**：在presentation层创建页面和组件
+
+## 注意事项
+
+1. **不要跨层调用**：UI不应直接调用Repository或DataSource
+2. **保持Domain层纯净**：不要在Domain层使用Flutter相关的类
+3. **使用依赖注入**：通过Provider管理依赖关系
+4. **编写测试**：每层都应该有对应的单元测试
+5. **遵循单一职责**：每个类只负责一件事情
+
+## 模块职责说明
+
+### 核心功能模块
+- `auth`: 统一登录、注册、找回密码
+- `user`: 个人中心、资料管理、设置、角色入口
+- `nutrition`: 营养档案管理
+- `recommendation`: AI推荐、推荐历史、反馈
+- `forum`: 社区论坛、发帖、评论
+- `order`: 订单列表、订单详情、支付
+- `consultation`: 营养师咨询、聊天
+
+### 角色功能模块
+
+#### 商家功能（merchant）
+- `merchant/auth`: 商家认证（店铺资质上传）
+- `merchant/dish`: 菜品管理
+- `merchant/order`: 订单处理
+- `merchant/inventory`: 库存管理
+- `merchant/activity`: 活动管理
+- `merchant/profile`: 店铺管理、员工授权
+
+#### 营养师功能（nutritionist）
+- `nutritionist/auth`: 营养师认证（资质上传、认证状态）
+- `nutritionist/consult`: 咨询管理
+- `nutritionist/recommendation`: 推荐方案管理
+- `nutritionist/profile`: 工作台、个人资料
+
+#### 管理后台功能（admin）
+- `admin`: 后台管理所有功能（Web端）
+
+## 权限系统设计
+
+### 用户角色（UserRole）
+```dart
+enum UserRole {
+  user,         // 普通用户
+  merchant,     // 商家
+  employee,     // 店员
+  nutritionist, // 营养师
+  admin,        // 管理员
+}
+```
+
+### 角色入口显示逻辑
+1. **普通用户**: 默认功能
+2. **商家权限**: 个人中心显示"商家管理"入口
+3. **店员权限**: 个人中心显示"员工工作台"入口
+4. **营养师权限**: 个人中心显示"营养师工作台"入口
+5. **管理员权限**: 可访问管理后台（Web端）
+
+### 权限获取流程
+1. **商家**: 管理员在后台授权用户为商家
+2. **店员**: 商家在商家管理系统中授权其他用户为店员
+3. **营养师**: 用户申请认证，管理员审核通过
+4. **管理员**: 系统初始化或超级管理员授权
+
+## 下一步
+
+1. 复制备份的代码到对应的新位置
+2. 按照新的架构规范重构代码
+3. 删除冗余和重复的代码
+4. 统一错误处理和状态管理
+5. 添加缺失的功能实现
