@@ -5,6 +5,9 @@ library;
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+part 'base_dto.freezed.dart';
+part 'base_dto.g.dart';
+
 /// DTO 接口
 abstract class DTO {
   /// 转换为 JSON
@@ -26,7 +29,7 @@ class PaginationRequestDTO with _$PaginationRequestDTO implements DTO {
 }
 
 /// 分页响应 DTO
-@freezed
+@Freezed(genericArgumentFactories: true)
 class PaginationResponseDTO<T> with _$PaginationResponseDTO<T> {
   const factory PaginationResponseDTO({
     required List<T> data,
@@ -35,10 +38,15 @@ class PaginationResponseDTO<T> with _$PaginationResponseDTO<T> {
     required int limit,
     required int totalPages,
   }) = _PaginationResponseDTO;
+
+  factory PaginationResponseDTO.fromJson(
+    Map<String, dynamic> json,
+    T Function(Object?) fromJsonT,
+  ) => _$PaginationResponseDTOFromJson(json, fromJsonT);
 }
 
 /// API 响应 DTO
-@freezed
+@Freezed(genericArgumentFactories: true)
 class ApiResponseDTO<T> with _$ApiResponseDTO<T> {
   const factory ApiResponseDTO({
     required bool success,
@@ -53,6 +61,3 @@ class ApiResponseDTO<T> with _$ApiResponseDTO<T> {
     T Function(Object?) fromJsonT,
   ) => _$ApiResponseDTOFromJson(json, fromJsonT);
 }
-
-part 'base_dto.freezed.dart';
-part 'base_dto.g.dart';

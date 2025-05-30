@@ -85,4 +85,22 @@ class AppTextStyles {
       letterSpacing: 0.5,
     ),
   );
+  
+  // 添加兼容性别名
+  static TextStyle get button => const TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.1,
+  );
+  
+  static TextStyle get body => const TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 0.25,
+  );
+  
+  static TextStyle get h3 => const TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.w400,
+  );
 }

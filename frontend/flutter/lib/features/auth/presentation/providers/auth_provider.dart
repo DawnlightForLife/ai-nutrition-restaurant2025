@@ -1,26 +1,148 @@
-// DEPRECATED: This file has been replaced by AuthController using Riverpod
-// Please use: import '../controllers/auth_controller.dart';
-// 
-// Migration Guide:
-// - Replace AuthProvider with authControllerProvider
-// - Replace Consumer<AuthProvider> with ConsumerWidget and ref.watch(authControllerProvider)
-// - Use the new AsyncValue-based state management
-//
-// Example:
-// OLD: Consumer<AuthProvider>(builder: (context, auth, child) => ...)
-// NEW: Consumer(builder: (context, ref, child) {
-//        final authState = ref.watch(authControllerProvider);
-//        return authState.when(...);
-//      })
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../data/services/auth_service.dart';
+import '../../data/models/auth_state.dart';
 
-@Deprecated('Use AuthController with Riverpod instead')
-class AuthProvider {
-  AuthProvider._();
+/// 安全存储Provider
+final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
+  return const FlutterSecureStorage();
+});
+
+/// SharedPreferences Provider
+final sharedPreferencesProvider = FutureProvider<SharedPreferences>((ref) async {
+  return await SharedPreferences.getInstance();
+});
+
+/// 认证状态Provider
+final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>((ref) {
+  return AuthStateNotifier(ref);
+});
+
+class AuthStateNotifier extends StateNotifier<AuthState> {
+  final Ref _ref;
   
-  static void _showDeprecationWarning() {
-    throw UnsupportedError(
-      'AuthProvider is deprecated. Use AuthController with Riverpod instead.\n'
-      'See: lib/features/auth/presentation/controllers/auth_controller.dart'
-    );
+  AuthStateNotifier(this._ref) : super(const AuthState()) {
+    _init();
+  }
+  
+  /// 初始化，检查登录状态
+  Future<void> _init() async {
+    try {
+      final secureStorage = _ref.read(secureStorageProvider);
+      final token = await secureStorage.read(key: 'auth_token');
+      
+      if (token != null && token.isNotEmpty) {
+        // 获取用户信息
+        final authService = _ref.read(authServiceProvider);
+        final userInfo = await authService.getUserInfo(token);
+        
+        state = AuthState(
+          isAuthenticated: true,
+          token: token,
+          user: userInfo,
+        );
+      }
+    } catch (e) {
+      print('初始化认证状态失败: $e');
+    }
+  }
+  
+  /// 发送验证码
+  Future<bool> sendVerificationCode(String phone) async {
+    try {
+      state = state.copyWith(isLoading: true, error: null);
+      
+      final authService = _ref.read(authServiceProvider);
+      final success = await authService.sendVerificationCode(phone);
+      
+      state = state.copyWith(isLoading: false);
+      return success;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+      return false;
+    }
+  }
+  
+  /// 验证码登录
+  Future<bool> loginWithCode(String phone, String code) async {
+    try {
+      state = state.copyWith(isLoading: true, error: null);
+      
+      final authService = _ref.read(authServiceProvider);
+      final response = await authService.loginWithCode(phone, code);
+      
+      // 保存token
+      final token = response['token'];
+      final secureStorage = _ref.read(secureStorageProvider);
+      await secureStorage.write(key: 'auth_token', value: token);
+      
+      // 解析用户信息
+      final userInfo = UserInfo.fromJson(response['user']);
+      
+      state = AuthState(
+        isAuthenticated: true,
+        isLoading: false,
+        token: token,
+        user: userInfo,
+      );
+      
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+      return false;
+    }
+  }
+  
+  /// 密码登录
+  Future<bool> loginWithPassword(String phone, String password) async {
+    try {
+      state = state.copyWith(isLoading: true, error: null);
+      
+      final authService = _ref.read(authServiceProvider);
+      final response = await authService.loginWithPassword(phone, password);
+      
+      // 保存token
+      final token = response['token'];
+      final secureStorage = _ref.read(secureStorageProvider);
+      await secureStorage.write(key: 'auth_token', value: token);
+      
+      // 解析用户信息
+      final userInfo = UserInfo.fromJson(response['user']);
+      
+      state = AuthState(
+        isAuthenticated: true,
+        isLoading: false,
+        token: token,
+        user: userInfo,
+      );
+      
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+      return false;
+    }
+  }
+  
+  /// 登出
+  Future<void> logout() async {
+    final secureStorage = _ref.read(secureStorageProvider);
+    await secureStorage.delete(key: 'auth_token');
+    
+    state = const AuthState();
+  }
+  
+  /// 更新用户信息
+  void updateUserInfo(UserInfo userInfo) {
+    state = state.copyWith(user: userInfo);
   }
 }

@@ -5,7 +5,7 @@
 ![Flutter](https://img.shields.io/badge/Flutter-3.19.0+-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-3.3.0+-0175C2?style=for-the-badge&logo=dart&logoColor=white)
 ![Riverpod](https://img.shields.io/badge/Riverpod-2.6.1-00C4CC?style=for-the-badge)
-![Clean Architecture](https://img.shields.io/badge/Clean_Architecture-DDD-purple?style=for-the-badge)
+![Architecture](https://img.shields.io/badge/Architecture-Simplified-purple?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 *基于 AI 技术的智能营养推荐系统移动端应用*
@@ -20,11 +20,11 @@
 - [快速开始](#快速开始)
 - [项目结构](#项目结构)
 - [开发指南](#开发指南)
-- [API 集成](#api-集成)
 - [状态管理](#状态管理)
 - [测试](#测试)
 - [部署](#部署)
 - [贡献指南](#贡献指南)
+- [📚 项目文档](#项目文档)
 
 ## 🎯 项目简介
 
@@ -39,7 +39,7 @@ AI智能营养餐厅 Flutter 前端是一款基于人工智能技术的营养健
 ## ✨ 功能特性
 
 ### 🔐 用户模块
-- [x] 多种登录方式（邮箱、手机、第三方）
+- [x] 多种登录方式（手机、邮箱）
 - [x] 完整的用户档案管理
 - [x] 安全的身份验证机制
 
@@ -75,26 +75,28 @@ AI智能营养餐厅 Flutter 前端是一款基于人工智能技术的营养健
 
 ## 🏗️ 技术架构
 
-### 核心技术栈
-- **框架**: Flutter 3.8.0+
+### 核心技术栈（简化版）
+- **框架**: Flutter 3.19.0+
 - **语言**: Dart 3.3.0+
-- **状态管理**: Riverpod 2.6.1
-- **代码生成**: build_runner, freezed, json_annotation
-- **路由**: auto_route
-- **网络**: dio, retrofit
-- **本地存储**: hive, shared_preferences
+- **状态管理**: Riverpod 2.6.1（统一使用）
+- **代码生成**: build_runner, riverpod_generator, retrofit_generator
+- **路由**: 原生 Navigator（移除 auto_route）
+- **网络**: dio, retrofit（统一使用）
+- **本地存储**: shared_preferences, flutter_secure_storage（简化存储方案）
 - **UI组件**: flutter_screenutil, cached_network_image
+- **动画**: flutter_animate（移除 Rive）
+- **图表**: fl_chart（移除 syncfusion）
 
 ### 架构模式
-采用 **Clean Architecture** + **Feature-First** 架构：
+采用 **简化的分层架构**：
 
 ```
 lib/
 ├── core/                    # 核心基础设施
 │   ├── network/            # 网络层
-│   ├── storage/            # 存储层
-│   ├── widgets/            # 通用组件
-│   └── providers/          # 全局 Provider
+│   ├── error/              # 错误处理
+│   ├── utils/              # 工具函数
+│   └── widgets/            # 通用组件
 ├── features/               # 功能模块
 │   ├── auth/              # 认证模块
 │   ├── nutrition/         # 营养管理
@@ -104,8 +106,8 @@ lib/
 └── shared/                # 共享资源
 ```
 
-### 分层设计
-每个功能模块采用四层架构：
+### 分层设计（简化版）
+每个功能模块采用三层架构：
 
 ```
 feature/
@@ -117,8 +119,6 @@ feature/
 │   ├── entities/         # 业务实体
 │   ├── repositories/     # 仓储接口
 │   └── usecases/        # 用例
-├── application/          # 应用层
-│   └── coordinators/    # 协调器
 └── presentation/         # 表现层
     ├── pages/           # 页面
     ├── widgets/         # 组件
@@ -128,7 +128,7 @@ feature/
 ## 🚀 快速开始
 
 ### 环境要求
-- Flutter SDK: 3.8.0+
+- Flutter SDK: 3.19.0+
 - Dart SDK: 3.3.0+
 - iOS: 12.0+ / Android: API 21+
 - IDE: VS Code / Android Studio
@@ -148,23 +148,16 @@ feature/
 
 3. **代码生成**
    ```bash
-   flutter packages pub run build_runner build
+   flutter packages pub run build_runner build --delete-conflicting-outputs
    ```
 
-4. **配置环境**
+4. **运行应用**
    ```bash
-   # 复制环境配置文件
-   cp lib/core/config/env.example.dart lib/core/config/env.dart
-   # 根据实际情况修改配置
-   ```
-
-5. **运行应用**
-   ```bash
-   # 开发环境
-   flutter run --flavor dev
+   # 使用简化版入口文件
+   flutter run -t lib/main_clean.dart
    
-   # 生产环境
-   flutter run --flavor prod
+   # 或使用原始入口（需要修复依赖问题）
+   flutter run
    ```
 
 ### 开发脚本
@@ -193,18 +186,15 @@ flutter analyze
 lib/
 ├── app.dart                    # 应用入口
 ├── main.dart                   # 主函数
+├── main_clean.dart            # 简化版入口（推荐使用）
 ├── core/                       # 核心基础设施
 │   ├── config/                # 配置管理
-│   ├── constants/             # 常量定义
 │   ├── error/                 # 错误处理
-│   ├── network/               # 网络层
-│   ├── storage/               # 存储层
-│   ├── theme/                 # 主题配置
-│   ├── utils/                 # 工具函数
-│   ├── widgets/               # 通用组件
-│   │   └── async_view.dart   # 异步状态组件
-│   └── providers/             # 全局 Provider
-│       └── providers_index.dart
+│   ├── exceptions/            # 异常定义
+│   ├── events/               # 事件总线
+│   ├── network/              # 网络层
+│   ├── base/                 # 基础类
+│   └── utils/                # 工具函数
 ├── features/                   # 功能模块
 │   ├── auth/                  # 认证模块
 │   │   ├── data/
@@ -213,7 +203,6 @@ lib/
 │   │       ├── pages/
 │   │       ├── widgets/
 │   │       └── providers/
-│   │           └── auth_controller.dart
 │   ├── nutrition/             # 营养管理
 │   ├── consultation/          # 咨询模块
 │   ├── order/                 # 订单模块
@@ -222,15 +211,36 @@ lib/
 │   ├── user/                  # 用户模块
 │   └── global_pages/          # 全局页面
 ├── shared/                     # 共享资源
-│   ├── extensions/            # 扩展方法
-│   ├── models/                # 共享模型
-│   └── widgets/               # 共享组件
+│   ├── dto/                   # 数据传输对象
+│   ├── enums/                # 枚举定义
+│   ├── widgets/              # 共享组件
+│   └── domain/               # 共享领域对象
+├── theme/                     # 主题配置
 └── l10n/                      # 国际化
 ```
 
 </details>
 
 ## 👨‍💻 开发指南
+
+### 架构简化说明
+项目已经过架构优化，移除了过度工程化的部分：
+
+#### 已移除的依赖和功能：
+- ❌ auto_route → 使用原生 Navigator
+- ❌ get_it + injectable → 统一使用 Riverpod
+- ❌ freezed + json_serializable → 手动编写数据类
+- ❌ hive + sqflite → 简化为 SharedPreferences + flutter_secure_storage
+- ❌ syncfusion_flutter_charts → 使用 fl_chart
+- ❌ rive → 使用 flutter_animate
+- ❌ dartz → 使用原生 Dart
+- ❌ mockito + golden_toolkit → 统一使用 mocktail
+
+#### 已移除的架构层：
+- ❌ Facade 层（application/facades）
+- ❌ Coordinator 层（presentation/coordinators）
+- ❌ Plugin Manager（core/plugins）
+- ❌ Hooks 系统（core/hooks）
 
 ### 代码规范
 - 遵循 [Dart Style Guide](https://dart.dev/guides/language/effective-dart/style)
@@ -261,37 +271,13 @@ git push origin feature/new-feature
 - `test:` 测试
 - `chore:` 构建
 
-## 🔌 API 集成
-
-### 基础配置
-API 客户端已预配置，支持：
-- 自动 Token 管理
-- 请求/响应拦截
-- 错误统一处理
-- 缓存机制
-
-### 使用示例
-```dart
-// 在 Repository 中使用
-@riverpod
-class DataRepository extends _$DataRepository {
-  @override
-  Future<List<Data>> build() async {
-    final apiClient = ref.read(apiClientProvider);
-    final response = await apiClient.getData();
-    return response.data;
-  }
-}
-```
-
-详细文档：[API_INTEGRATION.md](./README_API_INTEGRATION.md)
-
 ## 🎛️ 状态管理
 
-### Riverpod 2.0 模式
-项目全面采用最新的 AsyncNotifier 模式：
+### Riverpod 统一方案
+项目统一使用 Riverpod 进行状态管理和依赖注入：
 
 ```dart
+// Provider 定义
 @riverpod
 class MyController extends _$MyController {
   @override
@@ -304,20 +290,26 @@ class MyController extends _$MyController {
     await future;
   }
 }
+
+// 使用示例
+class MyWidget extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final myData = ref.watch(myControllerProvider);
+    return myData.when(
+      data: (data) => Text(data.toString()),
+      loading: () => CircularProgressIndicator(),
+      error: (error, stack) => Text('Error: $error'),
+    );
+  }
+}
 ```
-
-### 使用指南
-- **AsyncView 组件**：统一处理异步状态
-- **便捷访问器**：简化状态访问
-- **自动缓存**：无需手动管理缓存
-
-详细文档：[PROVIDER_MIGRATION_GUIDE.md](./lib/features/PROVIDER_MIGRATION_GUIDE.md)
 
 ## 🧪 测试
 
-### 测试策略
-- **单元测试**：Provider 和工具函数
-- **Widget 测试**：UI 组件
+### 测试策略（简化版）
+- **单元测试**：使用 mocktail 进行模拟
+- **Widget 测试**：测试 UI 组件
 - **集成测试**：完整用户流程
 
 ### 运行测试
@@ -332,36 +324,31 @@ flutter test test/unit/auth/
 flutter test --coverage
 ```
 
-详细文档：[TESTING_GUIDE.md](./docs/TESTING_GUIDE.md)
-
 ## 📦 构建与部署
 
-### 构建配置
-支持多环境构建：
-- **开发环境**: `flutter build --flavor dev`
-- **测试环境**: `flutter build --flavor staging`
-- **生产环境**: `flutter build --flavor prod`
+### 构建命令
+```bash
+# iOS 构建
+flutter build ios
 
-### 自动化部署
-- GitHub Actions CI/CD
-- 自动代码检查
-- 自动测试执行
-- 多平台构建
+# Android 构建
+flutter build appbundle
 
-详细文档：[DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md)
+# Web 构建
+flutter build web
+```
 
-## 📚 学习资源
+## 📚 项目文档
 
-### 官方文档
-- [Flutter 官方文档](https://flutter.dev/docs)
-- [Riverpod 官方文档](https://riverpod.dev)
-- [Clean Architecture 指南](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+完整的项目文档已整理到 `docs/` 目录下，包含：
 
-### 项目特定文档
-- [AI 开发规则](./AI_DEVELOPMENT_RULES.md)
-- [团队开发指南](./TEAM_DEVELOPMENT_GUIDE.md)
-- [Flutter 构建修复](./FLUTTER_BUILD_FIX.md)
-- [营养档案测试指南](./NUTRITION_PROFILE_TEST_GUIDE.md)
+- **架构文档** - 系统设计和技术决策
+- **开发指南** - 编码规范和最佳实践  
+- **API文档** - 接口说明和使用示例
+- **测试文档** - 测试策略和用例
+- **故障排除** - 常见问题和解决方案
+
+👉 [进入文档中心](./docs/README.md)
 
 ## 🤝 贡献指南
 
@@ -394,6 +381,13 @@ flutter test --coverage
 - 📖 **开发文档**: [项目 Wiki](https://github.com/your-repo/wiki)
 
 ## 🔄 版本历史
+
+### v2.0.0 (2025-01-30)
+- 🔥 架构大幅简化，移除过度工程化
+- ✨ 统一使用 Riverpod 进行状态管理
+- 🚀 移除 auto_route，使用原生 Navigator
+- 📦 精简依赖，提升编译速度
+- 🎯 优化开发体验，降低复杂度
 
 ### v1.0.0 (2025-01-XX)
 - ✨ 初始版本发布

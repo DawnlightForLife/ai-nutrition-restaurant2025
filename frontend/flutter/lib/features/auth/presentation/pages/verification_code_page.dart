@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
-import '../../../../theme/yuanqi_colors.dart';
-import '../providers/auth_state_provider.dart';
+import '../../../../theme/app_colors.dart';
+import '../providers/auth_provider.dart';
 import '../../../../shared/widgets/common/toast.dart';
-import '../../../../core/error/app_exception.dart';
+import 'package:ai_nutrition_restaurant/core/exceptions/app_exceptions.dart';
 import 'profile_completion_page.dart';
+import '../../../user/presentation/pages/home_page.dart';
 
 class VerificationCodePage extends ConsumerStatefulWidget {
   final String phone;
@@ -84,7 +85,7 @@ class _VerificationCodePageState extends ConsumerState<VerificationCodePage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: YuanqiColors.textPrimary),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -94,7 +95,7 @@ class _VerificationCodePageState extends ConsumerState<VerificationCodePage> {
             },
             child: const Text(
               '帮助',
-              style: TextStyle(color: YuanqiColors.textSecondary),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
           ),
         ],
@@ -110,7 +111,7 @@ class _VerificationCodePageState extends ConsumerState<VerificationCodePage> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: YuanqiColors.textPrimary,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
@@ -118,7 +119,7 @@ class _VerificationCodePageState extends ConsumerState<VerificationCodePage> {
               '验证码已发送至 ${widget.phone}',
               style: const TextStyle(
                 fontSize: 14,
-                color: YuanqiColors.textSecondary,
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 48),
@@ -152,7 +153,7 @@ class _VerificationCodePageState extends ConsumerState<VerificationCodePage> {
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: YuanqiColors.textPrimary,
+              color: AppColors.textPrimary,
             ),
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
@@ -160,7 +161,7 @@ class _VerificationCodePageState extends ConsumerState<VerificationCodePage> {
             decoration: InputDecoration(
               counterText: '',
               filled: true,
-              fillColor: YuanqiColors.background,
+              fillColor: AppColors.background,
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: Colors.transparent),
@@ -168,7 +169,7 @@ class _VerificationCodePageState extends ConsumerState<VerificationCodePage> {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: YuanqiColors.primaryOrange,
+                  color: AppColors.primaryOrange,
                   width: 2,
                 ),
               ),
@@ -207,7 +208,7 @@ class _VerificationCodePageState extends ConsumerState<VerificationCodePage> {
         child: Text(
           _canResend ? '重新获取' : '重新获取(${_countdown}s)',
           style: TextStyle(
-            color: _canResend ? YuanqiColors.primaryOrange : YuanqiColors.textHint,
+            color: _canResend ? AppColors.primaryOrange : AppColors.textHint,
             fontSize: 14,
           ),
         ),
@@ -224,7 +225,7 @@ class _VerificationCodePageState extends ConsumerState<VerificationCodePage> {
         child: const Text(
           '手机号已停用？',
           style: TextStyle(
-            color: YuanqiColors.textSecondary,
+            color: AppColors.textSecondary,
             fontSize: 14,
           ),
         ),
@@ -243,7 +244,7 @@ class _VerificationCodePageState extends ConsumerState<VerificationCodePage> {
         barrierDismissible: false,
         builder: (context) => const Center(
           child: CircularProgressIndicator(
-            color: YuanqiColors.primaryOrange,
+            color: AppColors.primaryOrange,
           ),
         ),
       );
@@ -317,7 +318,7 @@ class _VerificationCodePageState extends ConsumerState<VerificationCodePage> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => const HomePage(),
+            builder: (context) => const MainHomePage(),
           ),
           (route) => false,
         );

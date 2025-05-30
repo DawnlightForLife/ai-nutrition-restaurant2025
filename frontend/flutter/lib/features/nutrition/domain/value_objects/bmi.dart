@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
+import 'package:ai_nutrition_restaurant/core/failures/failures.dart';
 
 /// BMI值对象
 class BMI {

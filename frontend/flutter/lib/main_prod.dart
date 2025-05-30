@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'config/flavor_config.dart';
 import 'config/app_config.dart';
 import 'core/utils/logger.dart';
-import 'core/di/module_initializer.dart';
 import 'app.dart';
 
 /// 生产环境入口
@@ -24,7 +23,7 @@ void main() async {
 Future<void> _initializeProdApp() async {
   try {
     // 初始化本地存储
-    await Hive.initFlutter();
+    final prefs = await SharedPreferences.getInstance();
     
     // 设置生产环境配置
     FlavorConfig(
@@ -38,9 +37,6 @@ Future<void> _initializeProdApp() async {
       level: LogLevel.error,
       enableFileLogging: false,
     );
-    
-    // 初始化所有模块
-    await ModuleInitializer.initialize();
     
   } catch (e, stack) {
     // 生产环境静默处理错误

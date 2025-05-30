@@ -44,4 +44,25 @@ abstract class AppColors {
   static const Color brandGreen = Color(0xFF4CAF50);
   static const Color brandOrange = Color(0xFFFF6B35);
   static const Color brandYellow = Color(0xFFFFC107);
+  
+  // ========== 兼容性别名 ==========
+  static const Color backgroundGray = Color(0xFFEEEEEE);
+  static const Color divider = Color(0xFFE0E0E0);
+  
+  // ========== 新增颜色定义 ==========
+  static const Color primaryOrange = Color(0xFFFF6B35);
+  static const Color secondaryGreen = Color(0xFF4CAF50);
+  
+  // 第三方登录颜色
+  static const Color wechatGreen = Color(0xFF07C160);
+  static const Color alipayBlue = Color(0xFF1677FF);
+  static const Color dingdingBlue = Color(0xFF0089FF);
+  static const Color wecomBlue = Color(0xFF2782D7);
+  
+  // 按钮渐变色
+  static const LinearGradient buttonGradient = LinearGradient(
+    colors: [primaryOrange, Color(0xFFFF8F65)],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
 }

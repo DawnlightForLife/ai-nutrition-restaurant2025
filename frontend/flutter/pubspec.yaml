@@ -24,14 +24,13 @@ dependencies:
   riverpod_annotation: ^2.3.5
   # 移除provider，统一使用riverpod
 
-  # 存储
+  # 存储 - 简化为两种方案
   shared_preferences: ^2.3.2
   flutter_secure_storage: ^9.2.2
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
+  # hive: ^2.2.3  # 移除，对单人开发过于复杂
+  # hive_flutter: ^1.1.0
 
-  # 网络
-  http: ^1.2.2
+  # 网络 - 统一使用dio
   connectivity_plus: ^6.0.5
   dio: ^5.7.0
   retrofit: ^4.4.1
@@ -47,23 +46,22 @@ dependencies:
   intl: ^0.20.0
   url_launcher: ^6.3.0
   logger: ^2.4.0
-  sqflite: ^2.4.0
+  # sqflite: ^2.4.0  # 移除，简化存储方案
   path_provider: ^2.1.4
   package_info_plus: ^8.1.0
-  device_info_plus: ^11.1.0
+  # device_info_plus: ^11.1.0  # 移除，暂时不需要设备信息
   uuid: ^4.5.1
 
   # UI组件
   cupertino_icons: ^1.0.8
-  data_table_2: ^2.5.15
+  # data_table_2: ^2.5.15  # 移除，暂时不需要复杂表格
   
-  # 动画系统
+  # 动画系统 - 简化为一种方案
   flutter_animate: ^4.5.0
-  rive: ^0.13.17
+  # rive: ^0.13.17  # 移除，对单人开发过于复杂
   
-  # 图表与可视化
+  # 图表与可视化 - 只保留开源的fl_chart
   fl_chart: ^0.69.0
-  syncfusion_flutter_charts: ^29.2.5
   
   # AI集成
   # tflite_flutter: ^0.11.0  # 暂时注释，需要特殊配置
@@ -72,19 +70,16 @@ dependencies:
   # widgetbook: ^3.9.0  # 暂时注释，最新版有breaking changes
   json_annotation: ^4.9.0
   
-  # 函数式编程
-  dartz: ^0.10.1
+  # 函数式编程 - 简化
+  # dartz: ^0.10.1  # 移除，对单人开发过于复杂
   equatable: ^2.0.5
   
-  # 依赖注入 - 移除injectable，统一使用riverpod
-  # injectable: ^2.5.0
-  # get_it: ^8.0.0
+  # 依赖注入 - 已移除get_it和injectable，统一使用riverpod
   
-  # 路由
-  auto_route: ^9.2.2
+  # 路由 - 使用原生Navigator
   
-  # 领域驱动设计支持
-  freezed_annotation: ^2.4.4
+  # 领域驱动设计支持 - 简化
+  # freezed_annotation: ^2.4.4  # 移除，手动编写数据类
   
   # 工具依赖
   path: ^1.9.0
@@ -94,12 +89,10 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # 代码生成
+  # 代码生成 - 简化，只保留核心的
   build_runner: ^2.4.13
-  freezed: ^2.5.7
-  json_serializable: ^6.8.0
-  auto_route_generator: ^9.0.0
-  # injectable_generator: ^2.6.2  # 移除，使用riverpod
+  # freezed: ^2.5.7  # 移除，手动编写数据类
+  # json_serializable: ^6.8.0  # 移除，手动编写JSON序列化
   riverpod_generator: ^2.4.3
   riverpod_lint: ^2.3.13
   
@@ -107,10 +100,10 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   analyzer: ^6.7.0
   
-  # 测试
-  mockito: ^5.4.4
+  # 测试 - 简化测试栈
   mocktail: ^1.0.4
-  golden_toolkit: ^0.15.0
+  # mockito: ^5.4.4  # 移除，使用mocktail统一
+  # golden_toolkit: ^0.15.0  # 移除，对单人开发过于复杂
   
   # 资源生成
   flutter_launcher_icons: ^0.14.1
@@ -119,9 +112,9 @@ dev_dependencies:
   # 文档生成
   # widgetbook_generator: ^3.9.0  # 暂时注释
   
-  # 代码生成器
+  # 代码生成器 - 只保留API生成
   retrofit_generator: ^9.1.2
-  hive_generator: ^2.0.1
+  # hive_generator: ^2.0.1  # 移除，简化存储
 
 flutter:
   uses-material-design: true

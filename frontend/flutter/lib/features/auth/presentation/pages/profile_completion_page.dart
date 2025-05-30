@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../theme/yuanqi_colors.dart';
+import '../../../../theme/app_colors.dart';
 
 class ProfileCompletionPage extends ConsumerStatefulWidget {
   const ProfileCompletionPage({Key? key}) : super(key: key);
@@ -58,7 +58,7 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
             },
             child: const Text(
               '跳过',
-              style: TextStyle(color: YuanqiColors.textSecondary),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
           ),
         ],
@@ -76,7 +76,7 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: YuanqiColors.textPrimary,
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -84,7 +84,7 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
                 '请完善您的基本信息',
                 style: TextStyle(
                   fontSize: 14,
-                  color: YuanqiColors.textSecondary,
+                  color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 32),
@@ -161,7 +161,7 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: YuanqiColors.textPrimary,
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 16),
@@ -175,7 +175,7 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
                 height: 48,
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: YuanqiColors.buttonGradient,
+                    gradient: AppColors.buttonGradient,
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: ElevatedButton(
@@ -220,7 +220,7 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: YuanqiColors.textPrimary,
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -230,9 +230,9 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
           validator: validator,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: YuanqiColors.textHint),
+            hintStyle: const TextStyle(color: AppColors.textHint),
             filled: true,
-            fillColor: YuanqiColors.background,
+            fillColor: AppColors.background,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
@@ -240,14 +240,14 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: YuanqiColors.primaryOrange,
+                color: AppColors.primaryOrange,
                 width: 2,
               ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: YuanqiColors.error,
+                color: AppColors.error,
                 width: 1,
               ),
             ),
@@ -266,7 +266,7 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: YuanqiColors.textPrimary,
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -310,10 +310,10 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? YuanqiColors.primaryOrange.withOpacity(0.1) : YuanqiColors.background,
+          color: isSelected ? AppColors.primaryOrange.withOpacity(0.1) : AppColors.background,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? YuanqiColors.primaryOrange : Colors.transparent,
+            color: isSelected ? AppColors.primaryOrange : Colors.transparent,
             width: 2,
           ),
         ),
@@ -322,7 +322,7 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
           children: [
             Icon(
               icon,
-              color: isSelected ? YuanqiColors.primaryOrange : YuanqiColors.textSecondary,
+              color: isSelected ? AppColors.primaryOrange : AppColors.textSecondary,
             ),
             const SizedBox(width: 8),
             Text(
@@ -330,7 +330,7 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-                color: isSelected ? YuanqiColors.primaryOrange : YuanqiColors.textPrimary,
+                color: isSelected ? AppColors.primaryOrange : AppColors.textPrimary,
               ),
             ),
           ],
@@ -348,7 +348,7 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: YuanqiColors.textPrimary,
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -358,7 +358,7 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             decoration: BoxDecoration(
-              color: YuanqiColors.background,
+              color: AppColors.background,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -368,12 +368,12 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
                   '${_selectedBirthDate.year}-${_selectedBirthDate.month.toString().padLeft(2, '0')}-${_selectedBirthDate.day.toString().padLeft(2, '0')}',
                   style: const TextStyle(
                     fontSize: 16,
-                    color: YuanqiColors.textPrimary,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const Icon(
                   Icons.calendar_today,
-                  color: YuanqiColors.textSecondary,
+                  color: AppColors.textSecondary,
                   size: 20,
                 ),
               ],
@@ -408,10 +408,10 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
           borderRadius: BorderRadius.circular(12),
           child: Container(
             decoration: BoxDecoration(
-              color: isSelected ? YuanqiColors.primaryOrange.withOpacity(0.1) : YuanqiColors.background,
+              color: isSelected ? AppColors.primaryOrange.withOpacity(0.1) : AppColors.background,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? YuanqiColors.primaryOrange : Colors.transparent,
+                color: isSelected ? AppColors.primaryOrange : Colors.transparent,
                 width: 2,
               ),
             ),
@@ -420,7 +420,7 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
               children: [
                 Icon(
                   goal['icon'] as IconData,
-                  color: isSelected ? YuanqiColors.primaryOrange : YuanqiColors.textSecondary,
+                  color: isSelected ? AppColors.primaryOrange : AppColors.textSecondary,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -429,7 +429,7 @@ class _ProfileCompletionPageState extends ConsumerState<ProfileCompletionPage> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-                    color: isSelected ? YuanqiColors.primaryOrange : YuanqiColors.textPrimary,
+                    color: isSelected ? AppColors.primaryOrange : AppColors.textPrimary,
                   ),
                 ),
               ],

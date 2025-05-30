@@ -73,10 +73,10 @@ class AppTheme {
         color: AppColors.textSecondary,
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: const CardThemeData(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.all(Radius.circular(12)),
       ),
       color: Colors.white,
     ),

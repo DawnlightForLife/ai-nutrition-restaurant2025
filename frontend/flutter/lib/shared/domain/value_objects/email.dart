@@ -1,34 +1,26 @@
 /// 邮箱值对象
 /// 
 /// 对应后端的值对象设计，确保前后端领域模型一致
-library;
 
-import 'package:dartz/dartz.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'email.freezed.dart';
-
-/// 邮箱值对象
-@freezed
-class Email with _$Email {
-  const Email._();
+class Email {
+  final String value;
   
-  const factory Email(String value) = _Email;
+  const Email._(this.value);
 
   /// 创建邮箱
-  static Either<EmailFailure, Email> create(String input) {
+  static Email? create(String input) {
     final trimmed = input.trim().toLowerCase();
     
     if (trimmed.isEmpty) {
-      return left(const EmailFailure.empty());
+      return null;
     }
     
     // 邮箱格式验证
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(trimmed)) {
-      return left(const EmailFailure.invalid());
+      return null;
     }
     
-    return right(Email(trimmed));
+    return Email._(trimmed);
   }
   
   /// 获取用户名部分
@@ -36,11 +28,15 @@ class Email with _$Email {
   
   /// 获取域名部分
   String get domain => value.split('@').last;
-}
+  
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Email && runtimeType == other.runtimeType && value == other.value;
 
-/// 邮箱失败类型
-@freezed
-class EmailFailure with _$EmailFailure {
-  const factory EmailFailure.empty() = _EmptyEmail;
-  const factory EmailFailure.invalid() = _InvalidEmail;
+  @override
+  int get hashCode => value.hashCode;
+  
+  @override
+  String toString() => value;
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/yuanqi_colors.dart';
+import '../../../../theme/app_colors.dart';
 
 /// Toast 工具类
 class Toast {
@@ -142,13 +142,13 @@ class _ToastWidgetState extends State<_ToastWidget>
   Color _getBackgroundColor() {
     switch (widget.type) {
       case ToastType.success:
-        return YuanqiColors.success;
+        return AppColors.success;
       case ToastType.error:
-        return YuanqiColors.error;
+        return AppColors.error;
       case ToastType.warning:
-        return YuanqiColors.warning;
+        return AppColors.warning;
       case ToastType.info:
-        return YuanqiColors.info;
+        return AppColors.info;
     }
   }
 

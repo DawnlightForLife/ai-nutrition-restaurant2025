@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../theme/yuanqi_colors.dart';
-import '../providers/auth_state_provider.dart';
+import '../../../../theme/app_colors.dart';
+import '../providers/auth_provider.dart';
 import '../../../../shared/widgets/common/toast.dart';
-import '../../../../core/error/app_exception.dart';
+import '../../../../core/exceptions/app_exceptions.dart';
 import 'verification_code_page.dart';
 import 'profile_completion_page.dart';
+import '../../../user/presentation/pages/home_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -99,7 +100,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             borderRadius: BorderRadius.circular(25),
             boxShadow: [
               BoxShadow(
-                color: YuanqiColors.primaryOrange.withOpacity(0.3),
+                color: AppColors.primaryOrange.withOpacity(0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),
@@ -122,8 +123,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                YuanqiColors.primaryOrange.withOpacity(0.1),
-                YuanqiColors.secondaryGreen.withOpacity(0.1),
+                AppColors.primaryOrange.withOpacity(0.1),
+                AppColors.secondaryGreen.withOpacity(0.1),
               ],
             ),
             borderRadius: BorderRadius.circular(20),
@@ -133,7 +134,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: YuanqiColors.primaryOrange,
+              color: AppColors.primaryOrange,
               letterSpacing: 1.0,
             ),
           ),
@@ -148,7 +149,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         // 手机号输入框
         Container(
           decoration: BoxDecoration(
-            color: YuanqiColors.background,
+            color: AppColors.background,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -164,12 +165,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         _countryCode,
                         style: const TextStyle(
                           fontSize: 16,
-                          color: YuanqiColors.textPrimary,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       const Icon(
                         Icons.arrow_drop_down,
-                        color: YuanqiColors.textSecondary,
+                        color: AppColors.textSecondary,
                       ),
                     ],
                   ),
@@ -178,7 +179,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               Container(
                 width: 1,
                 height: 24,
-                color: YuanqiColors.divider,
+                color: AppColors.divider,
               ),
               // 手机号输入
               Expanded(
@@ -191,7 +192,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ],
                   decoration: const InputDecoration(
                     hintText: '请输入手机号',
-                    hintStyle: TextStyle(color: YuanqiColors.textHint),
+                    hintStyle: TextStyle(color: AppColors.textHint),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
@@ -206,7 +207,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           // 密码输入框
           Container(
             decoration: BoxDecoration(
-              color: YuanqiColors.background,
+              color: AppColors.background,
               borderRadius: BorderRadius.circular(12),
             ),
             child: TextField(
@@ -214,13 +215,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               obscureText: !_showPassword,
               decoration: InputDecoration(
                 hintText: '请输入密码',
-                hintStyle: const TextStyle(color: YuanqiColors.textHint),
+                hintStyle: const TextStyle(color: AppColors.textHint),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 suffixIcon: IconButton(
                   icon: Icon(
                     _showPassword ? Icons.visibility : Icons.visibility_off,
-                    color: YuanqiColors.textSecondary,
+                    color: AppColors.textSecondary,
                   ),
                   onPressed: () {
                     setState(() {
@@ -246,8 +247,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       width: double.infinity,
       height: 48,
       decoration: BoxDecoration(
-        gradient: canLogin ? YuanqiColors.buttonGradient : null,
-        color: canLogin ? null : YuanqiColors.divider,
+        gradient: canLogin ? AppColors.buttonGradient : null,
+        color: canLogin ? null : AppColors.divider,
         borderRadius: BorderRadius.circular(24),
       ),
       child: ElevatedButton(
@@ -264,7 +265,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: canLogin ? Colors.white : YuanqiColors.textHint,
+            color: canLogin ? Colors.white : AppColors.textHint,
           ),
         ),
       ),
@@ -284,14 +285,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           child: Text(
             _isPasswordLogin ? '验证码登录' : '密码登录',
             style: const TextStyle(
-              color: YuanqiColors.textSecondary,
+              color: AppColors.textSecondary,
               fontSize: 14,
             ),
           ),
         ),
         const Text(
           '|',
-          style: TextStyle(color: YuanqiColors.divider),
+          style: TextStyle(color: AppColors.divider),
         ),
         TextButton(
           onPressed: () {
@@ -300,7 +301,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           child: const Text(
             '遇到问题',
             style: TextStyle(
-              color: YuanqiColors.textSecondary,
+              color: AppColors.textSecondary,
               fontSize: 14,
             ),
           ),
@@ -314,18 +315,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       children: [
         Row(
           children: [
-            Expanded(child: Container(height: 1, color: YuanqiColors.divider)),
+            Expanded(child: Container(height: 1, color: AppColors.divider)),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 '其他登录方式',
                 style: TextStyle(
-                  color: YuanqiColors.textHint,
+                  color: AppColors.textHint,
                   fontSize: 12,
                 ),
               ),
             ),
-            Expanded(child: Container(height: 1, color: YuanqiColors.divider)),
+            Expanded(child: Container(height: 1, color: AppColors.divider)),
           ],
         ),
         const SizedBox(height: 24),
@@ -334,28 +335,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           children: [
             _buildThirdPartyIcon(
               icon: Icons.chat,
-              color: YuanqiColors.wechatGreen,
+              color: AppColors.wechatGreen,
               onTap: () {
                 // TODO(dev): 微信登录
               },
             ),
             _buildThirdPartyIcon(
               icon: Icons.account_balance_wallet,
-              color: YuanqiColors.alipayBlue,
+              color: AppColors.alipayBlue,
               onTap: () {
                 // TODO(dev): 支付宝登录
               },
             ),
             _buildThirdPartyIcon(
               icon: Icons.apartment,
-              color: YuanqiColors.dingdingBlue,
+              color: AppColors.dingdingBlue,
               onTap: () {
                 // TODO(dev): 钉钉登录
               },
             ),
             _buildThirdPartyIcon(
               icon: Icons.business,
-              color: YuanqiColors.wecomBlue,
+              color: AppColors.wecomBlue,
               onTap: () {
                 // TODO(dev): 企业微信登录
               },
@@ -404,7 +405,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 _isAgreed = value ?? false;
               });
             },
-            activeColor: YuanqiColors.primaryOrange,
+            activeColor: AppColors.primaryOrange,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(4),
             ),
@@ -416,18 +417,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             text: const TextSpan(
               style: TextStyle(
                 fontSize: 12,
-                color: YuanqiColors.textSecondary,
+                color: AppColors.textSecondary,
               ),
               children: [
                 TextSpan(text: '我已阅读并同意'),
                 TextSpan(
                   text: '《用户服务协议》',
-                  style: TextStyle(color: YuanqiColors.primaryOrange),
+                  style: TextStyle(color: AppColors.primaryOrange),
                 ),
                 TextSpan(text: '和'),
                 TextSpan(
                   text: '《隐私政策》',
-                  style: TextStyle(color: YuanqiColors.primaryOrange),
+                  style: TextStyle(color: AppColors.primaryOrange),
                 ),
               ],
             ),
@@ -464,7 +465,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 title: Text(country['name']!),
                 trailing: Text(
                   country['code']!,
-                  style: const TextStyle(color: YuanqiColors.textSecondary),
+                  style: const TextStyle(color: AppColors.textSecondary),
                 ),
                 onTap: () {
                   setState(() {
@@ -580,9 +581,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const Scaffold(
-              body: Center(child: Text('主页')),
-            ),
+            builder: (context) => const MainHomePage(),
           ),
         );
       }

@@ -234,8 +234,9 @@ const startServer = async () => {
     
     // 启动服务器
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-      console.log(`服务器在端口 ${PORT} 上运行`);
+    // 监听所有网络接口，以便 Android 模拟器可以访问
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`服务器在端口 ${PORT} 上运行 (监听所有接口)`);
       databaseReady = true;
     });
     

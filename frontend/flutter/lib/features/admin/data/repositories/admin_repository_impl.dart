@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
+import 'package:ai_nutrition_restaurant/core/failures/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/admin.dart';
 import '../../domain/repositories/admin_repository.dart';

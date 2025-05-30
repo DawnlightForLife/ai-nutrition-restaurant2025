@@ -2,11 +2,8 @@
 /// 
 /// 本文件作为认证模块的Provider入口，集中管理认证相关的所有状态
 
-// 核心认证控制器
-export 'auth_controller.dart';
-
-// 便捷访问器
-export 'auth_accessors.dart';
+// 核心认证控制器 - 从controllers目录导出
+export '../controllers/auth_controller.dart';
 
 // 认证相关的特定Provider（如果有）
 // export 'oauth_provider.dart';

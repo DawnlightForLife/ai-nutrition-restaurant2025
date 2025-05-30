@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
+import 'package:ai_nutrition_restaurant/core/failures/failures.dart';
 import '../entities/merchant.dart';
 
 /// Umerchant 仓储接口

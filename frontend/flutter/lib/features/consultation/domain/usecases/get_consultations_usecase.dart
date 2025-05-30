@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/base/use_case.dart';
-import '../../../../core/error/failures.dart';
+import 'package:ai_nutrition_restaurant/core/failures/failures.dart';
 import '../entities/consultation.dart';
 import '../repositories/consultation_repository.dart';
 
