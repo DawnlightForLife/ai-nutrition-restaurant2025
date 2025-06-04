@@ -20,12 +20,12 @@
  */
 
 const rateLimit = require('express-rate-limit');
-const RedisStore = require('rate-limit-redis');
+const { RedisStore } = require('rate-limit-redis');
 const Redis = require('ioredis');
 const redis = require('redis');
 const { promisify } = require('util');
 const logger = require('../../utils/logger/winstonLogger.js');
-const { getAccessTrackingService } = require('./accessTrackingMiddleware');
+const { getAccessTrackingService } = require('../access/accessTrackingMiddleware');
 
 /**
  * defaultLimiter
@@ -36,15 +36,43 @@ const redisClient = new Redis({
     host: process.env.REDIS_HOST || 'localhost',
     port: process.env.REDIS_PORT || 6379,
     password: process.env.REDIS_PASSWORD,
-    keyPrefix: 'rate-limit:'
+    keyPrefix: 'rate-limit:',
+    retryDelayOnFailover: 100,
+    maxRetriesPerRequest: 3,
+    lazyConnect: true,
+    showFriendlyErrorStack: true
 });
+
+// Redis错误处理
+redisClient.on('error', (error) => {
+    const errorMessage = typeof error === 'string' ? error : (error.message || error.toString());
+    logger.warn('Redis连接错误，限流器将使用内存存储:', errorMessage);
+});
+
+redisClient.on('connect', () => {
+    logger.info('Redis连接成功');
+});
+
+// 创建带错误处理的RedisStore
+const createRedisStore = (prefix) => {
+    try {
+        if (typeof RedisStore !== 'function') {
+            logger.warn(`RedisStore不是构造函数(${prefix})，使用内存存储`);
+            return undefined;
+        }
+        return new RedisStore({
+            sendCommand: (...args) => redisClient.call(...args),
+            prefix: prefix
+        });
+    } catch (error) {
+        logger.warn(`Redis Store创建失败(${prefix})，使用内存存储:`, error.message);
+        return undefined; // 使用express-rate-limit的默认内存存储
+    }
+};
 
 // 通用限流配置
 const defaultLimiter = rateLimit({
-    store: new RedisStore({
-        client: redisClient,
-        prefix: 'default:'
-    }),
+    store: createRedisStore('default:'),
     windowMs: 15 * 60 * 1000, // 15分钟
     max: 100, // 限制每个IP 15分钟内最多100个请求
     message: {
@@ -56,10 +84,7 @@ const defaultLimiter = rateLimit({
 
 // API限流配置
 const apiLimiter = rateLimit({
-    store: new RedisStore({
-        client: redisClient,
-        prefix: 'api:'
-    }),
+    store: createRedisStore('api:'),
     windowMs: 60 * 1000, // 1分钟
     max: 60, // 限制每个IP 1分钟内最多60个请求
     message: {
@@ -75,10 +100,7 @@ const apiLimiter = rateLimit({
  */
 // 认证限流配置
 const authLimiter = rateLimit({
-    store: new RedisStore({
-        client: redisClient,
-        prefix: 'auth:'
-    }),
+    store: createRedisStore('auth:'),
     windowMs: 60 * 60 * 1000, // 1小时
     max: 5, // 限制每个IP 1小时内最多5次登录尝试
     message: {
@@ -94,10 +116,7 @@ const authLimiter = rateLimit({
  */
 // 文件上传限流配置
 const uploadLimiter = rateLimit({
-    store: new RedisStore({
-        client: redisClient,
-        prefix: 'upload:'
-    }),
+    store: createRedisStore('upload:'),
     windowMs: 60 * 60 * 1000, // 1小时
     max: 10, // 限制每个IP 1小时内最多10次上传
     message: {
@@ -119,10 +138,7 @@ const createDynamicLimiter = (options = {}) => {
     // TODO: 支持按 user-agent / referer / method 设置不同限流器
 
     return rateLimit({
-        store: new RedisStore({
-            client: redisClient,
-            prefix: prefix
-        }),
+        store: createRedisStore(prefix),
         windowMs,
         max,
         message: {
@@ -163,7 +179,7 @@ const initRedis = async (redisUrl = process.env.REDIS_URL || 'redis://localhost:
     redisCommands = {
       get: promisify(redisClient.get).bind(redisClient),
       set: promisify(redisClient.set).bind(redisClient),
-      setEx: promisify(redisClient.setex).bind(redisClient),
+      setEx: promisify(redisClient.setEx).bind(redisClient),
       incr: promisify(redisClient.incr).bind(redisClient),
       expire: promisify(redisClient.expire).bind(redisClient),
       del: promisify(redisClient.del).bind(redisClient)

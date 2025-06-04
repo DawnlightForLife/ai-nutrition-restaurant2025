@@ -9,7 +9,7 @@ const { getAccessTrackingService } = require('../../middleware/access/accessTrac
 const AccessTrack = require('../../models/security/accessTrackModel');
 const authMiddleware = require('../../middleware/auth/authMiddleware');
 const roleMiddleware = require('../../middleware/auth/roleMiddleware');
-const requireRole = roleMiddleware.requireRole;
+const requireRole = roleMiddleware;
 const logger = require('../../utils/logger/winstonLogger.js');
 
 // 获取访问轨迹服务

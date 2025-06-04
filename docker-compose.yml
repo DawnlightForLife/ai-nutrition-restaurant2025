@@ -1,4 +1,3 @@
-﻿version: '3.8'
 services:
   frontend:
     build: ./frontend/flutter
@@ -18,9 +17,14 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       - PORT=3000
       - MONGO_URI=mongodb://mongo:27017/ai-nutrition-restaurant
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_URL=redis://redis:6379
     networks:
       - app-network
 
@@ -47,8 +51,24 @@ services:
       retries: 5
       start_period: 40s
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
 volumes:
   mongo-data:
+  redis-data:
 
 networks:
   app-network:

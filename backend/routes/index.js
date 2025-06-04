@@ -19,6 +19,8 @@ router.use('/admin', require('./user/adminRoutes'));
 router.use('/permissions', require('./user/permissionRoutes'));
 router.use('/oauth', require('./user/oauthRoutes'));
 router.use('/sms', require('./user/smsRoutes'));
+router.use('/guest-profiles', require('./user/guestProfileRoutes'));
+router.use('/points', require('./user/pointsRoutes'));
 
 // =================== Forum 模块 ===================
 router.use('/forum-posts', require('./forum/forumPostRoutes'));
@@ -40,11 +42,15 @@ router.use('/dishes', require('./merchant/dishRoutes'));
 router.use('/merchant-stats', require('./merchant/merchantStatsRoutes'));
 router.use('/promotions', require('./merchant/promotionRoutes'));
 
+// =================== Restaurant 模块 ===================
+router.use('/', require('./restaurant/restaurantRoutes'));
+
 // =================== Order 模块 ===================
 router.use('/orders', require('./order/orderRoutes'));
 router.use('/consultation-orders', require('./order/consultationOrderRoutes'));
 router.use('/subscriptions', require('./order/subscriptionRoutes'));
 router.use('/payments', require('./order/paymentRoutes'));
+router.use('/pickup-codes', require('./order/pickupCodeRoutes'));
 
 // =================== Consult 模块 ===================
 router.use('/consultations', require('./consult/consultationRoutes'));
@@ -56,6 +62,7 @@ router.use('/user-notification-status', require('./notification/userNotification
 
 // =================== Security 模块 ===================
 router.use('/access-track', require('./security/accessTrackRoutes'));
+router.use('/content-reports', require('./security/contentReportRoutes'));
 
 // =================== Analytics 模块 ===================
 router.use('/usage-logs', require('./analytics/usageLogRoutes'));

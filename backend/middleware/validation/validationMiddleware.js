@@ -22,14 +22,32 @@
  */
 
 const Joi = require('joi');
+const { getValidationSchema } = require('./validationSchemas');
 
 /**
  * validate
  * - 校验 req.body 数据结构是否合法
  * - 使用 schema.validate 校验结构
+ * - 支持传入 schema 对象或 schema 名称字符串
  */
-const validate = (schema) => {
+const validate = (schemaOrName) => {
     return (req, res, next) => {
+        // 判断传入的是 schema 对象还是 schema 名称
+        let schema;
+        if (typeof schemaOrName === 'string') {
+            try {
+                schema = getValidationSchema(schemaOrName);
+            } catch (error) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'InternalError',
+                    message: error.message
+                });
+            }
+        } else {
+            schema = schemaOrName;
+        }
+        
         const { error } = schema.validate(req.body, {
             abortEarly: false,
             allowUnknown: true,
@@ -57,9 +75,26 @@ const validate = (schema) => {
 /**
  * validateQuery
  * - 校验 req.query 查询字符串结构是否合法
+ * - 支持传入 schema 对象或 schema 名称字符串
  */
-const validateQuery = (schema) => {
+const validateQuery = (schemaOrName) => {
     return (req, res, next) => {
+        // 判断传入的是 schema 对象还是 schema 名称
+        let schema;
+        if (typeof schemaOrName === 'string') {
+            try {
+                schema = getValidationSchema(schemaOrName);
+            } catch (error) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'InternalError',
+                    message: error.message
+                });
+            }
+        } else {
+            schema = schemaOrName;
+        }
+        
         const { error } = schema.validate(req.query, {
             abortEarly: false,
             allowUnknown: true,
@@ -87,9 +122,26 @@ const validateQuery = (schema) => {
 /**
  * validateParams
  * - 校验 req.params 中路径参数是否合法
+ * - 支持传入 schema 对象或 schema 名称字符串
  */
-const validateParams = (schema) => {
+const validateParams = (schemaOrName) => {
     return (req, res, next) => {
+        // 判断传入的是 schema 对象还是 schema 名称
+        let schema;
+        if (typeof schemaOrName === 'string') {
+            try {
+                schema = getValidationSchema(schemaOrName);
+            } catch (error) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'InternalError',
+                    message: error.message
+                });
+            }
+        } else {
+            schema = schemaOrName;
+        }
+        
         const { error } = schema.validate(req.params, {
             abortEarly: false,
             allowUnknown: true,
@@ -114,10 +166,20 @@ const validateParams = (schema) => {
     };
 };
 
+/**
+ * validationMiddleware
+ * - 统一的验证中间件，根据配置名称自动选择验证规则
+ * - 简化路由中的使用方式
+ */
+const validationMiddleware = (schemaName) => {
+    return validate(schemaName);
+};
+
 // Joi：用于外部定义校验 schema
 module.exports = {
     validate,
     validateQuery,
     validateParams,
+    validationMiddleware,
     Joi
 }; 

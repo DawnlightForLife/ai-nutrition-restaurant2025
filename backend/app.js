@@ -87,7 +87,7 @@ const {
 } = require('./middleware/validation/requestValidationMiddleware');
 const helmet = require('helmet');
 const { defaultLimiter } = require('./middleware/security/rateLimitMiddleware');
-const { accessTrackingMiddleware, initAccessTrackingService } = require('./middleware/security/accessTrackingMiddleware');
+const { accessTrackingMiddleware, initAccessTrackingService } = require('./middleware/access/accessTrackingMiddleware');
 const { dynamicRateLimit } = require('./middleware/security/rateLimitMiddleware');
 const mongoose = require('mongoose');
 const config = require('./config');

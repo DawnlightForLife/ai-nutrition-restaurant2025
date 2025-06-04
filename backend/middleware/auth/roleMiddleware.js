@@ -60,6 +60,4 @@ const requireRole = (requiredRoles) => {
   };
 };
 
-module.exports = {
-  requireRole,
-};
+module.exports = requireRole;

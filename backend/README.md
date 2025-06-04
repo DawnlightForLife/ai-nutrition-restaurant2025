@@ -187,6 +187,69 @@ npm start
 npm test
 ```
 
+### Docker部署
+
+项目支持Docker容器化部署，使用以下命令：
+
+```bash
+# 启动所有服务（包括Redis、MongoDB）
+docker-compose up -d
+
+# 仅启动后端服务
+docker-compose up backend -d
+
+# 重建并启动
+docker-compose up --build -d
+
+# 查看日志
+docker-compose logs backend
+
+# 停止服务
+docker-compose down
+```
+
+#### 服务端口说明
+
+- **Backend API**: http://localhost:8080
+- **Frontend**: http://localhost:80  
+- **AI Service**: http://localhost:8000
+- **MongoDB**: localhost:27017
+- **Redis**: localhost:6379
+
+## 故障排除
+
+### 常见启动问题
+
+1. **Redis连接失败**
+   ```bash
+   # 确保Redis容器正在运行
+   docker-compose ps redis
+   
+   # 重启Redis服务
+   docker-compose restart redis
+   ```
+
+2. **中间件导入错误**
+   - 检查文件编码是否为UTF-8
+   - 确认中间件文件路径正确
+   - 查看详细错误日志：`docker logs ai-nutrition-restaurant2025-backend-1`
+
+3. **模块未找到错误**
+   ```bash
+   # 重建容器解决依赖问题
+   docker-compose down backend
+   docker-compose up backend --build -d
+   ```
+
+4. **数据库连接问题**
+   ```bash
+   # 检查MongoDB健康状态
+   docker-compose ps mongo
+   
+   # 查看MongoDB日志
+   docker-compose logs mongo
+   ```
+
 ## API文档
 
 启动服务器后，访问以下地址查看API文档：
