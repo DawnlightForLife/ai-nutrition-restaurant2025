@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/domain/enums/user_role.dart';
 import '../../../../routes/app_navigator.dart';
 
 /// 用户中心页面占位组件
@@ -44,6 +45,22 @@ class UserProfilePlaceholder extends ConsumerWidget {
                       Text(
                         authState.user?.phone ?? '',
                         style: theme.textTheme.bodyMedium,
+                      ),
+                      // 临时调试：显示角色信息
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'DEBUG - Role: ${authState.user?.role ?? 'null'}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.blue[800],
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -107,6 +124,21 @@ class UserProfilePlaceholder extends ConsumerWidget {
               // TODO: Navigate to merchant application
             },
           ),
+          
+          // 管理员入口 - 根据角色动态显示
+          if (authState.user != null && 
+              (authState.user!.role == 'admin' || authState.user!.role == 'super_admin'))
+            ...[
+              const Divider(height: 32),
+              _buildMenuItem(
+                context,
+                icon: Icons.admin_panel_settings,
+                title: '后台管理中心',
+                subtitle: '进入管理后台',
+                onTap: () => _handleAdminAccess(context, ref),
+              ),
+            ],
+          
           const Divider(height: 32),
           
           // 退出登录
@@ -146,5 +178,11 @@ class UserProfilePlaceholder extends ConsumerWidget {
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
     );
+  }
+  
+  /// 处理管理员访问
+  void _handleAdminAccess(BuildContext context, WidgetRef ref) {
+    // 跳转到管理员验证页面
+    Navigator.of(context).pushNamed('/admin/verify');
   }
 }

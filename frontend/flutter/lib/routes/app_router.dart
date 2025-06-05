@@ -12,6 +12,10 @@ import '../features/main/presentation/pages/main_page.dart';
 import '../features/search/presentation/pages/search_page.dart';
 import '../features/cart/presentation/pages/cart_page.dart';
 import '../features/global_pages/presentation/pages/placeholder_page.dart';
+import '../features/admin/presentation/pages/admin_verification_page.dart';
+import '../features/admin/presentation/pages/admin_dashboard_page.dart';
+import '../features/admin/presentation/pages/merchant_approval_page.dart';
+import '../features/admin/presentation/pages/admin_management_page.dart';
 // TODO: 导入其他页面
 
 /// 应用路由配置
@@ -89,6 +93,19 @@ class AppRouter {
         
       case RouteNames.helpCenter:
         return _buildRoute(const PlaceholderPage(title: '帮助中心'), settings);
+
+      // 管理员相关路由
+      case '/admin/verify':
+        return _buildRoute(const AdminVerificationPage(), settings);
+        
+      case '/admin/dashboard':
+        return _buildRoute(const AdminDashboardPage(), settings);
+        
+      case '/admin/merchant-approval':
+        return _buildRoute(const MerchantApprovalPage(), settings);
+        
+      case '/admin/admin-management':
+        return _buildRoute(const AdminManagementPage(), settings);
 
       // TODO: 添加其他路由
 

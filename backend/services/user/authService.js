@@ -667,6 +667,8 @@ const generateToken = (user) => {
  */
 const loginOrRegisterWithCode = async (phone, code) => {
   try {
+    console.log('🔍 开始验证码登录流程:', { phone, code });
+    
     // 先验证验证码
     const isValid = await validateTempCode(phone, code);
     if (!isValid) {
@@ -679,7 +681,16 @@ const loginOrRegisterWithCode = async (phone, code) => {
     const UserModel = getUserModel();
     let user = await UserModel.findOne({ phone });
 
+    console.log('🔍 查询到的用户:', {
+      exists: !!user,
+      id: user?._id,
+      phone: user?.phone,
+      role: user?.role,
+      nickname: user?.nickname
+    });
+
     if (!user) {
+      console.log('🆕 用户不存在，开始自动注册...');
       // 自动注册流程
       const userData = {
         phone,
@@ -687,6 +698,10 @@ const loginOrRegisterWithCode = async (phone, code) => {
         autoRegistered: true // 标记为自动注册用户
       };
       user = await register(userData);
+      console.log('🆕 注册完成:', {
+        id: user._id,
+        role: user.role
+      });
     }
 
     // 更新最后登录时间，使用findOneAndUpdate避免验证问题
@@ -697,10 +712,25 @@ const loginOrRegisterWithCode = async (phone, code) => {
     );
     user = updatedUser || user;
 
+    console.log('🔍 最终用户数据:', {
+      id: user._id,
+      phone: user.phone,
+      role: user.role,
+      nickname: user.nickname
+    });
+
     const userObject = user.toObject ? user.toObject() : { ...user };
     delete userObject.password;
 
     const token = generateToken(user);
+    
+    console.log('🔍 生成的JWT payload:', {
+      id: user._id,
+      userId: user._id,
+      role: user.role,
+      phone: user.phone
+    });
+    
     return { user: userObject, token };
   } catch (error) {
     logger.error('验证码登录失败:', { error });

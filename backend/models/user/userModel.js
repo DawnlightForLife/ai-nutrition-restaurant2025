@@ -50,7 +50,7 @@ const userSchema = new mongoose.Schema({
   // 用户角色
   role: {
     type: String,
-    enum: ['customer', 'store_manager', 'store_staff', 'nutritionist', 'admin', 'area_manager', 'system'],
+    enum: ['customer', 'store_manager', 'store_staff', 'nutritionist', 'admin', 'super_admin', 'area_manager', 'system'],
     default: 'customer',
     description: '用户角色'
   },

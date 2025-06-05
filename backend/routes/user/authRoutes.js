@@ -35,12 +35,33 @@ router.post('/reset-password', updateAuth);
 router.get('/verify-token', verifyToken);
 
 // [GET] 获取当前用户信息
-router.get('/me', authenticate, (req, res) => {
+router.get('/me', authenticate, async (req, res) => {
   try {
-    const user = req.user;
+    const userId = req.user.id || req.user.userId;
+    
+    // 从数据库中获取最新的用户信息
+    const User = require('../../models/user/userModel');
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: '用户不存在'
+      });
+    }
+    
+    // 返回最新的用户信息
     res.json({
       success: true,
-      user: user
+      user: {
+        id: user._id,
+        userId: user._id,
+        phone: user.phone,
+        role: user.role,
+        nickname: user.nickname,
+        avatar: user.avatarUrl,
+        ...req.user // 保留token中的其他信息如iat, exp
+      }
     });
   } catch (error) {
     res.status(500).json({

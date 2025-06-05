@@ -37,6 +37,7 @@ class UserInfo {
   final String phone;
   final String? nickname;
   final String? avatar;
+  final String? role;
   final bool needCompleteProfile;
   final DateTime createdAt;
   
@@ -45,6 +46,7 @@ class UserInfo {
     required this.phone,
     this.nickname,
     this.avatar,
+    this.role,
     this.needCompleteProfile = false,
     required this.createdAt,
   });
@@ -55,6 +57,7 @@ class UserInfo {
       phone: json['phone'] ?? '',
       nickname: json['nickname'],
       avatar: json['avatar'],
+      role: json['role'],
       needCompleteProfile: json['isProfileCompleted'] == false,
       createdAt: json['createdAt'] != null 
         ? DateTime.parse(json['createdAt']) 
@@ -68,6 +71,7 @@ class UserInfo {
       'phone': phone,
       'nickname': nickname,
       'avatar': avatar,
+      'role': role,
       'isProfileCompleted': !needCompleteProfile,
       'createdAt': createdAt.toIso8601String(),
     };
