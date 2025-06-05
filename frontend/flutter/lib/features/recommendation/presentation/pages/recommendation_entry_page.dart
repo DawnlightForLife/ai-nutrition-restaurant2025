@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:auto_route/auto_route.dart';
 
 /// 推荐入口页面
 /// 
 /// 用户进入推荐系统的入口页面
-@RoutePage()
 class RecommendationEntryPage extends ConsumerStatefulWidget {
   const RecommendationEntryPage({super.key});
 

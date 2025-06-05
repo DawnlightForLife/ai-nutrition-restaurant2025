@@ -76,11 +76,6 @@ targets:
             - lib/**.g.dart
             - lib/**.freezed.dart
 
-      # Auto Route 配置
-      auto_route_generator:
-        generate_for:
-          include:
-            - lib/core/router/app_router.dart
 
 # IDE 优化建议（添加到 .vscode/settings.json）:
 # {

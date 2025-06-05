@@ -7,7 +7,7 @@ import '../../../../shared/widgets/common/toast.dart';
 import '../../../../core/exceptions/app_exceptions.dart';
 import 'verification_code_page.dart';
 import 'profile_completion_page.dart';
-import '../../../user/presentation/pages/home_page.dart';
+import '../../../../routes/app_navigator.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -518,12 +518,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         if (success) {
           print('验证码发送成功，准备跳转到验证码页面');
           
-          // 直接使用之前保存的navigator进行导航
-          navigator.push(
-            MaterialPageRoute(
-              builder: (context) => VerificationCodePage(
-                phone: phone,
-              ),
+          // 跳转到验证码页面
+          AppNavigator.push(
+            context,
+            VerificationCodePage.legacy(
+              phone: phone,
             ),
           );
           print('导航到验证码页面完成');
@@ -570,20 +569,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (user != null) {
       if (user.needCompleteProfile) {
         // 跳转到资料完善页面
-        Navigator.pushReplacement(
+        AppNavigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const ProfileCompletionPage(),
-          ),
+          const ProfileCompletionPage(),
         );
       } else {
         // 跳转到主页
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const MainHomePage(),
-          ),
-        );
+        AppNavigator.toMain(context);
       }
     }
   }

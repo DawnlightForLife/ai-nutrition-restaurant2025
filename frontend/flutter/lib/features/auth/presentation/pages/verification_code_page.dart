@@ -7,17 +7,27 @@ import '../providers/auth_provider.dart';
 import '../../../../shared/widgets/common/toast.dart';
 import 'package:ai_nutrition_restaurant/core/exceptions/app_exceptions.dart';
 import 'profile_completion_page.dart';
-import '../../../user/presentation/pages/home_page.dart';
+import '../../../../routes/app_navigator.dart';
+import '../../domain/enums/verification_type.dart';
 
 class VerificationCodePage extends ConsumerStatefulWidget {
-  final String phone;
-  final bool isFromLogin;
+  final String phoneNumber;
+  final VerificationType verificationType;
   
   const VerificationCodePage({
     Key? key,
-    required this.phone,
-    this.isFromLogin = true,
+    required this.phoneNumber,
+    this.verificationType = VerificationType.login,
   }) : super(key: key);
+  
+  // 兼容旧的构造函数
+  VerificationCodePage.legacy({
+    Key? key,
+    required String phone,
+    bool isFromLogin = true,
+  }) : phoneNumber = phone,
+       verificationType = isFromLogin ? VerificationType.login : VerificationType.register,
+       super(key: key);
 
   @override
   ConsumerState<VerificationCodePage> createState() => _VerificationCodePageState();
@@ -116,7 +126,7 @@ class _VerificationCodePageState extends ConsumerState<VerificationCodePage> {
             ),
             const SizedBox(height: 8),
             Text(
-              '验证码已发送至 ${widget.phone}',
+              '验证码已发送至 ${widget.phoneNumber}',
               style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,
@@ -250,8 +260,8 @@ class _VerificationCodePageState extends ConsumerState<VerificationCodePage> {
       );
       
       try {
-        print('开始验证码登录: 手机号=${widget.phone}, 验证码=$code');
-        final success = await authNotifier.loginWithCode(widget.phone, code);
+        print('开始验证码登录: 手机号=${widget.phoneNumber}, 验证码=$code');
+        final success = await authNotifier.loginWithCode(widget.phoneNumber, code);
         
         // 关闭加载指示器
         if (mounted) {
@@ -306,22 +316,14 @@ class _VerificationCodePageState extends ConsumerState<VerificationCodePage> {
     if (user != null && mounted) {
       if (user.needCompleteProfile) {
         // 跳转到资料完善页面
-        Navigator.pushAndRemoveUntil(
+        AppNavigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (context) => const ProfileCompletionPage(),
-          ),
+          const ProfileCompletionPage(),
           (route) => false,
         );
       } else {
         // 跳转到主页
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const MainHomePage(),
-          ),
-          (route) => false,
-        );
+        AppNavigator.toMain(context);
       }
     }
   }
@@ -330,7 +332,7 @@ class _VerificationCodePageState extends ConsumerState<VerificationCodePage> {
     final authNotifier = ref.read(authStateProvider.notifier);
     
     try {
-      final success = await authNotifier.sendVerificationCode(widget.phone);
+      final success = await authNotifier.sendVerificationCode(widget.phoneNumber);
       
       if (success) {
         _startCountdown();

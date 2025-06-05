@@ -1,4 +1,3 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,7 +8,6 @@ import '../widgets/nutrition_profile_card.dart';
 import 'nutrition_profile_management_page.dart';
 import 'ai_recommendation_chat_page.dart';
 
-@RoutePage()
 class NutritionProfileListPage extends ConsumerStatefulWidget {
   const NutritionProfileListPage({super.key});
 

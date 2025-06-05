@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:auto_route/auto_route.dart';
 import '../providers/nutritionist_provider.dart';
 
 /// Unutritionist列表页面
-@RoutePage()
 class UnutritionistListPage extends ConsumerStatefulWidget {
   const UnutritionistListPage({Key? key}) : super(key: key);
 

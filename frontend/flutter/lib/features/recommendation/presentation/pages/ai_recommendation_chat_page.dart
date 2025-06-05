@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:auto_route/auto_route.dart';
 
 /// AI推荐聊天页面
 /// 
 /// 用户与AI进行对话获取个性化推荐的页面
-@RoutePage()
 class AiRecommendationChatPage extends ConsumerStatefulWidget {
   const AiRecommendationChatPage({super.key});
 

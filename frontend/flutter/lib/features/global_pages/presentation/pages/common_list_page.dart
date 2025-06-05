@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:auto_route/auto_route.dart';
 import '../providers/common_provider.dart';
 
 /// Ucommon列表页面
-@RoutePage()
 class UcommonListPage extends ConsumerStatefulWidget {
   const UcommonListPage({Key? key}) : super(key: key);
 

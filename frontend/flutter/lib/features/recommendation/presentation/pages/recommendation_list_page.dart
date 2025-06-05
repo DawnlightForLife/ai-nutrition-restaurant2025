@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:auto_route/auto_route.dart';
 import '../providers/recommendation_provider.dart';
 
 /// 推荐记录列表页面
-@RoutePage()
 class RecommendationListPage extends ConsumerStatefulWidget {
   const RecommendationListPage({Key? key}) : super(key: key);
 

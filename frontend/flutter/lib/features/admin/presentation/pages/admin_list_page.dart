@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:auto_route/auto_route.dart';
 import '../providers/admin_provider.dart';
 
 /// Uadmin列表页面
-@RoutePage()
 class UadminListPage extends ConsumerStatefulWidget {
   const UadminListPage({Key? key}) : super(key: key);
 

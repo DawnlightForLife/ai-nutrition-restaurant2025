@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:auto_route/auto_route.dart';
 import '../providers/consultation_provider.dart';
 
 /// Uconsultation列表页面
-@RoutePage()
 class UconsultationListPage extends ConsumerStatefulWidget {
   const UconsultationListPage({Key? key}) : super(key: key);
 

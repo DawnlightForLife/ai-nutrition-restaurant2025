@@ -135,9 +135,27 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   
   /// 登出
   Future<void> logout() async {
-    final secureStorage = _ref.read(secureStorageProvider);
-    await secureStorage.delete(key: 'auth_token');
-    
+    try {
+      final secureStorage = _ref.read(secureStorageProvider);
+      await secureStorage.delete(key: 'auth_token');
+      
+      // 完全重置状态
+      state = const AuthState(
+        isAuthenticated: false,
+        isLoading: false,
+        user: null,
+        token: null,
+        error: null,
+      );
+    } catch (e) {
+      print('登出时发生错误: $e');
+      // 即使删除token失败，也要重置状态
+      state = const AuthState();
+    }
+  }
+  
+  /// 清除所有状态（强制重置）
+  void clearState() {
     state = const AuthState();
   }
   

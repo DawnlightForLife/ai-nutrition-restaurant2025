@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:auto_route/auto_route.dart';
 import '../../domain/entities/recommendation_item.dart';
 
 /// AI推荐结果页面
 /// 
 /// 显示AI生成的推荐结果列表
-@RoutePage()
 class AiRecommendationResultPage extends ConsumerStatefulWidget {
   /// 推荐结果列表
   final List<RecommendationItem> recommendations;

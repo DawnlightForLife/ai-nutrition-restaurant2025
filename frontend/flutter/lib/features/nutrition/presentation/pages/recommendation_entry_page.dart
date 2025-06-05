@@ -1,11 +1,9 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../core/navigation/app_router.dart';
+import '../../../../routes/app_navigator.dart';
 import '../../domain/constants/nutrition_constants.dart';
 import '../providers/nutrition_provider.dart';
 
-@RoutePage()
 class RecommendationEntryPage extends ConsumerStatefulWidget {
   const RecommendationEntryPage({super.key});
 
@@ -111,7 +109,7 @@ class _RecommendationEntryPageState
       child: InkWell(
         onTap: () {
           // 跳转到营养档案管理页
-          context.router.push(NutritionProfileManagementRoute());
+          AppNavigator.toNutritionProfiles(context);
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -289,7 +287,7 @@ class _RecommendationEntryPageState
             FilledButton(
               onPressed: () {
                 Navigator.pop(context);
-                context.router.push(NutritionProfileManagementRoute());
+                AppNavigator.toNutritionProfiles(context);
               },
               child: const Text('去创建'),
             ),
@@ -298,7 +296,7 @@ class _RecommendationEntryPageState
       );
     } else {
       // 跳转到AI推荐聊天页
-      context.router.push(AiRecommendationChatRoute());
+      AppNavigator.toAIChat(context, 'default_profile_id');
     }
   }
 }

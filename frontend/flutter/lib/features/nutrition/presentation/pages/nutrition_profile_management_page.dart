@@ -1,4 +1,3 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,14 +6,13 @@ import '../../domain/entities/nutrition_profile_v2.dart';
 import '../../../domain/user/value_objects/user_id.dart';
 import '../providers/nutrition_profile_list_provider.dart';
 
-@RoutePage()
 class NutritionProfileManagementPage extends ConsumerStatefulWidget {
   final String? profileId;
   final bool isNewProfile;
   
   const NutritionProfileManagementPage({
     super.key,
-    @PathParam('id') this.profileId,
+    this.profileId,
     this.isNewProfile = false,
   });
 

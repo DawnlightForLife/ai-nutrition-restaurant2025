@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:auto_route/auto_route.dart';
 import '../providers/order_provider.dart';
 
 /// Uorder列表页面
-@RoutePage()
 class UorderListPage extends ConsumerStatefulWidget {
   const UorderListPage({Key? key}) : super(key: key);
 
