@@ -38,6 +38,9 @@ const Session = require('../models/common/sessionModel');
 const feedbackModel = require('../models/feedback/feedbackModel');
 const paymentModel = require('../models/order/paymentModel');
 const promotionModel = require('../models/promotion/promotionModel');
+const NutritionistCertification = require('../models/nutrition/nutritionistCertificationModel');
+const UserPermission = require('../models/user/userPermissionModel');
+const PermissionHistory = require('../models/admin/permissionHistoryModel');
 
 const models = {
   core: {
@@ -45,15 +48,20 @@ const models = {
     UserRole,
     Admin,
     OAuthAccount,
+    UserPermission,
     DataAccessControl,
     AuditLog,
     DbMetrics
+  },
+  admin: {
+    PermissionHistory
   },
   nutrition: {
     NutritionProfile,
     Nutritionist,
     AiRecommendation,
-    UserFavorite
+    UserFavorite,
+    NutritionistCertification
   },
   merchant: {
     Merchant,
@@ -242,7 +250,9 @@ const createIndexes = async () => {
       UserNotificationStatus.createIndexes(),
       ExportTask.createIndexes(),
       FileUpload.createIndexes(),
-      Session.createIndexes()
+      Session.createIndexes(),
+      UserPermission.createIndexes(),
+      PermissionHistory.createIndexes()
     ]);
     console.log('所有数据库索引创建完成');
   } catch (error) {
@@ -295,6 +305,7 @@ module.exports = {
   connectDB,
   dbManager, // 导出数据库管理器以便其他模块使用
   ...models.core,
+  ...models.admin,
   ...models.nutrition,
   ...models.merchant,
   ...models.order,

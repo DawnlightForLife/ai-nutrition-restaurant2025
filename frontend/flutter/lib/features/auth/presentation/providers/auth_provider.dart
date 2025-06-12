@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../data/services/auth_service.dart';
 import '../../data/models/auth_state.dart';
+import '../../../main/presentation/providers/navigation_provider.dart';
 
 /// 安全存储Provider
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
@@ -90,6 +91,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         user: userInfo,
       );
       
+      // 登录成功后重置导航状态到首页
+      _resetNavigationToHome();
+      
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -122,6 +126,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         token: token,
         user: userInfo,
       );
+      
+      // 登录成功后重置导航状态到首页
+      _resetNavigationToHome();
       
       return true;
     } catch (e) {
@@ -162,5 +169,14 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   /// 更新用户信息
   void updateUserInfo(UserInfo userInfo) {
     state = state.copyWith(user: userInfo);
+  }
+  
+  /// 重置导航状态到首页
+  void _resetNavigationToHome() {
+    try {
+      _ref.read(navigationProvider.notifier).toHome();
+    } catch (e) {
+      print('重置导航状态失败: $e');
+    }
   }
 }

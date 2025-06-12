@@ -68,12 +68,12 @@ android {
         options.compilerArgs.add("-Xlint:-options")
     }
     
-    // 确保APK输出路径一致
+    // 确保APK输出路径一致，使用Flutter期望的文件名格式
     applicationVariants.all {
         outputs.all {
-            // 设置统一的输出文件名格式
+            // 设置Flutter期望的输出文件名格式
             val outputImpl = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-            outputImpl.outputFileName = "app-${name}.apk"
+            outputImpl.outputFileName = "app-debug.apk"
         }
     }
 }

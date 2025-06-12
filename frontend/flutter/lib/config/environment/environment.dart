@@ -16,9 +16,9 @@ abstract class Environment {
     } catch (e) {
       // 如果 FlavorConfig 没有初始化，使用默认值
       if (Platform.isAndroid) {
-        return 'http://10.0.2.2:3000';
+        return 'http://10.0.2.2:8080/api';
       }
-      return 'http://localhost:3000';
+      return 'http://localhost:3000/api';
     }
   }
   

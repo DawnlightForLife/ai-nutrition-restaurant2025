@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const ModelFactory = require('../modelFactory');
 const { shardingService } = require('../../services/database/shardingService');
 

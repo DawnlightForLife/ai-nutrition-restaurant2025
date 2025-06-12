@@ -518,22 +518,27 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         if (success) {
           print('验证码发送成功，准备跳转到验证码页面');
           
-          // 跳转到验证码页面
-          AppNavigator.push(
-            context,
-            VerificationCodePage.legacy(
-              phone: phone,
-            ),
-          );
-          print('导航到验证码页面完成');
-          
-          // 使用ScaffoldMessenger显示提示
+          // 先显示成功提示，然后跳转
           scaffoldMessenger.showSnackBar(
             const SnackBar(
               content: Text('验证码已发送'),
               backgroundColor: Colors.green,
+              duration: Duration(seconds: 2), // 短暂显示
             ),
           );
+          
+          // 延迟跳转到验证码页面，确保SnackBar显示完成
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (context.mounted) {
+              AppNavigator.push(
+                context,
+                VerificationCodePage.legacy(
+                  phone: phone,
+                ),
+              );
+              print('导航到验证码页面完成');
+            }
+          });
         } else {
           print('验证码发送失败');
           scaffoldMessenger.showSnackBar(

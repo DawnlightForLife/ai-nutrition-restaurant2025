@@ -5,16 +5,23 @@
  */
 const express = require('express');
 const router = express.Router();
-const { createMerchant, getMerchantList, getMerchantById, updateMerchant, deleteMerchant, verifyMerchant } = require('../../controllers/merchant/merchantController');
+const { createMerchant, getMerchantList, getMerchantById, updateMerchant, deleteMerchant, verifyMerchant, getMerchantStats, getCurrentUserMerchant } = require('../../controllers/merchant/merchantController');
 const authMiddleware = require('../../middleware/auth');
+const { legacyCertificationMiddleware, migrationNoticeMiddleware } = require('../../middleware/certification/legacyCertificationMiddleware');
 const auth = authMiddleware.auth || authMiddleware.authenticateUser;
 const authorize = authMiddleware.authorize;
 
 // [POST] 创建商家
-router.post('/', auth(), createMerchant);
+router.post('/', auth(), legacyCertificationMiddleware, migrationNoticeMiddleware, createMerchant);
 
 // [GET] 获取商家列表
 router.get('/', getMerchantList);
+
+// [GET] 获取当前用户的商家信息
+router.get('/current', auth(), getCurrentUserMerchant);
+
+// [GET] 获取商家统计数据（管理员专用） - 必须在/:id之前
+router.get('/stats', auth(), authorize('admin'), getMerchantStats);
 
 // [GET] 获取指定商家详情
 router.get('/:id', getMerchantById);

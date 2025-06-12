@@ -18,10 +18,10 @@ class CentralizedEventBus {
   CentralizedEventBus._();
 
   /// 事件流控制器映射表
-  final Map<Type, StreamController> _controllers = {};
+  final Map<Type, StreamController<dynamic>> _controllers = {};
   
   /// 事件订阅映射表
-  final Map<Type, Set<StreamSubscription>> _subscriptions = {};
+  final Map<Type, Set<StreamSubscription<dynamic>>> _subscriptions = {};
   
   /// 事件过滤器列表
   final List<EventFilter> _filters = [];
@@ -94,7 +94,7 @@ class CentralizedEventBus {
           middleware.afterHandle(event);
         }
       },
-      onError: (error, stack) {
+      onError: (Object error, StackTrace stack) {
         AppLogger.error(
           '事件流错误: ${T.toString()}',
           error: error,
@@ -104,7 +104,7 @@ class CentralizedEventBus {
     );
 
     // 记录订阅
-    _subscriptions.putIfAbsent(T, () => <StreamSubscription>{}).add(subscription);
+    _subscriptions.putIfAbsent(T, () => <StreamSubscription<dynamic>>{}).add(subscription);
     
     AppLogger.debug('事件订阅添加: ${T.toString()}');
     

@@ -33,7 +33,7 @@ Future<void> _initializeApp(String flavor) async {
       case 'dev':
         FlavorConfig(
           flavor: Flavor.development,
-          apiBaseUrl: 'http://localhost:3000',  // Environment 类会自动处理 Android 的情况
+          apiBaseUrl: 'http://localhost:8080/api',  // Environment 类会自动处理 Android 的情况
           appTitle: '营养立方 (开发版)',
         );
         
@@ -47,7 +47,7 @@ Future<void> _initializeApp(String flavor) async {
       case 'staging':
         FlavorConfig(
           flavor: Flavor.staging,
-          apiBaseUrl: 'https://staging-api.nutrition-cube.com',
+          apiBaseUrl: 'https://staging-api.nutrition-cube.com/api',
           appTitle: '营养立方 (测试版)',
         );
         
@@ -61,7 +61,7 @@ Future<void> _initializeApp(String flavor) async {
       default:
         FlavorConfig(
           flavor: Flavor.production,
-          apiBaseUrl: 'https://api.nutrition-cube.com',
+          apiBaseUrl: 'https://api.nutrition-cube.com/api',
           appTitle: '营养立方',
         );
         

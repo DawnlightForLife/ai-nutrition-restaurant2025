@@ -50,21 +50,30 @@ const commonRules = {
 // 请求验证中间件
 const validateRequest = (schema) => {
     return (req, res, next) => {
-        const validationSchema = {
-            body: schema.body,
-            query: schema.query,
-            params: schema.params,
-            headers: schema.headers
-        };
+        // 只包含已定义的schema部分，避免undefined值
+        const validationSchema = {};
+        const requestData = {};
+
+        if (schema.body) {
+            validationSchema.body = schema.body;
+            requestData.body = req.body;
+        }
+        if (schema.query) {
+            validationSchema.query = schema.query;
+            requestData.query = req.query;
+        }
+        if (schema.params) {
+            validationSchema.params = schema.params;
+            requestData.params = req.params;
+        }
+        if (schema.headers) {
+            validationSchema.headers = schema.headers;
+            requestData.headers = req.headers;
+        }
 
         // stripUnknown: true 会剥离未在 schema 中定义的字段
         // allowUnknown: true 允许对象中存在未校验字段（不抛错）
-        const validationResult = Joi.object(validationSchema).validate({
-            body: req.body,
-            query: req.query,
-            params: req.params,
-            headers: req.headers
-        }, {
+        const validationResult = Joi.object(validationSchema).validate(requestData, {
             abortEarly: false,
             allowUnknown: true,
             stripUnknown: true

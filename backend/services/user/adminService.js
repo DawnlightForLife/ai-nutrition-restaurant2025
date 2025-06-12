@@ -27,7 +27,10 @@ const getSystemUsers = async (filters = {}, pagination = {}) => {
     const query = {};
     
     // 应用筛选条件
-    if (filters.role) query.role = filters.role;
+    if (filters.role) {
+      // 如果filters.role已经是一个查询对象（如{ $in: [...] }），直接使用
+      query.role = filters.role;
+    }
     if (filters.status) query.account_status = filters.status;
     if (filters.search) {
       query.$or = [
@@ -137,7 +140,7 @@ const updateUserStatus = async (userId, status, adminId, reason) => {
 const updateUserRole = async (userId, role, adminId) => {
   try {
     // 验证角色值
-    const validRoles = ['user', 'merchant', 'nutritionist', 'admin'];
+    const validRoles = ['customer', 'store_manager', 'store_staff', 'nutritionist', 'admin', 'super_admin'];
     if (!validRoles.includes(role)) {
       const error = new Error('无效的用户角色');
       error.statusCode = 400;

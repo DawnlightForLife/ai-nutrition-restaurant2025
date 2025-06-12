@@ -212,4 +212,46 @@ class AppNavigator {
   static Future<void> toEmployeeWorkspace(BuildContext context) {
     return pushNamed(context, RouteNames.employeeEntry);
   }
+
+  /// 跳转到营养师认证申请
+  static Future<void> toNutritionistCertification(BuildContext context, {
+    String? applicationId,
+    dynamic initialData,
+  }) {
+    return pushNamed(
+      context,
+      RouteNames.nutritionistCertification,
+      arguments: {
+        'applicationId': applicationId,
+        'initialData': initialData,
+      },
+    );
+  }
+
+  /// 跳转到营养师认证状态
+  static Future<void> toNutritionistCertificationStatus(
+    BuildContext context, {
+    required String applicationId,
+  }) {
+    return pushNamed(
+      context,
+      RouteNames.nutritionistCertificationStatus,
+      arguments: {'applicationId': applicationId},
+    );
+  }
+
+  /// 跳转到营养师认证编辑
+  static Future<void> toNutritionistCertificationEdit(BuildContext context, {
+    String? applicationId,
+    dynamic initialData,
+  }) {
+    return pushNamed(
+      context,
+      RouteNames.nutritionistCertificationEdit,
+      arguments: {
+        'applicationId': applicationId,
+        'initialData': initialData,
+      },
+    );
+  }
 }

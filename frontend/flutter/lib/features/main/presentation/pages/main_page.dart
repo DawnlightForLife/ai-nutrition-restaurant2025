@@ -33,6 +33,13 @@ class _MainPageState extends ConsumerState<MainPage> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    
+    // 确保导航状态从首页开始
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(navigationProvider.notifier).toHome();
+      }
+    });
   }
 
   @override
@@ -47,7 +54,7 @@ class _MainPageState extends ConsumerState<MainPage> {
 
     // 监听索引变化，切换页面
     ref.listen<int>(navigationProvider, (previous, next) {
-      if (_pageController.hasClients) {
+      if (_pageController.hasClients && _pageController.page?.round() != next) {
         _pageController.jumpToPage(next);
       }
     });
@@ -56,6 +63,12 @@ class _MainPageState extends ConsumerState<MainPage> {
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(), // 禁止滑动切换
+        onPageChanged: (index) {
+          // 确保页面切换和导航状态同步
+          if (ref.read(navigationProvider) != index) {
+            ref.read(navigationProvider.notifier).setIndex(index);
+          }
+        },
         children: _pages,
       ),
       bottomNavigationBar: AppBottomNavigationBar(

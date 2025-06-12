@@ -42,7 +42,7 @@ const authorize = (roles) => {
       }
 
       // 特殊角色：超级管理员总是有所有权限
-      if (userRole === 'superadmin') {
+      if (userRole === 'superadmin' || userRole === 'super_admin') {
         return next();
       }
       
@@ -91,7 +91,7 @@ const checkPermission = (permissions) => {
       const userRole = req.user.role;
       
       // 特殊角色：超级管理员总是有所有权限
-      if (userRole === 'superadmin') {
+      if (userRole === 'superadmin' || userRole === 'super_admin') {
         return next();
       }
       
@@ -144,7 +144,7 @@ const checkResourceOwner = (getResourceOwnerIdFn) => {
       const userRole = req.user.role;
       
       // 特殊角色：管理员和超级管理员可以访问所有资源
-      if (userRole === 'admin' || userRole === 'superadmin') {
+      if (userRole === 'admin' || userRole === 'superadmin' || userRole === 'super_admin') {
         return next();
       }
       

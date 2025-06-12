@@ -16,7 +16,7 @@ const conditionEvaluator = require('./access/conditionEvaluator');
 const cache = require('./cache/cache');
 
 // 日志工具
-const logger = require('./logger/logger');
+const logger = require('./logger/winstonLogger');
 
 // 数据验证工具
 const userValidator = require('./validators/userValidator');

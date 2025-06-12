@@ -195,12 +195,17 @@ const startServer = async () => {
       }
     });
     
-    // 初始化服务
+    // 初始化缓存服务
+    const cacheService = require('./services/cache/cacheService');
+    await cacheService.initialize();
+    console.log('缓存服务已初始化');
+    
+    // 初始化其他Redis服务（如果需要）
     const redisEnabled = process.env.REDIS_ENABLED === 'true';
     if (redisEnabled) {
       const { initRedisCache } = require('./utils/cache');
       await initRedisCache();
-      console.log('Redis缓存服务已初始化');
+      console.log('额外Redis缓存服务已初始化');
     }
     
     // 初始化分片服务

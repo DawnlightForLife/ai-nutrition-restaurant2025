@@ -18,6 +18,8 @@ dependencies:
   flutter_svg: ^2.0.10+1
   cached_network_image: ^3.4.1
   image_picker: ^1.1.2
+  file_picker: ^8.1.2
+  flutter_hooks: ^0.20.5
 
   # 状态管理
   flutter_riverpod: ^2.6.1
@@ -55,6 +57,7 @@ dependencies:
   # UI组件
   cupertino_icons: ^1.0.8
   # data_table_2: ^2.5.15  # 移除，暂时不需要复杂表格
+  qr_flutter: ^4.1.0  # 二维码生成
   
   # 动画系统 - 简化为一种方案
   flutter_animate: ^4.5.0
@@ -78,8 +81,8 @@ dependencies:
   
   # 路由 - 使用原生Navigator
   
-  # 领域驱动设计支持 - 简化
-  # freezed_annotation: ^2.4.4  # 移除，手动编写数据类
+  # 领域驱动设计支持
+  freezed_annotation: ^2.4.4
   
   # 工具依赖
   path: ^1.9.0
@@ -89,10 +92,11 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # 代码生成 - 简化，只保留核心的
+  # 代码生成
   build_runner: ^2.4.13
-  # freezed: ^2.5.7  # 移除，手动编写数据类
-  # json_serializable: ^6.8.0  # 移除，手动编写JSON序列化
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+  retrofit_generator: ^8.2.1
   riverpod_generator: ^2.4.3
   riverpod_lint: ^2.3.13
   
@@ -112,8 +116,6 @@ dev_dependencies:
   # 文档生成
   # widgetbook_generator: ^3.9.0  # 暂时注释
   
-  # 代码生成器 - 只保留API生成
-  retrofit_generator: ^9.1.2
   # hive_generator: ^2.0.1  # 移除，简化存储
 
 flutter:

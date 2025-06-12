@@ -8,247 +8,194 @@ class AdminUserItem extends StatelessWidget {
   final VoidCallback? onDelete;
   
   const AdminUserItem({
-    super.key,
+    Key? key,
     required this.admin,
     this.onEdit,
     this.onDelete,
-  });
+  }) : super(key: key);
   
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final dateFormat = DateFormat('yyyy-MM-dd HH:mm');
     
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 用户基本信息
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 用户头像
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: _getRoleColor(admin['role']).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: Icon(
-                    _getRoleIcon(admin['role']),
-                    color: _getRoleColor(admin['role']),
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                
-                // 用户信息
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              admin['nickname'] ?? admin['phone'],
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          _buildRoleBadge(context),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        admin['phone'] ?? '',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.access_time,
-                            size: 14,
-                            color: theme.colorScheme.onSurface.withOpacity(0.5),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _getCreatedAtText(),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.5),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                
-                // 操作按钮
-                if (_canEdit())
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      switch (value) {
-                        case 'edit':
-                          onEdit?.call();
-                          break;
-                        case 'delete':
-                          onDelete?.call();
-                          break;
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit, size: 20),
-                            SizedBox(width: 8),
-                            Text('编辑'),
-                          ],
-                        ),
-                      ),
-                      if (_canDelete())
-                        const PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(Icons.delete, size: 20, color: Colors.red),
-                              SizedBox(width: 8),
-                              Text('删除', style: TextStyle(color: Colors.red)),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-              ],
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: CircleAvatar(
+          radius: 24,
+          backgroundColor: _getRoleColor(admin['role']),
+          child: Text(
+            (admin['nickname'] ?? admin['phone'] ?? '?')[0].toUpperCase(),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
             ),
-            
-            // 权限说明
-            if (admin['role'] == 'super_admin') ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.security,
-                      size: 16,
-                      color: Colors.purple[700],
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '拥有最高权限，可以管理所有管理员和系统设置',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.purple[700],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+          ),
+        ),
+        title: Row(
+          children: [
+            Text(
+              admin['nickname'] ?? '未设置昵称',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
-            ],
+            ),
+            const SizedBox(width: 8),
+            _buildRoleChip(admin['role']),
           ],
         ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(
+                  Icons.phone,
+                  size: 16,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  admin['phone'] ?? '未知',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(
+                  Icons.access_time,
+                  size: 16,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '创建时间: ${_formatDate(admin['createdAt'] ?? admin['created_at'])}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        trailing: _buildActions(context),
       ),
     );
   }
   
-  /// 构建角色徽章
-  Widget _buildRoleBadge(BuildContext context) {
-    final role = admin['role'] ?? 'user';
-    final color = _getRoleColor(role);
-    final text = _getRoleText(role);
+  /// 构建角色标签
+  Widget _buildRoleChip(String? role) {
+    String roleText;
+    Color roleColor;
     
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
+    switch (role) {
+      case 'super_admin':
+        roleText = '超级管理员';
+        roleColor = Colors.red;
+        break;
+      case 'admin':
+        roleText = '管理员';
+        roleColor = Colors.orange;
+        break;
+      default:
+        roleText = '未知角色';
+        roleColor = Colors.grey;
+    }
+    
+    return Chip(
+      label: Text(
+        roleText,
+        style: const TextStyle(
           fontSize: 12,
-          fontWeight: FontWeight.w500,
+          color: Colors.white,
         ),
       ),
+      backgroundColor: roleColor,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
   
-  /// 获取角色颜色
+  /// 获取角色对应的颜色
   Color _getRoleColor(String? role) {
     switch (role) {
       case 'super_admin':
-        return Colors.purple;
+        return Colors.red;
       case 'admin':
-        return Colors.blue;
+        return Colors.orange;
       default:
         return Colors.grey;
     }
   }
   
-  /// 获取角色图标
-  IconData _getRoleIcon(String? role) {
-    switch (role) {
-      case 'super_admin':
-        return Icons.admin_panel_settings;
-      case 'admin':
-        return Icons.manage_accounts;
-      default:
-        return Icons.person;
-    }
-  }
-  
-  /// 获取角色文本
-  String _getRoleText(String? role) {
-    switch (role) {
-      case 'super_admin':
-        return '超级管理员';
-      case 'admin':
-        return '管理员';
-      default:
-        return '用户';
-    }
-  }
-  
-  /// 获取创建时间文本
-  String _getCreatedAtText() {
-    final createdAt = admin['createdAt'];
-    if (createdAt == null) return '';
+  /// 格式化日期
+  String _formatDate(dynamic date) {
+    if (date == null) return '未知';
     
     try {
-      final date = DateTime.parse(createdAt);
-      final formatter = DateFormat('yyyy-MM-dd HH:mm');
-      return '创建时间：${formatter.format(date)}';
+      DateTime dateTime;
+      if (date is String) {
+        dateTime = DateTime.parse(date);
+      } else if (date is DateTime) {
+        dateTime = date;
+      } else {
+        return '未知';
+      }
+      
+      return DateFormat('yyyy-MM-dd HH:mm').format(dateTime);
     } catch (e) {
-      return '';
+      return '未知';
     }
   }
   
-  /// 是否可以编辑
-  bool _canEdit() {
-    // TODO: 根据当前用户权限判断
-    return true;
-  }
-  
-  /// 是否可以删除
-  bool _canDelete() {
-    // 超级管理员不能删除自己
-    // TODO: 根据当前用户ID判断
-    return admin['role'] != 'super_admin';
+  /// 构建操作按钮
+  Widget _buildActions(BuildContext context) {
+    // 超级管理员不能被编辑或删除
+    if (admin['role'] == 'super_admin' && admin['phone'] == '15108343625') {
+      return const SizedBox.shrink();
+    }
+    
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert),
+      onSelected: (value) {
+        switch (value) {
+          case 'edit':
+            onEdit?.call();
+            break;
+          case 'delete':
+            onDelete?.call();
+            break;
+        }
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'edit',
+          child: Row(
+            children: [
+              Icon(Icons.edit, size: 20),
+              SizedBox(width: 8),
+              Text('编辑'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete, size: 20, color: Colors.red),
+              SizedBox(width: 8),
+              Text('删除', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

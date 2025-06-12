@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/merchant_approval_item.dart';
+import '../providers/merchant_approval_provider.dart';
+import '../../../../shared/widgets/common/toast.dart';
 
 /// 商户审核列表页面
 class MerchantApprovalPage extends ConsumerStatefulWidget {
@@ -55,28 +57,56 @@ class _MerchantApprovalPageState extends ConsumerState<MerchantApprovalPage>
   
   /// 构建待审核列表
   Widget _buildPendingList() {
-    // TODO: 从后端获取真实数据
-    final pendingMerchants = _getMockPendingMerchants();
+    final approvalState = ref.watch(merchantApprovalProvider);
     
-    if (pendingMerchants.isEmpty) {
+    if (approvalState.isLoading && approvalState.pendingMerchants.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    if (approvalState.error != null && approvalState.pendingMerchants.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('加载失败: ${approvalState.error}'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => ref.read(merchantApprovalProvider.notifier).refresh(),
+              child: const Text('重试'),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    if (approvalState.pendingMerchants.isEmpty) {
       return _buildEmptyState('暂无待审核商户');
     }
     
     return RefreshIndicator(
-      onRefresh: () async {
-        // TODO: 刷新数据
-        await Future.delayed(const Duration(seconds: 1));
-      },
+      onRefresh: () => ref.read(merchantApprovalProvider.notifier).refresh(),
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: pendingMerchants.length,
+        itemCount: approvalState.pendingMerchants.length + 
+            (approvalState.hasMore ? 1 : 0),
         itemBuilder: (context, index) {
-          final merchant = pendingMerchants[index];
+          if (index == approvalState.pendingMerchants.length) {
+            // 加载更多
+            ref.read(merchantApprovalProvider.notifier).loadMore();
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+          
+          final merchant = approvalState.pendingMerchants[index];
           return MerchantApprovalItem(
-            merchant: merchant,
-            onApprove: () => _handleApprove(merchant['id']),
-            onReject: () => _handleReject(merchant['id']),
-            onViewDetail: () => _viewMerchantDetail(merchant),
+            merchant: merchant.toJson(),
+            onApprove: () => _handleApprove(merchant.id),
+            onReject: () => _handleReject(merchant.id),
+            onViewDetail: () => _viewMerchantDetail(merchant.toJson()),
           );
         },
       ),
@@ -85,27 +115,27 @@ class _MerchantApprovalPageState extends ConsumerState<MerchantApprovalPage>
   
   /// 构建已通过列表
   Widget _buildApprovedList() {
-    // TODO: 从后端获取真实数据
-    final approvedMerchants = _getMockApprovedMerchants();
+    final approvalState = ref.watch(merchantApprovalProvider);
     
-    if (approvedMerchants.isEmpty) {
+    if (approvalState.isLoading && approvalState.approvedMerchants.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    if (approvalState.approvedMerchants.isEmpty) {
       return _buildEmptyState('暂无已通过商户');
     }
     
     return RefreshIndicator(
-      onRefresh: () async {
-        // TODO: 刷新数据
-        await Future.delayed(const Duration(seconds: 1));
-      },
+      onRefresh: () => ref.read(merchantApprovalProvider.notifier).refresh(),
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: approvedMerchants.length,
+        itemCount: approvalState.approvedMerchants.length,
         itemBuilder: (context, index) {
-          final merchant = approvedMerchants[index];
+          final merchant = approvalState.approvedMerchants[index];
           return MerchantApprovalItem(
-            merchant: merchant,
+            merchant: merchant.toJson(),
             status: 'approved',
-            onViewDetail: () => _viewMerchantDetail(merchant),
+            onViewDetail: () => _viewMerchantDetail(merchant.toJson()),
           );
         },
       ),
@@ -114,27 +144,27 @@ class _MerchantApprovalPageState extends ConsumerState<MerchantApprovalPage>
   
   /// 构建已拒绝列表
   Widget _buildRejectedList() {
-    // TODO: 从后端获取真实数据
-    final rejectedMerchants = _getMockRejectedMerchants();
+    final approvalState = ref.watch(merchantApprovalProvider);
     
-    if (rejectedMerchants.isEmpty) {
+    if (approvalState.isLoading && approvalState.rejectedMerchants.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    if (approvalState.rejectedMerchants.isEmpty) {
       return _buildEmptyState('暂无已拒绝商户');
     }
     
     return RefreshIndicator(
-      onRefresh: () async {
-        // TODO: 刷新数据
-        await Future.delayed(const Duration(seconds: 1));
-      },
+      onRefresh: () => ref.read(merchantApprovalProvider.notifier).refresh(),
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: rejectedMerchants.length,
+        itemCount: approvalState.rejectedMerchants.length,
         itemBuilder: (context, index) {
-          final merchant = rejectedMerchants[index];
+          final merchant = approvalState.rejectedMerchants[index];
           return MerchantApprovalItem(
-            merchant: merchant,
+            merchant: merchant.toJson(),
             status: 'rejected',
-            onViewDetail: () => _viewMerchantDetail(merchant),
+            onViewDetail: () => _viewMerchantDetail(merchant.toJson()),
           );
         },
       ),
@@ -185,14 +215,19 @@ class _MerchantApprovalPageState extends ConsumerState<MerchantApprovalPage>
       ),
     );
     
-    if (confirmed == true) {
-      // TODO: 调用API通过审核
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('审核已通过')),
+    if (confirmed == true && mounted) {
+      final success = await ref.read(merchantApprovalProvider.notifier).verifyMerchant(
+        merchantId,
+        status: 'approved',
       );
       
-      // 刷新列表
-      setState(() {});
+      if (mounted) {
+        if (success) {
+          Toast.success(context, '审核已通过');
+        } else {
+          Toast.error(context, '操作失败，请重试');
+        }
+      }
     }
   }
   
@@ -203,14 +238,20 @@ class _MerchantApprovalPageState extends ConsumerState<MerchantApprovalPage>
       builder: (context) => _RejectReasonDialog(),
     );
     
-    if (reason != null && reason.isNotEmpty) {
-      // TODO: 调用API拒绝审核
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('审核已拒绝')),
+    if (reason != null && reason.isNotEmpty && mounted) {
+      final success = await ref.read(merchantApprovalProvider.notifier).verifyMerchant(
+        merchantId,
+        status: 'rejected',
+        rejectionReason: reason,
       );
       
-      // 刷新列表
-      setState(() {});
+      if (mounted) {
+        if (success) {
+          Toast.success(context, '审核已拒绝');
+        } else {
+          Toast.error(context, '操作失败，请重试');
+        }
+      }
     }
   }
   
@@ -220,63 +261,6 @@ class _MerchantApprovalPageState extends ConsumerState<MerchantApprovalPage>
       '/admin/merchant-detail',
       arguments: merchant,
     );
-  }
-  
-  /// 获取模拟待审核商户数据
-  List<Map<String, dynamic>> _getMockPendingMerchants() {
-    return [
-      {
-        'id': '1',
-        'name': '张三烧烤店',
-        'contactPerson': '张三',
-        'phone': '13800138001',
-        'address': '北京市朝阳区某某街道123号',
-        'businessLicense': '91110105MA01234567',
-        'submittedAt': DateTime.now().subtract(const Duration(hours: 2)),
-      },
-      {
-        'id': '2',
-        'name': '李四快餐店',
-        'contactPerson': '李四',
-        'phone': '13800138002',
-        'address': '上海市浦东新区某某路456号',
-        'businessLicense': '91310115MA87654321',
-        'submittedAt': DateTime.now().subtract(const Duration(days: 1)),
-      },
-    ];
-  }
-  
-  /// 获取模拟已通过商户数据
-  List<Map<String, dynamic>> _getMockApprovedMerchants() {
-    return [
-      {
-        'id': '3',
-        'name': '王五餐厅',
-        'contactPerson': '王五',
-        'phone': '13800138003',
-        'address': '广州市天河区某某大道789号',
-        'businessLicense': '91440106MA11111111',
-        'submittedAt': DateTime.now().subtract(const Duration(days: 3)),
-        'approvedAt': DateTime.now().subtract(const Duration(days: 2)),
-      },
-    ];
-  }
-  
-  /// 获取模拟已拒绝商户数据
-  List<Map<String, dynamic>> _getMockRejectedMerchants() {
-    return [
-      {
-        'id': '4',
-        'name': '赵六小吃店',
-        'contactPerson': '赵六',
-        'phone': '13800138004',
-        'address': '深圳市南山区某某科技园',
-        'businessLicense': '91440300MA22222222',
-        'submittedAt': DateTime.now().subtract(const Duration(days: 5)),
-        'rejectedAt': DateTime.now().subtract(const Duration(days: 4)),
-        'rejectReason': '营业执照照片不清晰，请重新上传',
-      },
-    ];
   }
 }
 

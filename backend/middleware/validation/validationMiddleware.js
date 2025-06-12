@@ -175,11 +175,26 @@ const validationMiddleware = (schemaName) => {
     return validate(schemaName);
 };
 
+// ========== 专用验证中间件 ==========
+
+/**
+ * 营养师认证申请验证中间件
+ */
+const validateNutritionistCertificationRequest = validate('nutritionistCertification.create');
+const validateNutritionistCertificationUpdate = validate('nutritionistCertification.update');
+const validateDocumentUpload = validate('nutritionistCertification.uploadDocument');
+
 // Joi：用于外部定义校验 schema
 module.exports = {
     validate,
     validateQuery,
     validateParams,
     validationMiddleware,
+    
+    // 营养师认证专用验证
+    validateNutritionistCertificationRequest,
+    validateNutritionistCertificationUpdate,
+    validateDocumentUpload,
+    
     Joi
 }; 

@@ -10,6 +10,12 @@ const nutritionistSchema = new mongoose.Schema({
     index: true,
     description: '关联用户 ID'
   },
+  // 关联到认证申请
+  certificationApplicationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'NutritionistCertification',
+    description: '关联的认证申请ID'
+  },
   // 个人信息
   personalInfo: {
     realName: {

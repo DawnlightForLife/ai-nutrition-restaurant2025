@@ -41,6 +41,32 @@ exports.createMerchant = catchAsync(async (req, res) => {
 });
 
 /**
+ * 获取当前用户的商家信息
+ * - 返回当前认证用户的商家申请记录
+ */
+exports.getCurrentUserMerchant = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  
+  const result = await merchantService.getMerchantByUserId(userId);
+  
+  // 如果没有找到商家信息，返回空数组而不是错误
+  if (!result.success) {
+    return res.status(200).json({
+      success: true,
+      message: result.message || '未找到商家信息',
+      data: []
+    });
+  }
+  
+  // 返回数组格式以保持一致性
+  res.status(200).json({
+    success: true,
+    message: '获取商家信息成功',
+    data: [result.data]
+  });
+});
+
+/**
  * 获取商家列表
  * - 支持多条件筛选、分页、排序
  * - 返回商家列表及分页信息
@@ -50,7 +76,8 @@ exports.getMerchantList = catchAsync(async (req, res) => {
     businessType,
     city,
     hasNutritionist,
-    specialtyDiet, 
+    specialtyDiet,
+    verificationStatus,
     limit = 10, 
     skip = 0, 
     sortBy = 'stats.avgRating', 
@@ -62,6 +89,7 @@ exports.getMerchantList = catchAsync(async (req, res) => {
     city,
     hasNutritionist: hasNutritionist === 'true',
     specialtyDiet,
+    verificationStatus,
     limit: parseInt(limit),
     skip: parseInt(skip),
     sort: { [sortBy]: parseInt(sortOrder) }
@@ -138,11 +166,35 @@ exports.updateMerchant = catchAsync(async (req, res) => {
     });
   }
   
-  // 防止更新某些字段
+  // 防止更新某些字段（但允许重新提交时更新verification）
   delete data.userId;
-  delete data.verification;
   delete data.accountStatus;
   delete data.stats;
+  
+  // 特殊处理：允许商家本人更新verification状态（用于重新提交申请）
+  console.log('控制器: 检查verification更新权限', {
+    hasVerificationData: !!data.verification,
+    isOwner: merchant.data.userId.toString() === req.user.id,
+    currentStatus: merchant.data.verification.verificationStatus,
+    newStatus: data.verification?.verificationStatus
+  });
+
+  if (data.verification && merchant.data.userId.toString() === req.user.id) {
+    // 只允许从rejected状态改为pending状态（重新提交）
+    if (merchant.data.verification.verificationStatus === 'rejected' && 
+        data.verification.verificationStatus === 'pending') {
+      // 保留verification字段用于重新提交
+      console.log('控制器: 允许重新提交，保留verification字段');
+    } else {
+      // 其他情况下不允许修改verification
+      console.log('控制器: 不允许此verification更新，删除字段');
+      delete data.verification;
+    }
+  } else {
+    // 非商家本人不允许修改verification
+    console.log('控制器: 非商家本人，删除verification字段');
+    delete data.verification;
+  }
   
   const result = await merchantService.updateMerchant(id, data);
   
@@ -215,7 +267,7 @@ exports.verifyMerchant = catchAsync(async (req, res) => {
   const { verificationStatus, rejectionReason } = req.body;
   
   // 只有管理员可以审核
-  if (req.user.role !== 'admin') {
+  if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
     return res.status(403).json({
       success: false,
       message: '无权进行此操作'
@@ -239,6 +291,36 @@ exports.verifyMerchant = catchAsync(async (req, res) => {
   res.status(200).json({
     success: true,
     message: '商家审核完成',
+    data: result.data
+  });
+});
+
+/**
+ * 获取商家统计数据
+ * - 仅管理员可以访问
+ * - 返回各状态商家数量统计
+ */
+exports.getMerchantStats = catchAsync(async (req, res) => {
+  // 只有管理员可以查看统计
+  if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+    return res.status(403).json({
+      success: false,
+      message: '无权进行此操作'
+    });
+  }
+  
+  const result = await merchantService.getMerchantStats();
+  
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      message: result.message
+    });
+  }
+  
+  res.status(200).json({
+    success: true,
+    message: '获取商家统计成功',
     data: result.data
   });
 });

@@ -194,6 +194,15 @@ class CacheService {
   }
   
   /**
+   * 删除缓存 (别名方法，兼容性)
+   * @param {string} key - 缓存键
+   * @returns {Promise<boolean>} 是否成功
+   */
+  async del(key) {
+    return this.delete(key);
+  }
+  
+  /**
    * 清除指定模式的所有缓存
    * @param {string} pattern - 键模式，如"users:*"
    * @returns {Promise<number>} 删除的键数量

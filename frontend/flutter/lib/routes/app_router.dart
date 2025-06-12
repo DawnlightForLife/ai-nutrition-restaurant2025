@@ -15,7 +15,16 @@ import '../features/global_pages/presentation/pages/placeholder_page.dart';
 import '../features/admin/presentation/pages/admin_verification_page.dart';
 import '../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../features/admin/presentation/pages/merchant_approval_page.dart';
+import '../features/admin/presentation/pages/merchant_detail_page.dart';
 import '../features/admin/presentation/pages/admin_management_page.dart';
+import '../features/admin/presentation/pages/permission_management_page.dart';
+import '../features/admin/presentation/pages/system_config_page.dart';
+import '../features/admin/presentation/pages/merchant_stats_page.dart';
+import '../features/admin/presentation/pages/nutritionist_stats_page.dart';
+import '../features/merchant/presentation/pages/merchant_application_improved_page.dart';
+import '../features/merchant/presentation/pages/merchant_application_status_page.dart';
+import '../features/nutritionist/presentation/pages/nutritionist_certification_application_page.dart';
+import '../features/nutritionist/presentation/pages/nutritionist_certification_status_page.dart';
 // TODO: 导入其他页面
 
 /// 应用路由配置
@@ -104,8 +113,61 @@ class AppRouter {
       case '/admin/merchant-approval':
         return _buildRoute(const MerchantApprovalPage(), settings);
         
+      case '/admin/merchant-detail':
+        final merchant = settings.arguments as Map<String, dynamic>? ?? {};
+        return _buildRoute(MerchantDetailPage(merchant: merchant), settings);
+        
       case '/admin/admin-management':
         return _buildRoute(const AdminManagementPage(), settings);
+        
+      case '/admin/permission-management':
+        return _buildRoute(const PermissionManagementPage(), settings);
+        
+      case '/admin/system-config':
+        return _buildRoute(const SystemConfigPage(), settings);
+        
+      case '/admin/merchant-stats':
+        return _buildRoute(const MerchantStatsPage(), settings);
+        
+      case '/admin/nutritionist-stats':
+        return _buildRoute(const NutritionistStatsPage(), settings);
+
+      // 商家申请相关路由
+      case RouteNames.merchantApplication:
+        return _buildRoute(const MerchantApplicationImprovedPage(), settings);
+        
+      case RouteNames.merchantApplicationStatus:
+        return _buildRoute(const MerchantApplicationStatusPage(), settings);
+
+      // 营养师认证相关路由
+      case RouteNames.nutritionistCertification:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          NutritionistCertificationApplicationPage(
+            applicationId: args?['applicationId'],
+            initialData: args?['initialData'],
+          ),
+          settings,
+        );
+
+      case RouteNames.nutritionistCertificationStatus:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          NutritionistCertificationStatusPage(
+            applicationId: args?['applicationId'] ?? '',
+          ),
+          settings,
+        );
+
+      case RouteNames.nutritionistCertificationEdit:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          NutritionistCertificationApplicationPage(
+            applicationId: args?['applicationId'],
+            initialData: args?['initialData'],
+          ),
+          settings,
+        );
 
       // TODO: 添加其他路由
 

@@ -18,7 +18,9 @@ class AdminService {
   /// 获取管理员列表
   Future<List<Map<String, dynamic>>> getAdminList() async {
     try {
-      final response = await _dio.get('/admin/admins');
+      final response = await _dio.get('/admin/users', queryParameters: {
+        'role': 'admin,super_admin', // 只获取管理员角色的用户
+      });
       
       if (response.statusCode == 200 && response.data['success'] == true) {
         final List<dynamic> data = response.data['data'] ?? [];
@@ -44,13 +46,14 @@ class AdminService {
     required String role,
   }) async {
     try {
-      final response = await _dio.post('/admin/admins', data: {
+      final response = await _dio.post('/admin/users', data: {
         'phone': phone,
         'nickname': nickname,
         'role': role,
+        'password': 'Admin@123', // 默认密码，用户需要首次登录后修改
       });
       
-      if (response.statusCode == 201 && response.data['success'] == true) {
+      if (response.statusCode == 201 || (response.statusCode == 200 && response.data['success'] == true)) {
         return response.data['data'];
       } else {
         throw Exception(response.data['message'] ?? '创建管理员失败');
@@ -79,7 +82,7 @@ class AdminService {
     required String role,
   }) async {
     try {
-      final response = await _dio.put('/admin/admins/$adminId', data: {
+      final response = await _dio.put('/admin/users/$adminId', data: {
         'nickname': nickname,
         'role': role,
       });
@@ -108,7 +111,7 @@ class AdminService {
   /// 删除管理员
   Future<void> deleteAdmin(String adminId) async {
     try {
-      final response = await _dio.delete('/admin/admins/$adminId');
+      final response = await _dio.delete('/admin/users/$adminId');
       
       if (response.statusCode != 200 && response.statusCode != 204) {
         throw Exception(response.data['message'] ?? '删除管理员失败');

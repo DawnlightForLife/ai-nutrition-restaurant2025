@@ -61,7 +61,7 @@ class MerchantApprovalItem extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                merchant['name'] ?? '',
+                                (merchant['businessName'] as String?) ?? '未知商家',
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -72,14 +72,14 @@ class MerchantApprovalItem extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '联系人：${merchant['contactPerson']} | ${merchant['phone']}',
+                          '联系人：${merchant['contact']?['email'] ?? ''} | ${merchant['contact']?['phone'] ?? ''}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurface.withOpacity(0.6),
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '地址：${merchant['address']}',
+                          '地址：${merchant['address']?['city'] ?? ''} ${merchant['address']?['state'] ?? ''}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurface.withOpacity(0.6),
                           ),
@@ -110,7 +110,7 @@ class MerchantApprovalItem extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '营业执照：${merchant['businessLicense']}',
+                      '业务类型：${_getBusinessTypeLabel((merchant['businessType'] as String?) ?? '未知')}',
                       style: theme.textTheme.bodySmall,
                     ),
                   ],
@@ -138,7 +138,7 @@ class MerchantApprovalItem extends StatelessWidget {
               ),
               
               // 拒绝原因（如果有）
-              if (status == 'rejected' && merchant['rejectReason'] != null) ...[
+              if (status == 'rejected' && merchant['verification']?['rejectionReason'] != null) ...[
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -157,7 +157,7 @@ class MerchantApprovalItem extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '拒绝原因：${merchant['rejectReason']}',
+                          '拒绝原因：${merchant['verification']?['rejectionReason']}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: Colors.red[700],
                           ),
@@ -172,24 +172,29 @@ class MerchantApprovalItem extends StatelessWidget {
               if (status == 'pending') ...[
                 const SizedBox(height: 16),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    OutlinedButton.icon(
-                      onPressed: onReject,
-                      icon: const Icon(Icons.close, size: 18),
-                      label: const Text('拒绝'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
+                    Flexible(
+                      child: OutlinedButton.icon(
+                        onPressed: onReject,
+                        icon: const Icon(Icons.close, size: 18),
+                        label: const Text('拒绝'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
-                    ElevatedButton.icon(
-                      onPressed: onApprove,
-                      icon: const Icon(Icons.check, size: 18),
-                      label: const Text('通过'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
+                    Flexible(
+                      child: ElevatedButton.icon(
+                        onPressed: onApprove,
+                        icon: const Icon(Icons.check, size: 18),
+                        label: const Text('通过'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                        ),
                       ),
                     ),
                   ],
@@ -253,19 +258,94 @@ class MerchantApprovalItem extends StatelessWidget {
     );
   }
   
+  /// 获取业务类型中文标签
+  String _getBusinessTypeLabel(String type) {
+    const typeMap = {
+      'maternityCenter': '月子中心',
+      'gym': '健身房',
+      'school': '学校',
+      'company': '公司',
+      'restaurant': '餐厅',
+      'schoolCompany': '学校/企业',
+      'other': '其他',
+    };
+    return typeMap[type] ?? type;
+  }
+
   /// 获取时间文本
   String _getTimeText() {
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm');
     
     if (status == 'pending') {
-      final submittedAt = merchant['submittedAt'] as DateTime;
-      return '提交时间：${dateFormat.format(submittedAt)}';
+      final createdAt = merchant['createdAt'];
+      if (createdAt != null) {
+        DateTime date;
+        if (createdAt is String) {
+          date = DateTime.parse(createdAt);
+        } else if (createdAt is DateTime) {
+          date = createdAt;
+        } else {
+          return '提交时间：--';
+        }
+        return '提交时间：${dateFormat.format(date)}';
+      }
+      return '提交时间：--';
     } else if (status == 'approved') {
-      final approvedAt = merchant['approvedAt'] as DateTime;
-      return '通过时间：${dateFormat.format(approvedAt)}';
+      // 首先尝试verifiedAt，如果没有则使用updatedAt
+      final verifiedAt = merchant['verification']?['verifiedAt'] ?? merchant['updatedAt'];
+      if (verifiedAt != null) {
+        DateTime date;
+        if (verifiedAt is String) {
+          date = DateTime.parse(verifiedAt);
+        } else if (verifiedAt is DateTime) {
+          date = verifiedAt;
+        } else {
+          return '通过时间：--';
+        }
+        return '通过时间：${dateFormat.format(date)}';
+      }
+      // 如果都没有，尝试使用createdAt
+      final createdAt = merchant['createdAt'];
+      if (createdAt != null) {
+        DateTime date;
+        if (createdAt is String) {
+          date = DateTime.parse(createdAt);
+        } else if (createdAt is DateTime) {
+          date = createdAt;
+        } else {
+          return '通过时间：--';
+        }
+        return '通过时间：${dateFormat.format(date)}';
+      }
+      return '通过时间：--';
     } else {
-      final rejectedAt = merchant['rejectedAt'] as DateTime;
-      return '拒绝时间：${dateFormat.format(rejectedAt)}';
+      // 对于拒绝状态，首先尝试verifiedAt，然后是updatedAt
+      final verifiedAt = merchant['verification']?['verifiedAt'] ?? merchant['updatedAt'];
+      if (verifiedAt != null) {
+        DateTime date;
+        if (verifiedAt is String) {
+          date = DateTime.parse(verifiedAt);
+        } else if (verifiedAt is DateTime) {
+          date = verifiedAt;
+        } else {
+          return '拒绝时间：--';
+        }
+        return '拒绝时间：${dateFormat.format(date)}';
+      }
+      // 如果都没有，尝试使用createdAt
+      final createdAt = merchant['createdAt'];
+      if (createdAt != null) {
+        DateTime date;
+        if (createdAt is String) {
+          date = DateTime.parse(createdAt);
+        } else if (createdAt is DateTime) {
+          date = createdAt;
+        } else {
+          return '拒绝时间：--';
+        }
+        return '拒绝时间：${dateFormat.format(date)}';
+      }
+      return '拒绝时间：--';
     }
   }
 }

@@ -71,10 +71,13 @@ const requireAuth = authenticateUser; // 添加兼容性别名，用于路由中
 const requireAdmin = (req, res, next) => {
   // 先验证用户是否已登录
   authenticateUser(req, res, () => {
-    // 检查用户是否是管理员
-    if (req.user && (req.user.role === 'admin' || req.user.isAdmin)) {
+    // 检查用户是否是管理员（包括多种管理员角色）
+    const adminRoles = ['admin', 'super_admin', 'area_manager'];
+    if (req.user && (adminRoles.includes(req.user.role) || req.user.isAdmin)) {
+      console.log('[AUTH DEBUG] 管理员权限验证通过, 用户角色:', req.user.role);
       next();
     } else {
+      console.log('[AUTH ERROR] 管理员权限验证失败, 用户角色:', req.user.role);
       return res.status(403).json({ 
         success: false, 
         message: '需要管理员权限' 

@@ -1,0 +1,24 @@
+2025-06-11 16:48:15 [[32MINFO[39M]: 创建模型 User 的类型: function
+2025-06-11 16:48:15 [[32MINFO[39M]: 模型 User 注册成功
+2025-06-11 16:48:15 [[32MINFO[39M]: 模型 User 是构造函数，可以使用new User()
+User模型类型: function
+User模型已成功导出为构造函数
+User模型被其他模块引用，确保导出正确类型
+2025-06-11 16:48:15 [[32MINFO[39M]: 创建模型 UserRole 的类型: function
+/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/mongoose/lib/schema.js:713
+      throw new TypeError(`Invalid schema configuration: \`${val}\` is not ` +
+      ^
+
+TypeError: Invalid schema configuration: `备份码` is not a valid type at path `description`. See https://bit.ly/mongoose-schematypes for a list of valid schema types.
+    at Schema.add (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/mongoose/lib/schema.js:713:13)
+    at new Schema (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/mongoose/lib/schema.js:141:10)
+    at Schema.interpretAsType (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/mongoose/lib/schema.js:1382:29)
+    at Schema.path (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/mongoose/lib/schema.js:1069:27)
+    at Schema.add (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/mongoose/lib/schema.js:733:12)
+    at Schema.add (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/mongoose/lib/schema.js:751:12)
+    at new Schema (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/mongoose/lib/schema.js:141:10)
+    at Object.<anonymous> (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/models/user/adminModel.js:6:21)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+
+Node.js v22.14.0

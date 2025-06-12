@@ -63,7 +63,8 @@ targets:
       retrofit_generator:
         generate_for:
           include:
-            - lib/**/services/**_api_service.dart
+            - lib/**/*_api_service.dart
+            - lib/**/*_api.dart
           exclude:
             - lib/**.g.dart
 

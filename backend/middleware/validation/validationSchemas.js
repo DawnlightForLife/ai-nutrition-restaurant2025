@@ -379,6 +379,113 @@ const nutritionSchemas = {
     healthConditions: Joi.array().items(Joi.string()),
     fitnessGoals: Joi.array().items(Joi.string()),
     preferredCuisines: Joi.array().items(Joi.string())
+  }),
+
+  // 营养师认证申请
+  createNutritionistCertification: Joi.object({
+    personalInfo: Joi.object({
+      fullName: Joi.string().min(2).max(50).required(),
+      gender: Joi.string().valid('male', 'female').required(),
+      birthDate: Joi.date().max('now').required(),
+      idNumber: Joi.string().pattern(/^[1-9]\d{5}(18|19|20)\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/).required(),
+      phone: Joi.string().pattern(/^1[3-9]\d{9}$/).required(),
+      email: Joi.string().email().required(),
+      address: Joi.object({
+        province: Joi.string().required(),
+        city: Joi.string().required(),
+        district: Joi.string().required(),
+        detailed: Joi.string().min(5).max(200).required()
+      }).required()
+    }).required(),
+    
+    education: Joi.object({
+      degree: Joi.string().valid('doctoral', 'master', 'bachelor', 'associate', 'technical_secondary').required(),
+      major: Joi.string().valid('nutrition', 'food_science', 'clinical_medicine', 'preventive_medicine', 'nursing', 'pharmacy', 'biochemistry', 'other_related').required(),
+      school: Joi.string().min(2).max(100).required(),
+      graduationYear: Joi.number().integer().min(1950).max(new Date().getFullYear() + 5).required(),
+      gpa: Joi.number().min(0).max(4.0).optional()
+    }).required(),
+    
+    workExperience: Joi.object({
+      totalYears: Joi.number().integer().min(0).max(50).required(),
+      currentPosition: Joi.string().min(2).max(100).required(),
+      currentEmployer: Joi.string().min(2).max(100).required(),
+      workDescription: Joi.string().min(10).max(1000).required(),
+      previousExperiences: Joi.array().items(Joi.object({
+        position: Joi.string().min(2).max(100).required(),
+        employer: Joi.string().min(2).max(100).required(),
+        startDate: Joi.date().required(),
+        endDate: Joi.date().greater(Joi.ref('startDate')).optional(),
+        responsibilities: Joi.string().max(500).optional()
+      })).default([])
+    }).required(),
+    
+    certificationInfo: Joi.object({
+      targetLevel: Joi.string().valid('registered_dietitian', 'dietetic_technician', 'public_nutritionist_l4', 'public_nutritionist_l3', 'nutrition_manager').required(),
+      specializationAreas: Joi.array().items(
+        Joi.string().valid('clinical_nutrition', 'public_nutrition', 'food_nutrition', 'sports_nutrition', 'maternal_child', 'elderly_nutrition', 'weight_management')
+      ).min(1).required(),
+      motivationStatement: Joi.string().min(50).max(2000).required(),
+      careerGoals: Joi.string().max(1000).optional()
+    }).required()
+  }),
+
+  // 更新营养师认证申请（与创建相同的验证规则，但所有字段都是可选的）
+  updateNutritionistCertification: Joi.object({
+    personalInfo: Joi.object({
+      fullName: Joi.string().min(2).max(50),
+      gender: Joi.string().valid('male', 'female'),
+      birthDate: Joi.date().max('now'),
+      idNumber: Joi.string().pattern(/^[1-9]\d{5}(18|19|20)\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/),
+      phone: Joi.string().pattern(/^1[3-9]\d{9}$/),
+      email: Joi.string().email(),
+      address: Joi.object({
+        province: Joi.string(),
+        city: Joi.string(),
+        district: Joi.string(),
+        detailed: Joi.string().min(5).max(200)
+      })
+    }),
+    
+    education: Joi.object({
+      degree: Joi.string().valid('doctoral', 'master', 'bachelor', 'associate', 'technical_secondary'),
+      major: Joi.string().valid('nutrition', 'food_science', 'clinical_medicine', 'preventive_medicine', 'nursing', 'pharmacy', 'biochemistry', 'other_related'),
+      school: Joi.string().min(2).max(100),
+      graduationYear: Joi.number().integer().min(1950).max(new Date().getFullYear() + 5),
+      gpa: Joi.number().min(0).max(4.0)
+    }),
+    
+    workExperience: Joi.object({
+      totalYears: Joi.number().integer().min(0).max(50),
+      currentPosition: Joi.string().min(2).max(100),
+      currentEmployer: Joi.string().min(2).max(100),
+      workDescription: Joi.string().min(10).max(1000),
+      previousExperiences: Joi.array().items(Joi.object({
+        position: Joi.string().min(2).max(100).required(),
+        employer: Joi.string().min(2).max(100).required(),
+        startDate: Joi.date().required(),
+        endDate: Joi.date().greater(Joi.ref('startDate')),
+        responsibilities: Joi.string().max(500)
+      }))
+    }),
+    
+    certificationInfo: Joi.object({
+      targetLevel: Joi.string().valid('registered_dietitian', 'dietetic_technician', 'public_nutritionist_l4', 'public_nutritionist_l3', 'nutrition_manager'),
+      specializationAreas: Joi.array().items(
+        Joi.string().valid('clinical_nutrition', 'public_nutrition', 'food_nutrition', 'sports_nutrition', 'maternal_child', 'elderly_nutrition', 'weight_management')
+      ).min(1),
+      motivationStatement: Joi.string().min(50).max(2000),
+      careerGoals: Joi.string().max(1000)
+    })
+  }),
+
+  // 文档上传验证
+  uploadDocument: Joi.object({
+    documentType: Joi.string().valid('degree_certificate', 'graduation_certificate', 'transcript', 'work_certificate', 'professional_certificate', 'training_certificate', 'id_card', 'profile_photo').required(),
+    fileName: Joi.string().min(1).max(255).required(),
+    fileUrl: Joi.string().uri().required(),
+    fileSize: Joi.number().integer().min(1).max(10 * 1024 * 1024).required(), // 最大10MB
+    mimeType: Joi.string().valid('image/jpeg', 'image/jpg', 'image/png', 'application/pdf').required()
   })
 };
 
@@ -502,6 +609,11 @@ const validationSchemas = {
   // 营养
   'nutritionProfile.create': nutritionSchemas.createNutritionProfile,
   'nutritionProfile.update': nutritionSchemas.updateNutritionProfile,
+  
+  // 营养师认证
+  'nutritionistCertification.create': nutritionSchemas.createNutritionistCertification,
+  'nutritionistCertification.update': nutritionSchemas.updateNutritionistCertification,
+  'nutritionistCertification.uploadDocument': nutritionSchemas.uploadDocument,
   
   // 积分
   'pointsRule.create': pointsSchemas.createPointsRule,

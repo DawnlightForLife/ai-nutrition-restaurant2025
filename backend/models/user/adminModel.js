@@ -11,20 +11,17 @@ const adminSchema = new mongoose.Schema({
     trim: true,
     lowercase: true,
     minlength: 4,
-    maxlength: 30,
-    description: '管理员用户名'
+    maxlength: 30
   },
   password: {
     type: String,
     required: true,
     minlength: 8,
-    description: '管理员密码',
     sensitivityLevel: 3
   },
   name: {
     type: String,
     required: true,
-    description: '管理员姓名'
   },
   email: {
     type: String,
@@ -38,7 +35,6 @@ const adminSchema = new mongoose.Schema({
       },
       message: props => `${props.value} 不是有效的邮箱地址!`
     },
-    description: '管理员邮箱',
     sensitivityLevel: 2
   },
   phone: {
@@ -49,7 +45,6 @@ const adminSchema = new mongoose.Schema({
       },
       message: props => `${props.value} 不是有效的手机号!`
     },
-    description: '管理员手机号',
     sensitivityLevel: 2
   },
   // 角色和权限
@@ -57,7 +52,6 @@ const adminSchema = new mongoose.Schema({
     type: String,
     enum: ['super_admin', 'content_admin', 'user_admin', 'merchant_admin', 'data_admin', 'read_only'],
     default: 'read_only',
-    description: '管理员角色'
   },
   permissions: [{
     type: String,
@@ -73,148 +67,118 @@ const adminSchema = new mongoose.Schema({
       'view_logs',
       'manage_nutrition_data'
     ],
-    description: '管理员权限列表'
   }],
   // 双因素认证
   twoFactorAuth: {
     enabled: {
       type: Boolean,
       default: false,
-      description: '是否启用双因素认证'
     },
     type: {
       type: String,
       enum: ['app', 'sms', 'email'],
       default: 'app',
-      description: '双因素认证类型'
     },
     secret: {
       type: String,
       default: '',
-      description: '双因素认证密钥',
       sensitivityLevel: 3
     },
     backupCodes: [{
       code: {
         type: String,
-        description: '备份码',
         sensitivityLevel: 3
       },
       used: {
         type: Boolean,
         default: false,
-        description: '备份码是否已使用'
       },
-      description: '备份码'
     }],
-    description: '双因素认证信息'
   },
   // 账户状态
   isActive: {
     type: Boolean,
     default: true,
-    description: '账户是否激活'
   },
   // 安全相关
   passwordResetToken: {
     type: String,
-    description: '密码重置令牌',
     sensitivityLevel: 3
   },
   passwordResetExpires: {
     type: Date,
-    description: '密码重置令牌过期时间'
   },
   passwordChangedAt: {
     type: Date,
-    description: '密码最后修改时间'
   },
   passwordHistory: [{
     password: {
       type: String,
-      description: '历史密码',
       sensitivityLevel: 3
     },
     changedAt: {
       type: Date,
-      description: '修改时间'
     },
-    description: '历史密码及修改时间'
   }],
   failedLoginAttempts: {
     type: Number,
     default: 0,
-    description: '连续失败登录次数'
   },
   accountLockedUntil: {
     type: Date,
-    description: '账户锁定截止时间'
   },
   // IP访问限制（可限定特定IP范围）
   allowedIpAddresses: [{
     type: String,
-    description: '允许访问的IP地址列表'
   }],
   // 管理员访问分级
   dataAccessLevel: {
     type: Number,
     enum: [1, 2, 3], // 1=可访问高敏感数据, 2=可访问中敏感数据, 3=仅可访问低敏感数据
     default: 2,
-    description: '数据访问级别'
   },
   // 审计跟踪
   isSuperAdmin: {
     type: Boolean,
     default: false,
-    description: '是否为超级管理员'
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Admin',
-    description: '创建者管理员ID'
   },
   lastLogin: {
     type: Date,
-    description: '最后登录时间'
   },
   loginHistory: [{
     timestamp: Date,
     ipAddress: {
       type: String,
-      description: '登录IP地址',
       sensitivityLevel: 2
     },
     userAgent: {
       type: String,
-      description: '用户代理信息',
       sensitivityLevel: 2
     },
     success: Boolean,
-    description: '登录历史记录'
   }],
   // 授权的操作范围
   authorizedOperations: {
     canApproveMerchants: {
       type: Boolean,
       default: false,
-      description: '是否可审批商户'
     },
     canApproveNutritionists: {
       type: Boolean,
       default: false,
-      description: '是否可审批营养师'
     },
     canManagePayments: {
       type: Boolean,
       default: false,
-      description: '是否可管理支付'
     },
     canDeleteUserData: {
       type: Boolean,
       default: false,
-      description: '是否可删除用户数据'
     },
-    description: '授权操作范围'
   }
 }, {
   timestamps: true,

@@ -95,18 +95,25 @@ const merchantSchema = new mongoose.Schema({
       description: '网站地址'
     }
   },
-  // 地址信息
+  // 地址信息 - 支持中国标准省市区格式
   address: {
+    // 保留原有字段以兼容旧数据
     line1: {
       type: String,
       required: true,
       sensitivityLevel: 2, // 中度敏感数据
-      description: '地址第一行'
+      description: '详细地址'
     },
     line2: {
       type: String,
       sensitivityLevel: 2, // 中度敏感数据
       description: '地址第二行'
+    },
+    // 中国标准地址格式
+    province: {
+      type: String,
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '省份'
     },
     city: {
       type: String,
@@ -114,11 +121,22 @@ const merchantSchema = new mongoose.Schema({
       sensitivityLevel: 3, // 低度敏感数据
       description: '城市'
     },
+    district: {
+      type: String,
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '区县'
+    },
+    // 兼容字段（映射到province）
     state: {
       type: String,
-      required: true,
+      get: function() {
+        return this.province || this.get('state');
+      },
+      set: function(value) {
+        this.province = value;
+      },
       sensitivityLevel: 3, // 低度敏感数据
-      description: '省/州'
+      description: '省/州（兼容字段）'
     },
     postalCode: {
       type: String,
@@ -423,6 +441,17 @@ const merchantSchema = new mongoose.Schema({
       type: String,
       sensitivityLevel: 2, // 中度敏感数据
       description: '拒绝原因'
+    },
+    resubmissionCount: {
+      type: Number,
+      default: 0,
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '重新提交次数'
+    },
+    lastResubmissionDate: {
+      type: Date,
+      sensitivityLevel: 3, // 低度敏感数据
+      description: '最后重新提交时间'
     },
     verificationDocuments: [{
       documentType: {

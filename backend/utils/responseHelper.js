@@ -247,5 +247,14 @@ module.exports = {
   serverErrorResponse,
   createResponse,
   formatValidationErrors,
-  handleError
+  handleError,
+  // 兼容性别名
+  success: successResponse,
+  error: errorResponse,
+  paginated: paginatedResponse,
+  validationError: validationErrorResponse,
+  unauthorized: unauthorizedResponse,
+  forbidden: forbiddenResponse,
+  notFound: notFoundResponse,
+  serverError: serverErrorResponse
 };

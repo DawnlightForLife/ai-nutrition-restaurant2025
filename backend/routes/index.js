@@ -11,12 +11,14 @@ const router = express.Router();
 // =================== Core 模块 ===================
 router.use('/app-config', require('./core/appConfigRoutes'));
 router.use('/audit-logs', require('./core/auditLogRoutes'));
+router.use('/system-config', require('./core/systemConfigRoutes'));
 
 // =================== User 模块 ===================
 router.use('/auth', require('./user/authRoutes'));
 router.use('/users', require('./user/userRoutes'));
 router.use('/admin', require('./user/adminRoutes'));
 router.use('/permissions', require('./user/permissionRoutes'));
+router.use('/user-permissions', require('./user/userPermissionRoutes'));
 router.use('/oauth', require('./user/oauthRoutes'));
 router.use('/sms', require('./user/smsRoutes'));
 router.use('/guest-profiles', require('./user/guestProfileRoutes'));
@@ -31,6 +33,7 @@ router.use('/forum-tags', require('./forum/forumTagRoutes'));
 router.use('/nutrition/nutrition-profiles', require('./nutrition/nutritionProfileRoutes'));
 router.use('/ai-recommendations', require('./nutrition/aiRecommendationRoutes'));
 router.use('/nutritionists', require('./nutrition/nutritionistRoutes'));
+router.use('/nutritionist-certification', require('./nutrition/nutritionistCertificationRoutes'));
 router.use('/favorites', require('./nutrition/favoriteRoutes'));
 router.use('/dietary-preferences', require('./nutrition/dietaryPreferenceRoutes'));
 router.use('/nutrition-plans', require('./nutrition/nutritionPlanRoutes'));
@@ -77,6 +80,12 @@ router.use('/sessions', require('./common/sessionRoutes'));
 
 
 // =================== 其他模块 ===================
+
+// =================== Admin 模块 ===================
+router.use('/admin/nutritionist-certification-review', require('./admin/nutritionistCertificationReviewRoutes'));
+router.use('/admin/user-permissions', require('./admin/userPermissionRoutes'));
+router.use('/admin/merchant-stats', require('./admin/merchantStatsRoutes'));
+router.use('/admin/nutritionist-stats', require('./admin/nutritionistStatsRoutes'));
 
 // =================== Dev 工具模块（仅开发环境启用） ===================
 if (process.env.NODE_ENV === 'development') {

@@ -1,19 +1,35 @@
 import 'dart:io';
+import 'environment/environment.dart';
 
 class AppConstants {
-  // API 基础 URL - 根据平台自动选择
+  // API 基础 URL - 优先使用Environment配置
   static String get apiBaseUrl {
-    // 后端在 Docker 容器中运行，映射到主机的 8080 端口
-    // 后端路由都在 /api 前缀下
+    try {
+      // 优先使用Environment配置
+      return Environment.apiBaseUrl;
+    } catch (e) {
+      // 如果Environment未初始化，使用默认配置
+      if (Platform.isAndroid) {
+        // Android 模拟器使用 10.0.2.2 访问主机，端口改为8080
+        return 'http://10.0.2.2:8080/api';
+      } else if (Platform.isIOS) {
+        // iOS 模拟器可以使用 localhost
+        return 'http://localhost:3000/api';
+      } else {
+        // macOS 或其他平台
+        return 'http://localhost:3000/api';
+      }
+    }
+  }
+
+  static String get serverBaseUrl {
+    // 不包含 /api 前缀的基础URL
     if (Platform.isAndroid) {
-      // Android 模拟器使用 10.0.2.2 访问主机
-      return 'http://10.0.2.2:8080/api';
+      return 'http://10.0.2.2:8080';
     } else if (Platform.isIOS) {
-      // iOS 模拟器可以使用 localhost
-      return 'http://localhost:8080/api';
+      return 'http://localhost:3000';
     } else {
-      // macOS 或其他平台
-      return 'http://localhost:8080/api';
+      return 'http://localhost:3000';
     }
   }
   

@@ -1,4 +1,9 @@
 module.exports = {
+  // core
+  systemConfigService: require('./core/systemConfigService'),
+  appConfigService: require('./core/appConfigService'),
+  auditLogService: require('./core/auditLogService'),
+  
   // user
   userService: require('./user/userService'),
   userRoleService: require('./user/userRoleService'),

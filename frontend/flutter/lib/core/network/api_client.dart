@@ -1,19 +1,22 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../error/error_handler.dart';
-import 'package:retrofit/retrofit.dart';
+import '../../features/nutrition/data/datasources/nutrition_api.dart';
+import '../../config/app_constants.dart';
 
 /// API客户端
 /// 负责与后端API的通信
 class ApiClient {
   late final Dio _dio;
-  
-  static const String _baseUrl = 'http://10.0.2.2:8080/api';
   static const Duration _connectTimeout = Duration(seconds: 30);
   static const Duration _receiveTimeout = Duration(seconds: 30);
 
   ApiClient() {
+    final baseUrl = AppConstants.apiBaseUrl;
+    
     _dio = Dio(BaseOptions(
-      baseUrl: _baseUrl,
+      baseUrl: baseUrl,
       connectTimeout: _connectTimeout,
       receiveTimeout: _receiveTimeout,
       headers: {
@@ -26,27 +29,32 @@ class ApiClient {
     _dio.interceptors.add(LogInterceptor(
       requestBody: true,
       responseBody: true,
-      logPrint: (obj) => GlobalErrorHandler.logInfo(obj.toString()),
+      logPrint: (obj) {
+        // 使用调试模式下的print输出，避免通过错误处理器记录正常日志
+        if (kDebugMode) {
+          print('[API] $obj');
+        }
+      },
     ));
 
     _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) {
-        // 可以在这里添加认证token
+      onRequest: (options, handler) async {
+        // 添加认证token
+        await _addAuthToken(options);
         handler.next(options);
       },
       onResponse: (response, handler) {
         handler.next(response);
       },
       onError: (error, handler) {
-        GlobalErrorHandler.logError(
-          'API Error',
-          error: error,
-          context: {
-            'url': error.requestOptions.uri.toString(),
-            'method': error.requestOptions.method,
-            'statusCode': error.response?.statusCode,
-          },
-        );
+        // 只记录真正的错误（4xx、5xx状态码）
+        final statusCode = error.response?.statusCode;
+        if (statusCode != null && statusCode >= 400) {
+          GlobalErrorHandler.logError(
+            'API Error: ${error.requestOptions.uri} [${error.requestOptions.method}] $statusCode',
+            error: error,
+          );
+        }
         handler.next(error);
       },
     ));
@@ -150,6 +158,29 @@ class ApiClient {
     _dio.options.headers.remove('Authorization');
   }
   
+  /// 添加认证token
+  Future<void> _addAuthToken(RequestOptions options) async {
+    // 不需要 token 的接口
+    final noAuthPaths = [
+      '/auth/send-code',
+      '/auth/login',
+      '/auth/login-with-code',
+      '/auth/login/code',
+      '/auth/register',
+    ];
+
+    final needAuth = !noAuthPaths.any((path) => options.path.contains(path));
+
+    if (needAuth) {
+      const storage = FlutterSecureStorage();
+      final token = await storage.read(key: 'auth_token');
+      
+      if (token != null) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+    }
+  }
+
   /// 获取Dio实例
   Dio getDio() {
     return _dio;

@@ -61,8 +61,15 @@ class RouteNames {
   static const String clientList = '/nutritionist/clients';
   static const String clientDetail = '/nutritionist/client';
   
+  // 营养师认证
+  static const String nutritionistCertification = '/nutritionist/certification';
+  static const String nutritionistCertificationStatus = '/nutritionist/certification/status';
+  static const String nutritionistCertificationEdit = '/nutritionist/certification/edit';
+  
   // 商家端
   static const String merchantMain = '/merchant';
+  static const String merchantApplication = '/merchant/application';
+  static const String merchantApplicationStatus = '/merchant/application-status';
   static const String dishManagement = '/merchant/dishes';
   static const String dishEditor = '/merchant/dish/edit';
   static const String inventory = '/merchant/inventory';
@@ -79,4 +86,16 @@ class RouteNames {
   static const String couponCenter = '/coupons';
   static const String flashSale = '/flash-sale';
   static const String groupBuy = '/group-buy';
+  
+  // 管理后台
+  static const String adminDashboard = '/admin/dashboard';
+  static const String adminLogin = '/admin/login';
+  static const String adminVerification = '/admin/verification';
+  static const String permissionManagement = '/admin/permission-management';
+  static const String systemConfig = '/admin/system-config';
+  static const String merchantApproval = '/admin/merchant-approval';
+  static const String merchantDetail = '/admin/merchant/detail';
+  static const String merchantStats = '/admin/merchant-stats';
+  static const String nutritionistStats = '/admin/nutritionist-stats';
+  static const String adminManagement = '/admin/admin-management';
 }
