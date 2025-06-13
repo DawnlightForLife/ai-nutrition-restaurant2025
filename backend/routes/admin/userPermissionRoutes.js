@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const userPermissionController = require('../../controllers/admin/userPermissionController');
-const authMiddleware = require('../../middleware/auth');
+const { authenticateUser } = require('../../middleware/auth/authMiddleware');
 const roleMiddleware = require('../../middleware/auth/roleMiddleware');
 
 // 所有路由都需要管理员权限
-router.use(authMiddleware);
+router.use(authenticateUser);
 router.use(roleMiddleware(['admin', 'super_admin']));
 
 // 获取已授权用户列表

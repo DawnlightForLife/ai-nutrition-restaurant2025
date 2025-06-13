@@ -7,13 +7,12 @@
 const express = require('express');
 const router = express.Router();
 const { createAdmin, getAdminList, getAdminById, updateAdmin, deleteAdmin } = require('../../controllers/user/adminController');
-const authMiddleware = require('../../middleware/auth');
-const auth = authMiddleware.auth || authMiddleware.authenticateUser;
-const { authorize } = authMiddleware;
+const { authenticateUser } = require('../../middleware/auth/authMiddleware');
+const roleMiddleware = require('../../middleware/auth/roleMiddleware');
 
 // 所有路由需要认证和super_admin权限
-router.use(auth());
-router.use(authorize('super_admin'));
+router.use(authenticateUser);
+router.use(roleMiddleware(['super_admin']));
 
 // [POST] 创建管理员
 router.post('/', createAdmin);

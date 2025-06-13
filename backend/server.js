@@ -58,8 +58,11 @@ const startServer = async () => {
     console.log('Mongoose默认连接已打开');
     console.log('数据库连接已就绪');
 
+    // 加载所有模型，确保它们被正确注册
+    const models = require('./models/index');
+    
     // 创建默认用户
-    const User = require('./models/user/userModel');
+    const User = models.User;
     const bcrypt = require('bcryptjs');
     
     // 检查是否已有用户

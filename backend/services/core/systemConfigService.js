@@ -212,7 +212,6 @@ class SystemConfigService {
       }
       
       const configs = await SystemConfig.find(query)
-        .populate('updatedBy', 'name email')
         .sort({ category: 1, key: 1 });
       
       return configs;

@@ -114,7 +114,7 @@ class NutritionistStatsNotifier extends StateNotifier<AsyncValue<Map<String, dyn
         
         // 尝试获取概况数据
         try {
-          final overviewResponse = await apiClient.get('/api/admin/nutritionist-stats/overview');
+          final overviewResponse = await apiClient.get('/admin/nutritionist-stats/overview');
           if (overviewResponse.data != null && overviewResponse.data['data'] != null) {
             final overviewData = overviewResponse.data['data'] as Map<String, dynamic>;
             stats['overview'] = <String, dynamic>{

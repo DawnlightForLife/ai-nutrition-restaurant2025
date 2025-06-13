@@ -6,33 +6,31 @@
 const express = require('express');
 const router = express.Router();
 const { createMerchant, getMerchantList, getMerchantById, updateMerchant, deleteMerchant, verifyMerchant, getMerchantStats, getCurrentUserMerchant } = require('../../controllers/merchant/merchantController');
-const authMiddleware = require('../../middleware/auth');
+const { authenticateUser, requireAdmin } = require('../../middleware/auth/authMiddleware');
 const { legacyCertificationMiddleware, migrationNoticeMiddleware } = require('../../middleware/certification/legacyCertificationMiddleware');
-const auth = authMiddleware.auth || authMiddleware.authenticateUser;
-const authorize = authMiddleware.authorize;
 
 // [POST] 创建商家
-router.post('/', auth(), legacyCertificationMiddleware, migrationNoticeMiddleware, createMerchant);
+router.post('/', authenticateUser, legacyCertificationMiddleware, migrationNoticeMiddleware, createMerchant);
 
 // [GET] 获取商家列表
 router.get('/', getMerchantList);
 
 // [GET] 获取当前用户的商家信息
-router.get('/current', auth(), getCurrentUserMerchant);
+router.get('/current', authenticateUser, getCurrentUserMerchant);
 
 // [GET] 获取商家统计数据（管理员专用） - 必须在/:id之前
-router.get('/stats', auth(), authorize('admin'), getMerchantStats);
+router.get('/stats', requireAdmin, getMerchantStats);
 
 // [GET] 获取指定商家详情
 router.get('/:id', getMerchantById);
 
 // [PUT] 更新商家信息
-router.put('/:id', auth(), updateMerchant);
+router.put('/:id', authenticateUser, updateMerchant);
 
 // [DELETE] 删除商家
-router.delete('/:id', auth(), deleteMerchant);
+router.delete('/:id', authenticateUser, deleteMerchant);
 
 // [PUT] 审核商家资质
-router.put('/:id/verify', auth(), authorize('admin'), verifyMerchant);
+router.put('/:id/verify', requireAdmin, verifyMerchant);
 
 module.exports = router;

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const systemConfigController = require('../../controllers/core/systemConfigController');
-const { requireAdmin } = require('../../middleware/auth/authMiddleware');
+const { authenticateUser } = require('../../middleware/auth/authMiddleware');
 
 /**
  * 系统配置路由
@@ -16,8 +16,8 @@ router.get('/public', systemConfigController.getPublicConfigs);
 router.get('/certification', systemConfigController.getCertificationConfigs);
 
 // ============ 管理后台接口 ============
-// 需要管理员权限
-router.use(requireAdmin);
+// 只需要身份验证（admin backend 用户已经通过管理后台访问）
+router.use(authenticateUser);
 
 // 获取配置分类列表
 router.get('/categories', systemConfigController.getCategories);

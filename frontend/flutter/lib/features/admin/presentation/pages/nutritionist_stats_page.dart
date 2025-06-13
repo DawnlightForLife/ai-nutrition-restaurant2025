@@ -202,7 +202,7 @@ class _NutritionistStatsPageState extends ConsumerState<NutritionistStatsPage> {
                 StatCard(
                   title: '评价总数',
                   value: _formatNumber(stats['consultation']['ratingDistribution'].fold<int>(
-                    0, (sum, item) => sum + (item['count'] as int)
+                    0, (int sum, dynamic item) => sum + (item['count'] as int)
                   )),
                   icon: Icons.star_rate,
                   color: Colors.amber,
@@ -546,7 +546,7 @@ class _NutritionistStatsPageState extends ConsumerState<NutritionistStatsPage> {
         PieChartData(
           sections: data.asMap().entries.map((entry) {
             final value = entry.value['count'].toDouble();
-            final total = data.fold<int>(0, (sum, item) => sum + item['count'] as int);
+            final total = data.fold<int>(0, (int sum, dynamic item) => sum + item['count'] as int);
             final percentage = (value / total * 100).toStringAsFixed(1);
             
             return PieChartSectionData(

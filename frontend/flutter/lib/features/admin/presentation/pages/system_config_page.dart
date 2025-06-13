@@ -179,31 +179,16 @@ class _SystemConfigPageState extends ConsumerState<SystemConfigPage> {
   }
   
   /// 构建认证功能配置卡片
-  Widget _buildCertificationCard(List<SystemConfig> certConfigs) {
+  Widget _buildCertificationCard(List<SystemConfig> configs) {
     final theme = Theme.of(context);
     
-    // 提取配置值
-    bool merchantEnabled = false;
-    bool nutritionistEnabled = false;
-    String merchantMode = 'contact';
-    String nutritionistMode = 'contact';
+    // 获取商家认证配置
+    final merchantEnabled = _getConfigValue(configs, CertificationConfigKeys.merchantCertificationEnabled) == 'true';
+    final merchantMode = _getConfigValue(configs, CertificationConfigKeys.merchantCertificationMode) ?? 'contact';
     
-    for (final config in certConfigs) {
-      switch (config.key) {
-        case CertificationConfigKeys.merchantCertificationEnabled:
-          merchantEnabled = config.getBoolValue();
-          break;
-        case CertificationConfigKeys.nutritionistCertificationEnabled:
-          nutritionistEnabled = config.getBoolValue();
-          break;
-        case CertificationConfigKeys.merchantCertificationMode:
-          merchantMode = config.getStringValue();
-          break;
-        case CertificationConfigKeys.nutritionistCertificationMode:
-          nutritionistMode = config.getStringValue();
-          break;
-      }
-    }
+    // 获取营养师认证配置
+    final nutritionistEnabled = _getConfigValue(configs, CertificationConfigKeys.nutritionistCertificationEnabled) == 'true';
+    final nutritionistMode = _getConfigValue(configs, CertificationConfigKeys.nutritionistCertificationMode) ?? 'contact';
     
     return Card(
       margin: const EdgeInsets.all(16),
@@ -222,6 +207,15 @@ class _SystemConfigPageState extends ConsumerState<SystemConfigPage> {
                 Text(
                   '认证功能配置',
                   style: theme.textTheme.titleLarge,
+                ),
+                const Spacer(),
+                // 添加刷新按钮
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () {
+                    ref.read(systemConfigManagerProvider.notifier).loadAllConfigs();
+                  },
+                  tooltip: '刷新配置',
                 ),
               ],
             ),
@@ -254,7 +248,7 @@ class _SystemConfigPageState extends ConsumerState<SystemConfigPage> {
             // 营养师认证配置
             _buildCertificationSection(
               title: '营养师认证',
-              icon: Icons.medical_services,
+              icon: Icons.health_and_safety,
               enabled: nutritionistEnabled,
               mode: nutritionistMode,
               onEnabledChanged: (value) async {
@@ -271,6 +265,36 @@ class _SystemConfigPageState extends ConsumerState<SystemConfigPage> {
                   );
                 }
               },
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // 添加说明信息
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: theme.colorScheme.primaryContainer,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 20,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '开启认证功能后，用户可以在个人中心申请相应的认证。认证模式可以选择"联系客服"或"自动认证"。',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -301,6 +325,26 @@ class _SystemConfigPageState extends ConsumerState<SystemConfigPage> {
               style: theme.textTheme.titleMedium,
             ),
             const Spacer(),
+            // 状态标签
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: enabled 
+                  ? theme.colorScheme.primaryContainer
+                  : theme.colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                enabled ? '已启用' : '已禁用',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: enabled 
+                    ? theme.colorScheme.onPrimaryContainer
+                    : theme.colorScheme.onErrorContainer,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // 开关按钮
             Switch(
               value: enabled,
               onChanged: onEnabledChanged,
@@ -309,27 +353,171 @@ class _SystemConfigPageState extends ConsumerState<SystemConfigPage> {
         ),
         if (enabled) ...[
           const SizedBox(height: 12),
-          Row(
-            children: [
-              const SizedBox(width: 28),
-              const Text('认证模式：'),
-              const SizedBox(width: 8),
-              ChoiceChip(
-                label: const Text('联系客服'),
-                selected: mode == 'contact',
-                onSelected: (selected) {
-                  if (selected) onModeChanged('contact');
-                },
-              ),
-              const SizedBox(width: 8),
-              ChoiceChip(
-                label: const Text('自动认证'),
-                selected: mode == 'auto',
-                onSelected: (selected) {
-                  if (selected) onModeChanged('auto');
-                },
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '认证模式',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Text('联系客服'),
+                        selected: mode == 'contact',
+                        onSelected: (selected) {
+                          if (selected) onModeChanged('contact');
+                        },
+                        avatar: const Icon(Icons.support_agent, size: 16),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Text('自动认证'),
+                        selected: mode == 'auto',
+                        onSelected: (selected) {
+                          if (selected) onModeChanged('auto');
+                        },
+                        avatar: const Icon(Icons.auto_awesome, size: 16),
+                      ),
+                    ),
+                  ],
+                ),
+                if (mode == 'contact') ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '用户需要联系客服完成认证',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ] else ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '系统将自动审核用户的认证申请',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // 快速认证配置
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.speed,
+                              size: 16,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '快速认证配置',
+                              style: theme.textTheme.titleSmall,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // 快速认证开关
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '启用快速认证',
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                            ),
+                            Switch(
+                              value: _getConfigValue(
+                                ref.read(systemConfigManagerProvider).value ?? [],
+                                '${title == '商家认证' ? 'merchant' : 'nutritionist'}_quick_certification_enabled'
+                              ) == 'true',
+                              onChanged: (value) async {
+                                await _updateCertificationConfig(
+                                  '${title == '商家认证' ? 'merchant' : 'nutritionist'}_quick_certification_enabled',
+                                  value,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // 快速认证阈值
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '快速认证阈值',
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                            ),
+                            SizedBox(
+                              width: 100,
+                              child: TextField(
+                                controller: TextEditingController(
+                                  text: _getConfigValue(
+                                    ref.read(systemConfigManagerProvider).value ?? [],
+                                    '${title == '商家认证' ? 'merchant' : 'nutritionist'}_quick_certification_threshold'
+                                  ) ?? '80',
+                                ),
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 8,
+                                  ),
+                                  suffixText: '%',
+                                ),
+                                onChanged: (value) async {
+                                  if (value.isNotEmpty) {
+                                    final numValue = int.tryParse(value);
+                                    if (numValue != null && numValue >= 0 && numValue <= 100) {
+                                      await _updateCertificationConfig(
+                                        '${title == '商家认证' ? 'merchant' : 'nutritionist'}_quick_certification_threshold',
+                                        numValue,
+                                      );
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '当用户满足条件时，系统将自动通过认证申请',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ],

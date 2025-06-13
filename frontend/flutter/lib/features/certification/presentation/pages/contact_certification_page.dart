@@ -6,6 +6,7 @@ import '../../../system/presentation/providers/system_config_provider.dart';
 import '../../../permission/presentation/pages/permission_application_page.dart';
 import '../../../permission/data/models/user_permission_model.dart';
 import '../../../permission/presentation/providers/user_permission_provider.dart';
+import '../../../system/domain/entities/system_config.dart';
 
 enum CertificationType {
   merchant,
@@ -27,6 +28,10 @@ class ContactCertificationPage extends ConsumerWidget {
     final contactInfoAsync = ref.watch(contactInfoProvider);
     final theme = Theme.of(context);
     final isNutritionist = certificationType == CertificationType.nutritionist;
+    // 获取当前认证模式
+    final certificationMode = isNutritionist
+        ? ref.watch(nutritionistCertificationModeProvider)
+        : ref.watch(merchantCertificationModeProvider);
     
     return Scaffold(
       appBar: AppBar(
@@ -187,8 +192,9 @@ class ContactCertificationPage extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             
-            // 申请权限按钮
-            _buildApplicationSection(context, ref, contactInfo),
+            // 只有自动认证模式才显示快速申请区域
+            if (certificationMode == CertificationMode.auto)
+              _buildApplicationSection(context, ref, contactInfo),
           ],
         ),
       ),
