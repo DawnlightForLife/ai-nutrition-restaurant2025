@@ -115,10 +115,8 @@ final nutritionistCertificationModeProvider = Provider<CertificationMode>((ref) 
 /// 联系信息配置Provider
 final contactInfoProvider = FutureProvider<Map<String, String>>((ref) async {
   final service = ref.watch(systemConfigServiceProvider);
-  
-  // 获取联系信息配置
-  final configs = await service.getPublicConfigs();
-  
+  // 每次都强制从后端拉取最新配置
+  final configs = await service.getPublicConfigs(forceRefresh: true);
   return {
     'wechat': configs['certification_contact_wechat'] ?? 'AIHealth2025',
     'phone': configs['certification_contact_phone'] ?? '400-123-4567',

@@ -243,21 +243,23 @@ class LegacyCertificationDisabledPage extends ConsumerWidget {
   }
 
   void _showContactInfo(BuildContext context) {
+    // 动态获取联系信息
+    final contactInfo = ...; // TODO: 通过Provider或参数传入
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('联系客服'),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('客服电话：400-123-4567'),
-            SizedBox(height: 8),
-            Text('客服邮箱：cert@aihealth.com'),
-            SizedBox(height: 8),
-            Text('客服微信：AIHealth2025'),
-            SizedBox(height: 8),
-            Text('工作时间：周一至周五 9:00-18:00'),
+            Text('客服电话：${contactInfo['phone'] ?? '400-123-4567'}'),
+            const SizedBox(height: 8),
+            Text('客服邮箱：${contactInfo['email'] ?? 'cert@aihealth.com'}'),
+            const SizedBox(height: 8),
+            Text('客服微信：${contactInfo['wechat'] ?? 'AIHealth2025'}'),
+            const SizedBox(height: 8),
+            const Text('工作时间：周一至周五 9:00-18:00'),
           ],
         ),
         actions: [

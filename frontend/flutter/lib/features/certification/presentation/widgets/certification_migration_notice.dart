@@ -165,9 +165,9 @@ class CertificationMigrationNotice extends ConsumerWidget {
               _buildDetailSection(
                 '需要帮助？',
                 [
-                  '客服电话：400-123-4567',
-                  '客服邮箱：cert@aihealth.com',
-                  '客服微信：AIHealth2025',
+                  '客服电话：' + (contactInfo['phone'] ?? '400-123-4567'),
+                  '客服邮箱：' + (contactInfo['email'] ?? 'cert@aihealth.com'),
+                  '客服微信：' + (contactInfo['wechat'] ?? 'AIHealth2025'),
                   '工作时间：周一至周五 9:00-18:00',
                 ],
                 theme,

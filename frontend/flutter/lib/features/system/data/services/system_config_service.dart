@@ -96,14 +96,29 @@ class SystemConfigService {
   }
   
   /// 获取公开配置
-  Future<Map<String, dynamic>> getPublicConfigs() async {
+  Future<Map<String, dynamic>> getPublicConfigs({bool forceRefresh = false}) async {
     try {
+      if (!forceRefresh && _isCacheValid() && _configCache.isNotEmpty) {
+        // 只返回公开配置相关key
+        final keys = [
+          'certification_contact_wechat',
+          'certification_contact_phone',
+          'certification_contact_email',
+        ];
+        final result = <String, dynamic>{};
+        for (final key in keys) {
+          if (_configCache.containsKey(key)) {
+            result[key] = _configCache[key];
+          }
+        }
+        if (result.length == keys.length) {
+          return result;
+        }
+      }
       final configs = await _remoteDataSource.getPublicConfigs();
-      
       // 更新缓存
       _configCache.addAll(configs);
       _lastFetchTime = DateTime.now();
-      
       return configs;
     } catch (e) {
       print('[SystemConfigService] 获取公开配置失败: $e');

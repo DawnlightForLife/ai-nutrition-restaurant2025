@@ -36,6 +36,15 @@ class ContactCertificationPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(isNutritionist ? '营养师认证' : '商家认证'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: '刷新认证联系信息',
+            onPressed: () {
+              ref.invalidate(contactInfoProvider);
+            },
+          ),
+        ],
       ),
       body: contactInfoAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
