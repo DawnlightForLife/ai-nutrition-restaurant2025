@@ -70,4 +70,37 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get online => '您已在线';
+
+  @override
+  String get accountSecurity => '账号安全';
+
+  @override
+  String get changePassword => '修改密码';
+
+  @override
+  String get oldPassword => '原密码';
+
+  @override
+  String get newPassword => '新密码';
+
+  @override
+  String get oldPasswordRequired => '请输入原密码';
+
+  @override
+  String get newPasswordRequired => '请输入新密码';
+
+  @override
+  String get confirmPasswordRequired => '请确认新密码';
+
+  @override
+  String get passwordsDoNotMatch => '两次输入的密码不一致';
+
+  @override
+  String get passwordTooShort => '密码长度不能少于6位';
+
+  @override
+  String get passwordChangedSuccess => '密码修改成功';
+
+  @override
+  String get confirm => '确认';
 }

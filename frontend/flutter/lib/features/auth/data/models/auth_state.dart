@@ -36,7 +36,8 @@ class UserInfo {
   final String id;
   final String phone;
   final String? nickname;
-  final String? avatar;
+  final String? avatar; // 旧字段，保留兼容性
+  final String? avatarUrl; // 新字段，优先使用
   final String? role;
   final bool needCompleteProfile;
   final DateTime createdAt;
@@ -46,6 +47,7 @@ class UserInfo {
     required this.phone,
     this.nickname,
     this.avatar,
+    this.avatarUrl,
     this.role,
     this.needCompleteProfile = false,
     required this.createdAt,
@@ -57,6 +59,7 @@ class UserInfo {
       phone: json['phone'] ?? '',
       nickname: json['nickname'],
       avatar: json['avatar'],
+      avatarUrl: json['avatarUrl'],
       role: json['role'],
       needCompleteProfile: json['isProfileCompleted'] == false,
       createdAt: json['createdAt'] != null 
@@ -71,9 +74,13 @@ class UserInfo {
       'phone': phone,
       'nickname': nickname,
       'avatar': avatar,
+      'avatarUrl': avatarUrl,
       'role': role,
       'isProfileCompleted': !needCompleteProfile,
       'createdAt': createdAt.toIso8601String(),
     };
   }
+  
+  // 获取头像URL（优先使用avatarUrl，兼容avatar字段）
+  String? get displayAvatarUrl => avatarUrl ?? avatar;
 }

@@ -171,6 +171,33 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(user: userInfo);
   }
   
+  /// 刷新用户信息（从服务器重新获取）
+  Future<bool> refreshUserInfo() async {
+    try {
+      if (!state.isAuthenticated || state.token == null) {
+        return false;
+      }
+      
+      state = state.copyWith(isLoading: true, error: null);
+      
+      final authService = _ref.read(authServiceProvider);
+      final userInfo = await authService.getUserInfo(state.token!);
+      
+      state = state.copyWith(
+        isLoading: false,
+        user: userInfo,
+      );
+      
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '刷新用户信息失败: ${e.toString()}',
+      );
+      return false;
+    }
+  }
+  
   /// 重置导航状态到首页
   void _resetNavigationToHome() {
     try {

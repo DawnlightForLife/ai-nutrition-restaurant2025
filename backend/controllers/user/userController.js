@@ -11,7 +11,7 @@
 // ✅ 使用 handleError / handleValidationError / handleNotFound
 
 const User = require('../../models/user/userModel');
-const { validateUser } = require('../../utils/validators/userValidator');
+const { validateUserRegistration, validateUserUpdate } = require('../../utils/validators/userValidator');
 // const logger = require('../../utils/logger/winstonLogger.js'); // 结构化日志记录（可选）
 const { handleError, handleValidationError, handleNotFound } = require('../../utils/errors/errorHandler');
 
@@ -25,7 +25,7 @@ const { handleError, handleValidationError, handleNotFound } = require('../../ut
 exports.createUser = async (req, res) => {
   try {
     // 验证请求数据
-    const { error } = validateUser(req.body);
+    const { error } = validateUserRegistration(req.body);
     if (error) {
       return handleValidationError(res, error);
     }
@@ -150,16 +150,50 @@ exports.getUserById = async (req, res) => {
  */
 exports.updateUser = async (req, res) => {
   try {
-    // 验证请求数据
-    const { error } = validateUser(req.body, true);
-    if (error) {
-      return handleValidationError(res, error);
-    }
-
+    console.log('updateUser 开始处理，req.file:', req.file ? '存在' : '不存在');
+    console.log('updateUser req.body:', req.body);
+    
     // 检查用户是否存在
     const user = await User.findById(req.params.id);
     if (!user) {
       return handleNotFound(res, '用户不存在');
+    }
+
+    // 处理头像上传
+    if (req.file) {
+      console.log('检测到上传文件:', req.file.filename);
+      // 构建头像URL
+      const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+      req.body.avatarUrl = avatarUrl;
+      console.log('设置头像URL:', avatarUrl);
+    } else {
+      console.log('没有检测到上传文件');
+    }
+
+    // 只更新允许的字段
+    const allowedUpdates = ['nickname', 'bio', 'avatarUrl'];
+    const updates = {};
+    
+    allowedUpdates.forEach(field => {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    });
+
+    // 简单验证昵称长度
+    if (updates.nickname && (updates.nickname.length < 1 || updates.nickname.length > 50)) {
+      return res.status(400).json({
+        success: false,
+        message: '昵称长度应在1-50个字符之间'
+      });
+    }
+
+    // 简单验证简介长度
+    if (updates.bio && updates.bio.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: '个人简介不能超过500个字符'
+      });
     }
 
     // 如果更新邮箱，检查新邮箱是否已被使用
@@ -171,13 +205,16 @@ exports.updateUser = async (req, res) => {
           message: '该邮箱已被使用' 
         });
       }
+      updates.email = req.body.email;
     }
 
     // 更新用户信息
-    Object.assign(user, req.body);
+    Object.assign(user, updates);
     
     // 检查资料是否完成
-    user.checkProfileCompletion();
+    if (user.checkProfileCompletion) {
+      user.checkProfileCompletion();
+    }
     
     // 保存更新
     await user.save();

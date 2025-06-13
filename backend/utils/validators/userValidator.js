@@ -54,7 +54,7 @@ const validateUserRegistration = (data) => {
       }),
     firstName: Joi.string().trim().allow('', null),
     lastName: Joi.string().trim().allow('', null),
-    avatar: Joi.string().uri().allow('', null)
+    avatarUrl: Joi.string().uri().allow('', null)
       .messages({
         'string.uri': '头像必须是有效的URL'
       }),
@@ -91,7 +91,7 @@ const validateUserUpdate = (data) => {
       }),
     firstName: Joi.string().trim().allow('', null),
     lastName: Joi.string().trim().allow('', null),
-    avatar: Joi.string().uri().allow('', null)
+    avatarUrl: Joi.string().uri().allow('', null)
       .messages({
         'string.uri': '头像必须是有效的URL'
       }),

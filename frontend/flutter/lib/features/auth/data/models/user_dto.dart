@@ -12,7 +12,8 @@ class UserDto {
   final String phone;
   final String? nickname;
   final String role;
-  final String? avatar;
+  final String? avatar; // 旧字段，保留兼容性
+  final String? avatarUrl; // 新字段，优先使用
   final String? gender;
   final int? age;
   final bool? isActive;
@@ -36,6 +37,7 @@ class UserDto {
     this.nickname,
     required this.role,
     this.avatar,
+    this.avatarUrl,
     this.gender,
     this.age,
     this.isActive,

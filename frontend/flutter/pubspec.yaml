@@ -120,7 +120,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  # generate: true  # 暂时禁用l10n生成
+  generate: true  # 启用l10n生成
   assets:
     - assets/images/
     - assets/icons/

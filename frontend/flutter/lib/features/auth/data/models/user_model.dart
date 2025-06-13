@@ -50,7 +50,7 @@ class UserModel {
   final String nickname;
   
   @JsonKey(defaultValue: '')
-  final String avatar;
+  final String avatar; // 旧字段，保留兼容性
   
   @JsonKey(defaultValue: 'customer')
   final String role;
@@ -209,6 +209,9 @@ class UserModel {
   
   // 获取显示名称
   String get displayName => nickname.isNotEmpty ? nickname : realName ?? '用户${phone.substring(phone.length - 4)}';
+  
+  // 获取头像URL（优先使用avatarUrl，兼容avatar字段）
+  String? get displayAvatarUrl => avatarUrl ?? (avatar.isNotEmpty ? avatar : null);
   
   // 获取用户ID（兼容两种格式）
   String get userId => id ?? altUserId ?? '';

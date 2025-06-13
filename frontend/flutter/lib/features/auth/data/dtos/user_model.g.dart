@@ -13,6 +13,7 @@ _$UserModelImpl _$$UserModelImplFromJson(Map<String, dynamic> json) =>
       email: json['email'] as String?,
       nickname: json['nickname'] as String?,
       avatar: json['avatar'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
       role: $enumDecode(_$UserRoleEnumMap, json['role']),
       isProfileCompleted: json['is_profile_completed'] as bool? ?? false,
       createdAt: json['created_at'] == null
@@ -30,6 +31,7 @@ Map<String, dynamic> _$$UserModelImplToJson(_$UserModelImpl instance) =>
       if (instance.email case final value?) 'email': value,
       if (instance.nickname case final value?) 'nickname': value,
       if (instance.avatar case final value?) 'avatar': value,
+      if (instance.avatarUrl case final value?) 'avatar_url': value,
       'role': _$UserRoleEnumMap[instance.role]!,
       'is_profile_completed': instance.isProfileCompleted,
       if (instance.createdAt?.toIso8601String() case final value?)

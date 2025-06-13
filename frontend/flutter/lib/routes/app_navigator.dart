@@ -179,6 +179,21 @@ class AppNavigator {
     return pushNamed(context, RouteNames.settings);
   }
 
+  /// 跳转到账号安全
+  static Future<void> toAccountSecurity(BuildContext context) {
+    return pushNamed(context, RouteNames.accountSecurity);
+  }
+
+  /// 跳转到修改密码
+  static Future<void> toChangePassword(BuildContext context) {
+    return pushNamed(context, RouteNames.changePassword);
+  }
+
+  /// 跳转到个人资料编辑
+  static Future<void> toProfileEdit(BuildContext context) {
+    return pushNamed(context, RouteNames.profileEdit);
+  }
+
   /// 跳转到消息中心
   static Future<void> toNotifications(BuildContext context) {
     return pushNamed(context, RouteNames.notificationCenter);

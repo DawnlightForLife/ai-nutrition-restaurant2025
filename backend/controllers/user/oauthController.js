@@ -59,7 +59,7 @@ const handleOAuthCallback = async (req, res) => {
         _id: user._id,
         username: user.username,
         email: user.email,
-        avatar: user.avatar,
+        avatarUrl: user.avatarUrl,
         role: user.role,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -170,7 +170,7 @@ const getUserInfo = async (provider, accessToken) => {
           email: response.data.email,
           firstName: response.data.given_name,
           lastName: response.data.family_name,
-          avatar: response.data.picture,
+          avatarUrl: response.data.picture,
           username: response.data.name
         };
         break;
@@ -199,7 +199,7 @@ const getUserInfo = async (provider, accessToken) => {
           email: email,
           firstName: '',
           lastName: '',
-          avatar: response.data.avatar_url,
+          avatarUrl: response.data.avatar_url,
           username: response.data.login
         };
         break;
@@ -213,7 +213,7 @@ const getUserInfo = async (provider, accessToken) => {
           email: response.data.email,
           firstName: response.data.first_name,
           lastName: response.data.last_name,
-          avatar: response.data.picture?.data?.url,
+          avatarUrl: response.data.picture?.data?.url,
           username: `${response.data.first_name}.${response.data.last_name}`
         };
         break;
@@ -226,7 +226,7 @@ const getUserInfo = async (provider, accessToken) => {
           email: `${response.data.openid}@wechat.user`,
           firstName: response.data.nickname,
           lastName: '',
-          avatar: response.data.headimgurl,
+          avatarUrl: response.data.headimgurl,
           username: response.data.nickname
         };
         break;
@@ -241,7 +241,7 @@ const getUserInfo = async (provider, accessToken) => {
           email: decodedToken.email || `${decodedToken.sub}@privaterelay.appleid.com`,
           firstName: '',
           lastName: '',
-          avatar: '',
+          avatarUrl: '',
           username: `apple_${decodedToken.sub.substring(0, 8)}`
         };
         break;
@@ -281,8 +281,8 @@ const findOrCreateUser = async (provider, userInfo) => {
       user.lastLogin = new Date();
       
       // 如果用户没有头像但OAuth提供了，则更新
-      if (!user.avatar && userInfo.avatar) {
-        user.avatar = userInfo.avatar;
+      if (!user.avatarUrl && userInfo.avatarUrl) {
+        user.avatarUrl = userInfo.avatarUrl;
       }
       
       await user.save();
@@ -310,7 +310,7 @@ const findOrCreateUser = async (provider, userInfo) => {
         email: userInfo.email,
         firstName: userInfo.firstName || '',
         lastName: userInfo.lastName || '',
-        avatar: userInfo.avatar || '',
+        avatarUrl: userInfo.avatarUrl || '',
         password: crypto.randomBytes(16).toString('hex'), // 生成随机密码
         hasPassword: false, // 标记为没有设置密码
         registrationMethod: 'oauth',

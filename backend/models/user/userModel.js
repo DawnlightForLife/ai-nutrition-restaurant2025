@@ -748,7 +748,7 @@ userSchema.methods.toPublicProfile = function() {
     email: this.email,
     firstName: this.firstName,
     lastName: this.lastName,
-    avatar: this.avatar,
+    avatarUrl: this.avatarUrl,
     phoneVerified: !!this.phoneVerified,
     emailVerified: !!this.emailVerified,
     role: this.role,

@@ -344,7 +344,7 @@ const login = async (phone, password) => {
         phone: userObject.phone,
         username: userObject.username || '',
         nickname: userObject.nickname || '',
-        avatar: userObject.avatar || '',
+        avatarUrl: userObject.avatarUrl || '',  // 修复：使用一致的字段名 avatarUrl
         role: userObject.role,
         profileCompleted: userObject.profileCompleted || false,
         autoRegistered: userObject.autoRegistered || false,

@@ -25,6 +25,10 @@ import '../features/merchant/presentation/pages/merchant_application_improved_pa
 import '../features/merchant/presentation/pages/merchant_application_status_page.dart';
 import '../features/nutritionist/presentation/pages/nutritionist_certification_application_page.dart';
 import '../features/nutritionist/presentation/pages/nutritionist_certification_status_page.dart';
+import '../features/user/presentation/pages/settings_page.dart';
+import '../features/user/presentation/pages/account_security_page.dart';
+import '../features/user/presentation/pages/change_password_page.dart';
+import '../features/user/presentation/pages/profile_edit_page.dart';
 // TODO: 导入其他页面
 
 /// 应用路由配置
@@ -90,9 +94,18 @@ class AppRouter {
       case RouteNames.aiResult:
         return _buildRoute(const PlaceholderPage(title: '推荐结果'), settings);
 
-      // 其他常用页面
+      // 设置相关页面
       case RouteNames.settings:
-        return _buildRoute(const PlaceholderPage(title: '设置'), settings);
+        return _buildRoute(const SettingsPage(), settings);
+        
+      case RouteNames.accountSecurity:
+        return _buildRoute(const AccountSecurityPage(), settings);
+        
+      case RouteNames.changePassword:
+        return _buildRoute(const ChangePasswordPage(), settings);
+        
+      case RouteNames.profileEdit:
+        return _buildRoute(const ProfileEditPage(), settings);
         
       case RouteNames.notificationCenter:
         return _buildRoute(const PlaceholderPage(title: '消息通知'), settings);

@@ -24,7 +24,8 @@ mixin _$UserModel {
   String get phone => throw _privateConstructorUsedError;
   String? get email => throw _privateConstructorUsedError;
   String? get nickname => throw _privateConstructorUsedError;
-  String? get avatar => throw _privateConstructorUsedError;
+  String? get avatar => throw _privateConstructorUsedError; // 旧字段，保留兼容性
+  String? get avatarUrl => throw _privateConstructorUsedError; // 新字段，优先使用
   UserRole get role => throw _privateConstructorUsedError;
   bool get isProfileCompleted => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
@@ -68,6 +69,7 @@ abstract class $UserModelCopyWith<$Res> {
       String? email,
       String? nickname,
       String? avatar,
+      String? avatarUrl,
       UserRole role,
       bool isProfileCompleted,
       DateTime? createdAt,
@@ -94,6 +96,7 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
     Object? email = freezed,
     Object? nickname = freezed,
     Object? avatar = freezed,
+    Object? avatarUrl = freezed,
     Object? role = null,
     Object? isProfileCompleted = null,
     Object? createdAt = freezed,
@@ -119,6 +122,10 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
       avatar: freezed == avatar
           ? _value.avatar
           : avatar // ignore: cast_nullable_to_non_nullable
+              as String?,
+      avatarUrl: freezed == avatarUrl
+          ? _value.avatarUrl
+          : avatarUrl // ignore: cast_nullable_to_non_nullable
               as String?,
       role: null == role
           ? _value.role
@@ -154,6 +161,7 @@ abstract class _$$UserModelImplCopyWith<$Res>
       String? email,
       String? nickname,
       String? avatar,
+      String? avatarUrl,
       UserRole role,
       bool isProfileCompleted,
       DateTime? createdAt,
@@ -178,6 +186,7 @@ class __$$UserModelImplCopyWithImpl<$Res>
     Object? email = freezed,
     Object? nickname = freezed,
     Object? avatar = freezed,
+    Object? avatarUrl = freezed,
     Object? role = null,
     Object? isProfileCompleted = null,
     Object? createdAt = freezed,
@@ -203,6 +212,10 @@ class __$$UserModelImplCopyWithImpl<$Res>
       avatar: freezed == avatar
           ? _value.avatar
           : avatar // ignore: cast_nullable_to_non_nullable
+              as String?,
+      avatarUrl: freezed == avatarUrl
+          ? _value.avatarUrl
+          : avatarUrl // ignore: cast_nullable_to_non_nullable
               as String?,
       role: null == role
           ? _value.role
@@ -233,6 +246,7 @@ class _$UserModelImpl implements _UserModel {
       this.email,
       this.nickname,
       this.avatar,
+      this.avatarUrl,
       required this.role,
       this.isProfileCompleted = false,
       this.createdAt,
@@ -251,6 +265,10 @@ class _$UserModelImpl implements _UserModel {
   final String? nickname;
   @override
   final String? avatar;
+// 旧字段，保留兼容性
+  @override
+  final String? avatarUrl;
+// 新字段，优先使用
   @override
   final UserRole role;
   @override
@@ -263,7 +281,7 @@ class _$UserModelImpl implements _UserModel {
 
   @override
   String toString() {
-    return 'UserModel(id: $id, phone: $phone, email: $email, nickname: $nickname, avatar: $avatar, role: $role, isProfileCompleted: $isProfileCompleted, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'UserModel(id: $id, phone: $phone, email: $email, nickname: $nickname, avatar: $avatar, avatarUrl: $avatarUrl, role: $role, isProfileCompleted: $isProfileCompleted, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -277,6 +295,8 @@ class _$UserModelImpl implements _UserModel {
             (identical(other.nickname, nickname) ||
                 other.nickname == nickname) &&
             (identical(other.avatar, avatar) || other.avatar == avatar) &&
+            (identical(other.avatarUrl, avatarUrl) ||
+                other.avatarUrl == avatarUrl) &&
             (identical(other.role, role) || other.role == role) &&
             (identical(other.isProfileCompleted, isProfileCompleted) ||
                 other.isProfileCompleted == isProfileCompleted) &&
@@ -289,7 +309,7 @@ class _$UserModelImpl implements _UserModel {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, phone, email, nickname,
-      avatar, role, isProfileCompleted, createdAt, updatedAt);
+      avatar, avatarUrl, role, isProfileCompleted, createdAt, updatedAt);
 
   /// Create a copy of UserModel
   /// with the given fields replaced by the non-null parameter values.
@@ -342,6 +362,7 @@ abstract class _UserModel implements UserModel {
       final String? email,
       final String? nickname,
       final String? avatar,
+      final String? avatarUrl,
       required final UserRole role,
       final bool isProfileCompleted,
       final DateTime? createdAt,
@@ -359,7 +380,9 @@ abstract class _UserModel implements UserModel {
   @override
   String? get nickname;
   @override
-  String? get avatar;
+  String? get avatar; // 旧字段，保留兼容性
+  @override
+  String? get avatarUrl; // 新字段，优先使用
   @override
   UserRole get role;
   @override

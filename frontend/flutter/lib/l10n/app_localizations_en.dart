@@ -70,4 +70,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get online => 'You are online';
+
+  @override
+  String get accountSecurity => 'Account Security';
+
+  @override
+  String get changePassword => 'Change Password';
+
+  @override
+  String get oldPassword => 'Old Password';
+
+  @override
+  String get newPassword => 'New Password';
+
+  @override
+  String get oldPasswordRequired => 'Please enter your old password';
+
+  @override
+  String get newPasswordRequired => 'Please enter your new password';
+
+  @override
+  String get confirmPasswordRequired => 'Please confirm your new password';
+
+  @override
+  String get passwordsDoNotMatch => 'Passwords do not match';
+
+  @override
+  String get passwordTooShort => 'Password must be at least 6 characters';
+
+  @override
+  String get passwordChangedSuccess => 'Password changed successfully';
+
+  @override
+  String get confirm => 'Confirm';
 }

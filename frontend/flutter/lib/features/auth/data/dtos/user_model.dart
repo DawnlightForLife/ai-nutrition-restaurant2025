@@ -11,7 +11,8 @@ class UserModel with _$UserModel {
     required String phone,
     String? email,
     String? nickname,
-    String? avatar,
+    String? avatar, // 旧字段，保留兼容性
+    String? avatarUrl, // 新字段，优先使用
     required UserRole role,
     @Default(false) bool isProfileCompleted,
     DateTime? createdAt,
@@ -20,4 +21,10 @@ class UserModel with _$UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>
       _$UserModelFromJson(json);
+}
+
+// 扩展UserModel添加便捷方法
+extension UserModelExtension on UserModel {
+  // 获取头像URL（优先使用avatarUrl，兼容avatar字段）
+  String? get displayAvatarUrl => avatarUrl ?? avatar;
 }

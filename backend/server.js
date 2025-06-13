@@ -17,6 +17,9 @@ let databaseReady = false;
 app.use(cors());
 app.use(express.json());
 
+// 静态文件服务 - 为上传的文件提供访问
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // 全局错误处理
 app.use((err, req, res, next) => {
   console.error('全局错误处理捕获到错误:', err);

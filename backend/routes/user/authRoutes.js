@@ -59,7 +59,7 @@ router.get('/me', authenticate, async (req, res) => {
         phone: user.phone,
         role: user.role,
         nickname: user.nickname,
-        avatar: user.avatarUrl,
+        avatarUrl: user.avatarUrl,  // 修复：使用一致的字段名 avatarUrl
         ...req.user // 保留token中的其他信息如iat, exp
       }
     });

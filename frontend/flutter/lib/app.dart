@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'theme/app_theme.dart';
 import 'routes/app_router.dart';
+import 'l10n/app_localizations.dart';
 
 /// App Theme Provider
 final appThemeProvider = Provider<AppTheme>((ref) {
@@ -25,6 +27,16 @@ class App extends ConsumerWidget {
           title: '营养立方',
           theme: appTheme.lightTheme,
           debugShowCheckedModeBanner: false,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('zh', 'CN'), // 中文
+            Locale('en', 'US'), // 英文
+          ],
           navigatorObservers: [AppRouter.observer],
           initialRoute: AppRouter.initialRoute,
           onGenerateRoute: (settings) => AppRouter.onGenerateRoute(settings, ref),

@@ -42,6 +42,8 @@ class RouteNames {
   // 用户中心
   static const String settings = '/settings';
   static const String accountSecurity = '/account/security';
+  static const String changePassword = '/account/security/change-password';
+  static const String profileEdit = '/profile/edit';
   static const String addressManager = '/addresses';
   static const String addressEditor = '/address/edit';
   static const String notificationCenter = '/notifications';

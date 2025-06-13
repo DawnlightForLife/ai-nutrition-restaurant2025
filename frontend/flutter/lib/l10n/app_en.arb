@@ -23,5 +23,16 @@
   "loading": "Loading...",
   "noData": "No data available",
   "offline": "You are offline",
-  "online": "You are online"
+  "online": "You are online",
+  "accountSecurity": "Account Security",
+  "changePassword": "Change Password",
+  "oldPassword": "Old Password",
+  "newPassword": "New Password",
+  "oldPasswordRequired": "Please enter your old password",
+  "newPasswordRequired": "Please enter your new password",
+  "confirmPasswordRequired": "Please confirm your new password",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "passwordTooShort": "Password must be at least 6 characters",
+  "passwordChangedSuccess": "Password changed successfully",
+  "confirm": "Confirm"
 }

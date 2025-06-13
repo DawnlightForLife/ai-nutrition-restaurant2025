@@ -103,7 +103,7 @@ const oauthAccountSchema = new mongoose.Schema({
       sensitivityLevel: 1,  // 高度敏感数据
       description: '支付宝用户 ID'
     },
-    avatar: {
+    avatarUrl: {
       type: String,
       sensitivityLevel: 3,  // 低度敏感数据
       description: '支付宝头像'

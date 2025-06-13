@@ -65,7 +65,7 @@ const userSchemas = {
   updateProfile: Joi.object({
     name: Joi.string().min(2).max(50),
     email: Joi.string().email(),
-    avatar: Joi.string().uri(),
+    avatarUrl: Joi.string().uri(),
     gender: Joi.string().valid('male', 'female', 'other'),
     birthday: Joi.date().max('now'),
     bio: Joi.string().max(500)
