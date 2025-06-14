@@ -562,7 +562,12 @@ const sendPasswordResetCode = async (phone) => {
     await user.save();
     
     // TODO: 集成短信服务发送验证码
-    logger.info(`为用户 ${phone} 发送验证码: ${resetCode}`);
+    logger.info(`为用户 ${phone} 发送重置密码验证码: ${resetCode}`);
+    
+    // 开发环境下打印验证码
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[DEV] 重置密码验证码 for ${phone}: ${resetCode}`);
+    }
     
     return true;
   } catch (error) {

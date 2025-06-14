@@ -68,6 +68,25 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     }
   }
   
+  /// 发送重置密码验证码
+  Future<bool> sendPasswordResetCode(String phone) async {
+    try {
+      state = state.copyWith(isLoading: true, error: null);
+      
+      final authService = _ref.read(authServiceProvider);
+      final success = await authService.sendPasswordResetCode(phone);
+      
+      state = state.copyWith(isLoading: false);
+      return success;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+      return false;
+    }
+  }
+  
   /// 验证码登录
   Future<bool> loginWithCode(String phone, String code) async {
     try {
@@ -193,6 +212,25 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(
         isLoading: false,
         error: '刷新用户信息失败: ${e.toString()}',
+      );
+      return false;
+    }
+  }
+  
+  /// 重置密码
+  Future<bool> resetPassword(String phone, String code, String newPassword) async {
+    try {
+      state = state.copyWith(isLoading: true, error: null);
+      
+      final authService = _ref.read(authServiceProvider);
+      final success = await authService.resetPassword(phone, code, newPassword);
+      
+      state = state.copyWith(isLoading: false);
+      return success;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
       );
       return false;
     }

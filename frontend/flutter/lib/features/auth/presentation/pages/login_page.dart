@@ -7,6 +7,7 @@ import '../../../../shared/widgets/common/toast.dart';
 import '../../../../core/exceptions/app_exceptions.dart';
 import 'verification_code_page.dart';
 import 'profile_completion_page.dart';
+import 'reset_password_page.dart';
 import '../../../../routes/app_navigator.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -228,6 +229,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       _showPassword = !_showPassword;
                     });
                   },
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // 忘记密码按钮
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                AppNavigator.push(context, const ResetPasswordPage());
+              },
+              child: const Text(
+                '忘记密码？',
+                style: TextStyle(
+                  color: AppColors.primaryOrange,
+                  fontSize: 14,
                 ),
               ),
             ),
@@ -495,10 +513,62 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         
         if (success) {
           _navigateAfterLogin();
+        } else {
+          // 登录失败，显示错误提示
+          if (mounted) {
+            final error = ref.read(authStateProvider).error;
+            String errorMessage = '登录失败';
+            
+            // 根据错误信息显示更具体的提示
+            if (error != null) {
+              if (error.contains('密码错误') || error.contains('密码不正确')) {
+                errorMessage = '密码错误，请重新输入';
+              } else if (error.contains('用户不存在')) {
+                errorMessage = '该手机号未注册';
+              } else {
+                errorMessage = error;
+              }
+            }
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(errorMessage),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.all(16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+          }
         }
       } catch (e) {
         if (mounted) {
-          Toast.error(context, e.toString());
+          String errorMessage = '登录失败';
+          
+          // 解析错误信息
+          String errorString = e.toString();
+          if (errorString.contains('密码错误') || errorString.contains('密码不正确')) {
+            errorMessage = '密码错误，请重新输入';
+          } else if (errorString.contains('用户不存在')) {
+            errorMessage = '该手机号未注册';
+          } else if (errorString.contains('Exception: 登录失败:')) {
+            // 提取具体的错误信息
+            errorMessage = errorString.replaceAll('Exception: 登录失败:', '').trim();
+          }
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
         }
       }
     } else {

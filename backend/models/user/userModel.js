@@ -47,6 +47,17 @@ const userSchema = new mongoose.Schema({
       description: '验证码过期时间'
     }
   },
+  // 重置密码相关
+  reset_code: {
+    type: String,
+    default: null,
+    description: '重置密码验证码'
+  },
+  reset_code_expires: {
+    type: Date,
+    default: null,
+    description: '重置密码验证码过期时间'
+  },
   // 用户角色
   role: {
     type: String,

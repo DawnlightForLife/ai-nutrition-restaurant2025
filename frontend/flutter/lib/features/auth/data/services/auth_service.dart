@@ -27,6 +27,21 @@ class AuthService {
     }
   }
   
+  /// 发送重置密码验证码
+  Future<bool> sendPasswordResetCode(String phone) async {
+    try {
+      final response = await _dio.post('/auth/send-code', data: {
+        'phone': phone,
+        'type': 'reset',  // 指定为重置密码类型
+      });
+      
+      return response.data['success'] == true;
+    } catch (e) {
+      print('发送重置密码验证码失败: $e');
+      throw Exception('发送验证码失败: ${e.toString()}');
+    }
+  }
+  
   /// 验证码登录（包含自动注册逻辑）
   Future<Map<String, dynamic>> loginWithCode(String phone, String code) async {
     try {
@@ -83,6 +98,22 @@ class AuthService {
     } catch (e) {
       print('获取用户信息失败: $e');
       throw Exception('获取用户信息失败: ${e.toString()}');
+    }
+  }
+  
+  /// 重置密码
+  Future<bool> resetPassword(String phone, String code, String newPassword) async {
+    try {
+      final response = await _dio.post('/auth/reset-password', data: {
+        'phone': phone,
+        'code': code,
+        'newPassword': newPassword,
+      });
+      
+      return response.data['success'] == true;
+    } catch (e) {
+      print('重置密码失败: $e');
+      throw Exception('重置密码失败: ${e.toString()}');
     }
   }
 }
