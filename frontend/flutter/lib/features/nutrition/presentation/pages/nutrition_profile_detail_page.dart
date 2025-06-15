@@ -3,7 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// 营养档案详情页
 class NutritionProfileDetailPage extends ConsumerWidget {
-  const NutritionProfileDetailPage({super.key});
+  final String profileId;
+  
+  const NutritionProfileDetailPage({
+    super.key,
+    required this.profileId,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

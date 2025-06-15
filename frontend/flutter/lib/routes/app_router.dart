@@ -28,6 +28,9 @@ import '../features/nutritionist/presentation/pages/nutritionist_certification_s
 import '../features/user/presentation/pages/settings_page.dart';
 import '../features/user/presentation/pages/account_security_page.dart';
 import '../features/user/presentation/pages/change_password_page.dart';
+import '../features/nutrition/presentation/pages/nutrition_profile_list_page.dart';
+import '../features/nutrition/presentation/pages/nutrition_profile_detail_page.dart';
+import '../features/nutrition/presentation/pages/nutrition_profile_management_page.dart';
 import '../features/user/presentation/pages/profile_edit_page.dart';
 // TODO: 导入其他页面
 
@@ -77,15 +80,26 @@ class AppRouter {
       case RouteNames.cart:
         return _buildRoute(const CartPage(), settings);
 
-      // 营养档案相关 (临时使用占位页面)
+      // 营养档案相关
       case RouteNames.nutritionProfileList:
-        return _buildRoute(const PlaceholderPage(title: '营养档案'), settings);
+        return _buildRoute(const NutritionProfileListPage(), settings);
         
       case RouteNames.nutritionProfileDetail:
-        return _buildRoute(const PlaceholderPage(title: '档案详情'), settings);
+        final String profileId = settings.arguments as String;
+        return _buildRoute(
+          NutritionProfileDetailPage(profileId: profileId), 
+          settings
+        );
         
       case RouteNames.nutritionProfileEditor:
-        return _buildRoute(const PlaceholderPage(title: '编辑档案'), settings);
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          NutritionProfileManagementPage(
+            profileId: args?['profileId'],
+            isNewProfile: args?['isNewProfile'] ?? true,
+          ), 
+          settings
+        );
 
       // AI推荐相关 (临时使用占位页面)
       case RouteNames.aiChat:

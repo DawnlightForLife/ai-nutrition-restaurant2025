@@ -58,6 +58,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   # data_table_2: ^2.5.15  # 移除，暂时不需要复杂表格
   qr_flutter: ^4.1.0  # 二维码生成
+  shimmer: ^3.0.0  # Shimmer加载效果
+  share_plus: ^10.0.3  # 分享功能
+  csv: ^6.0.0  # CSV导出
   
   # 动画系统 - 简化为一种方案
   flutter_animate: ^4.5.0

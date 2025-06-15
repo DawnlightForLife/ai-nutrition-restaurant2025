@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../core/navigation/app_router.dart';
+import 'ai_recommendation_result_page.dart';
 
 class AiRecommendationChatPage extends ConsumerStatefulWidget {
   const AiRecommendationChatPage({super.key});
@@ -441,9 +441,14 @@ class _AiRecommendationChatPageState
 
   void _handleRecommendationTap(RecommendationItem item) {
     // 跳转到推荐结果页
-    context.router.push(AiRecommendationResultRoute(
-      recommendations: [item],
-    ));
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AiRecommendationResultPage(
+          recommendations: [item],
+        ),
+      ),
+    );
   }
 
   void _handleReset() {

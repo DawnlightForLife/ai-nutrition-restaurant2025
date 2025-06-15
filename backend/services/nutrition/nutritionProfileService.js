@@ -10,6 +10,7 @@ const AppError = require("../../utils/errors/appError");
 const mongoose = require("mongoose");
 const { Types } = mongoose;
 const logger = require("../../utils/logger/winstonLogger.js");
+const { HEALTH_GOALS } = require("../../constants/dietaryRestrictions");
 
 const nutritionProfileService = {
   /**
@@ -25,7 +26,8 @@ const nutritionProfileService = {
     }
 
     // 验证年龄段
-    if (!data.ageGroup || !['under18', '18to30', '31to45', '46to60', 'above60'].includes(data.ageGroup)) {
+    const validAgeGroups = ['under18', '18to25', '26to35', '36to45', '46to55', '56to65', 'above65'];
+    if (!data.ageGroup || !validAgeGroups.includes(data.ageGroup)) {
       return { field: 'ageGroup', message: '年龄段字段无效' };
     }
 
@@ -40,10 +42,7 @@ const nutritionProfileService = {
     }
 
     // 验证主要营养目标
-    const validGoals = [
-      'generalHealth', 'weightLoss', 'weightGain', 'muscleBuilding', 
-      'immunityBoost', 'bloodSugarControl', 'bloodPressureControl', 'energyBoost'
-    ];
+    const validGoals = Object.values(HEALTH_GOALS);
     const primaryGoal = Array.isArray(data.nutritionGoals) && data.nutritionGoals.length > 0 
       ? data.nutritionGoals[0] 
       : null;
@@ -388,6 +387,124 @@ const nutritionProfileService = {
     }
     
     return updatedProfile;
+  },
+
+  /**
+   * 更新健康目标详细配置
+   * @param {String} profileId - 档案ID
+   * @param {Object} healthGoalDetails - 健康目标详细配置数据
+   * @returns {Promise<Object>} 更新后的档案
+   */
+  async updateHealthGoalDetails(profileId, healthGoalDetails) {
+    const updatedProfile = await NutritionProfile.findByIdAndUpdate(
+      profileId,
+      { healthGoalDetails: healthGoalDetails },
+      { new: true, runValidators: true }
+    );
+    
+    if (!updatedProfile) {
+      throw new AppError("未找到指定的营养档案", 404);
+    }
+    
+    return updatedProfile;
+  },
+
+  /**
+   * 验证健康目标配置的一致性
+   * @param {Array} nutritionGoals - 营养目标数组
+   * @param {Object} healthGoalDetails - 健康目标详细配置
+   * @returns {Object|null} 如果验证成功返回null，否则返回错误对象
+   */
+  validateGoalConsistency(nutritionGoals, healthGoalDetails) {
+    if (!nutritionGoals || !healthGoalDetails) {
+      return null; // 没有提供足够的数据进行验证
+    }
+
+    // 检查每个设置的详细配置是否对应已选择的目标
+    const goalMapping = {
+      bloodSugarControl: HEALTH_GOALS.BLOOD_SUGAR_CONTROL,
+      bloodPressureControl: HEALTH_GOALS.BLOOD_PRESSURE_CONTROL,
+      cholesterolManagement: HEALTH_GOALS.CHOLESTEROL_MANAGEMENT,
+      weightManagement: [HEALTH_GOALS.WEIGHT_LOSS, HEALTH_GOALS.WEIGHT_GAIN, HEALTH_GOALS.WEIGHT_MAINTAIN, HEALTH_GOALS.FAT_LOSS, HEALTH_GOALS.MUSCLE_GAIN],
+      sportsNutrition: [HEALTH_GOALS.SPORTS_PERFORMANCE, HEALTH_GOALS.MUSCLE_GAIN],
+      specialPhysiological: [HEALTH_GOALS.PREGNANCY, HEALTH_GOALS.LACTATION, HEALTH_GOALS.MENOPAUSE],
+      digestiveHealth: [HEALTH_GOALS.GUT_HEALTH, HEALTH_GOALS.DIGESTION_IMPROVEMENT],
+      immunityBoost: HEALTH_GOALS.IMMUNITY_BOOST
+    };
+
+    for (const [detailKey, goalValue] of Object.entries(goalMapping)) {
+      if (healthGoalDetails[detailKey] && Object.keys(healthGoalDetails[detailKey]).length > 0) {
+        const hasGoal = Array.isArray(goalValue) 
+          ? goalValue.some(g => nutritionGoals.includes(g))
+          : nutritionGoals.includes(goalValue);
+        
+        if (!hasGoal) {
+          return { 
+            field: detailKey, 
+            message: `详细配置 ${detailKey} 需要先选择对应的健康目标` 
+          };
+        }
+      }
+    }
+
+    return null; // 验证通过
+  },
+
+  /**
+   * 计算营养档案完成度
+   * @param {Object} profile - 营养档案
+   * @returns {Number} 完成度百分比(0-100)
+   */
+  calculateCompleteness(profile) {
+    let score = 0;
+    let totalFields = 0;
+
+    // 必填字段（权重高）
+    const requiredFields = [
+      { field: 'gender', weight: 2 },
+      { field: 'ageGroup', weight: 2 },
+      { field: 'height', weight: 2 },
+      { field: 'weight', weight: 2 },
+      { field: 'activityLevel', weight: 2 },
+      { field: 'nutritionGoals', weight: 2, check: (val) => val && val.length > 0 }
+    ];
+
+    // 可选但重要字段
+    const optionalFields = [
+      { field: 'dietaryPreferences.dietaryType', weight: 1 },
+      { field: 'dietaryPreferences.cuisinePreferences', weight: 1, check: (val) => val && val.length > 0 },
+      { field: 'dietaryPreferences.tastePreferences', weight: 1 },
+      { field: 'lifestyle.exerciseFrequency', weight: 1 },
+      { field: 'lifestyle.sleepDuration', weight: 1 },
+      { field: 'region.province', weight: 1 },
+      { field: 'occupation', weight: 1 }
+    ];
+
+    // 计算必填字段得分
+    requiredFields.forEach(({ field, weight, check }) => {
+      totalFields += weight;
+      const value = field.includes('.') 
+        ? field.split('.').reduce((obj, key) => obj?.[key], profile)
+        : profile[field];
+      
+      if (check ? check(value) : value) {
+        score += weight;
+      }
+    });
+
+    // 计算可选字段得分
+    optionalFields.forEach(({ field, weight, check }) => {
+      totalFields += weight;
+      const value = field.includes('.') 
+        ? field.split('.').reduce((obj, key) => obj?.[key], profile)
+        : profile[field];
+      
+      if (check ? check(value) : value) {
+        score += weight;
+      }
+    });
+
+    return Math.round((score / totalFields) * 100);
   }
 };
 

@@ -31,6 +31,8 @@ router.use('/forum-tags', require('./forum/forumTagRoutes'));
 
 // =================== Nutrition 模块 ===================
 router.use('/nutrition/nutrition-profiles', require('./nutrition/nutritionProfileRoutes'));
+router.use('/nutrition/nutrition-profiles-extended', require('./nutrition/nutritionProfileExtendedRoutes'));
+router.use('/nutrition/constants', require('./nutrition/nutritionConstantsRoutes'));
 router.use('/ai-recommendations', require('./nutrition/aiRecommendationRoutes'));
 router.use('/nutritionists', require('./nutrition/nutritionistRoutes'));
 router.use('/nutritionist-certification', require('./nutrition/nutritionistCertificationRoutes'));

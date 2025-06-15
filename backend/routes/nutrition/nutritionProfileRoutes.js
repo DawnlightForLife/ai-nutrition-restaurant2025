@@ -7,6 +7,11 @@ const express = require('express');
 const router = express.Router();
 const nutritionProfileController = require('../../controllers/nutrition/nutritionProfileController');
 const { authenticate } = require('../../middleware/auth/authMiddleware');
+const { 
+  validateProfileCreation, 
+  validateProfileUpdate,
+  validateHealthGoalDetailsUpdate 
+} = require('../../middleware/validators/nutritionProfileValidator');
 
 // [GET] 获取所有营养档案（仅管理员）
 router.get('/', authenticate, nutritionProfileController.getAllProfiles);
@@ -18,10 +23,10 @@ router.get('/:id', authenticate, nutritionProfileController.getProfileById);
 router.get('/user/:userId', authenticate, nutritionProfileController.getProfilesByUserId);
 
 // [POST] 创建新的营养档案
-router.post('/', authenticate, nutritionProfileController.createProfile);
+router.post('/', authenticate, validateProfileCreation, nutritionProfileController.createProfile);
 
 // [PUT] 更新指定营养档案
-router.put('/:id', authenticate, nutritionProfileController.updateProfile);
+router.put('/:id', authenticate, validateProfileUpdate, nutritionProfileController.updateProfile);
 
 // [DELETE] 删除指定营养档案
 router.delete('/:id', authenticate, nutritionProfileController.deleteProfile);
@@ -37,5 +42,11 @@ router.get('/ai/data', authenticate, nutritionProfileController.getProfileForAI)
 
 // [POST] 验证营养档案数据
 router.post('/validate', authenticate, nutritionProfileController.validateProfile);
+
+// [PUT] 更新健康目标详细配置
+router.put('/:id/health-goals', authenticate, validateHealthGoalDetailsUpdate, nutritionProfileController.updateHealthGoalDetails);
+
+// [GET] 获取营养档案完成度详情
+router.get('/:id/completeness', authenticate, nutritionProfileController.getProfileCompleteness);
 
 module.exports = router;

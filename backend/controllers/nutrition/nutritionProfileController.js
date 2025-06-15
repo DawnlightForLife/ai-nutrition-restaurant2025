@@ -12,6 +12,7 @@
  */
 
 const NutritionProfile = require('../../models/nutrition/nutritionProfileModel');
+const nutritionProfileService = require('../../services/nutrition/nutritionProfileService');
 const logger = require('../../utils/logger/winstonLogger.js');
 
 // NOTE: getAllProfiles 仅管理员可访问
@@ -546,6 +547,120 @@ const validateProfile = async (req, res) => {
   }
 };
 
+/**
+ * 更新健康目标详细配置
+ * @param {Object} req - Express请求对象
+ * @param {Object} res - Express响应对象
+ */
+const updateHealthGoalDetails = async (req, res) => {
+  try {
+    const profileId = req.params.id;
+    const { healthGoalDetails } = req.body;
+
+    // 获取档案以验证权限和目标一致性
+    const profile = await NutritionProfile.findById(profileId);
+    
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: '未找到指定的营养档案'
+      });
+    }
+
+    // 验证用户权限
+    if (profile.userId.toString() !== req.user.id && !req.user.isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: '您无权更新此档案'
+      });
+    }
+
+    // 验证健康目标配置的一致性
+    const consistencyError = nutritionProfileService.validateGoalConsistency(
+      profile.nutritionGoals, 
+      healthGoalDetails
+    );
+    
+    if (consistencyError) {
+      return res.status(400).json({
+        success: false,
+        message: consistencyError.message,
+        field: consistencyError.field
+      });
+    }
+
+    // 更新健康目标详细配置
+    const updatedProfile = await nutritionProfileService.updateHealthGoalDetails(
+      profileId, 
+      healthGoalDetails
+    );
+
+    res.json({
+      success: true,
+      message: '健康目标详细配置更新成功',
+      profile: updatedProfile
+    });
+  } catch (error) {
+    logger.error(`更新健康目标详细配置(ID: ${req.params.id})失败:`, error);
+    res.status(500).json({
+      success: false,
+      message: '服务器错误，更新健康目标详细配置失败',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * 获取营养档案完成度详情
+ * @param {Object} req - Express请求对象
+ * @param {Object} res - Express响应对象
+ */
+const getProfileCompleteness = async (req, res) => {
+  try {
+    const profileId = req.params.id;
+    
+    const profile = await NutritionProfile.findById(profileId);
+    
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: '未找到指定的营养档案'
+      });
+    }
+
+    // 验证用户权限
+    if (profile.userId.toString() !== req.user.id && !req.user.isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: '您无权查看此档案'
+      });
+    }
+
+    // 计算完成度
+    const completeness = nutritionProfileService.calculateCompleteness(profile);
+    
+    res.json({
+      success: true,
+      data: {
+        profileId: profile._id,
+        completeness: completeness,
+        recommendations: completeness < 80 ? [
+          '建议完善饮食偏好信息',
+          '建议添加运动习惯信息',
+          '建议设置健康目标详细配置'
+        ] : []
+      }
+    });
+  } catch (error) {
+    logger.error(`获取营养档案完成度(ID: ${req.params.id})失败:`, error);
+    res.status(500).json({
+      success: false,
+      message: '服务器错误，获取完成度失败',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllProfiles,
   getProfileById,
@@ -558,5 +673,7 @@ module.exports = {
   getProfileForAI,
   validateProfile,
   calculateCompletionPercentage,
-  validateNutritionProfile
+  validateNutritionProfile,
+  updateHealthGoalDetails,
+  getProfileCompleteness
 };
