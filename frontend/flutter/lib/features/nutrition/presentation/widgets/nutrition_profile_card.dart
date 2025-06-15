@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/nutrition_profile_v2.dart';
+import '../../domain/constants/nutrition_constants.dart';
 
 class NutritionProfileCard extends StatelessWidget {
   final NutritionProfileV2 profile;
@@ -164,40 +165,102 @@ class NutritionProfileCard extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    // 基本信息行
-                    Row(
-                      children: [
-                        _buildInfoItem(
-                          context,
-                          icon: Icons.cake_outlined,
-                          label: '年龄',
-                          value: _getAgeGroupText(profile.ageGroup),
-                        ),
-                        const SizedBox(width: 24),
-                        _buildInfoItem(
-                          context,
-                          icon: Icons.straighten,
-                          label: '身高',
-                          value: '${profile.height.toStringAsFixed(0)}cm',
-                        ),
-                        const SizedBox(width: 24),
-                        _buildInfoItem(
-                          context,
-                          icon: Icons.monitor_weight_outlined,
-                          label: '体重',
-                          value: '${profile.weight.toStringAsFixed(1)}kg',
-                        ),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          child: _buildInfoItem(
-                            context,
-                            icon: Icons.analytics_outlined,
-                            label: 'BMI',
-                            value: profile.bmi.toStringAsFixed(1),
-                            valueColor: _getBMIColor(profile.bmi),
-                          ),
-                        ),
-                      ],
+                    // 基本信息行 - 使用Grid布局防止溢出
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        // 如果宽度小于400，使用2x2网格，否则使用1x4
+                        if (constraints.maxWidth < 400) {
+                          return Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildInfoItem(
+                                      context,
+                                      icon: Icons.cake_outlined,
+                                      label: '年龄',
+                                      value: _getAgeGroupText(profile.ageGroup),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: _buildInfoItem(
+                                      context,
+                                      icon: Icons.straighten,
+                                      label: '身高',
+                                      value: '${profile.height.toStringAsFixed(0)}cm',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildInfoItem(
+                                      context,
+                                      icon: Icons.monitor_weight_outlined,
+                                      label: '体重',
+                                      value: '${profile.weight.toStringAsFixed(1)}kg',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: _buildInfoItem(
+                                      context,
+                                      icon: Icons.analytics_outlined,
+                                      label: 'BMI',
+                                      value: profile.bmi.toStringAsFixed(1),
+                                      valueColor: _getBMIColor(profile.bmi),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        } else {
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: _buildInfoItem(
+                                  context,
+                                  icon: Icons.cake_outlined,
+                                  label: '年龄',
+                                  value: _getAgeGroupText(profile.ageGroup),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildInfoItem(
+                                  context,
+                                  icon: Icons.straighten,
+                                  label: '身高',
+                                  value: '${profile.height.toStringAsFixed(0)}cm',
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildInfoItem(
+                                  context,
+                                  icon: Icons.monitor_weight_outlined,
+                                  label: '体重',
+                                  value: '${profile.weight.toStringAsFixed(1)}kg',
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildInfoItem(
+                                  context,
+                                  icon: Icons.analytics_outlined,
+                                  label: 'BMI',
+                                  value: profile.bmi.toStringAsFixed(1),
+                                  valueColor: _getBMIColor(profile.bmi),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                      },
                     ),
                     const SizedBox(height: 12),
                     // 饮食偏好标签
@@ -318,26 +381,35 @@ class NutritionProfileCard extends StatelessWidget {
     Color? valueColor,
   }) {
     final theme = Theme.of(context);
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
           icon,
-          size: 16,
-          color: theme.colorScheme.onSurface.withOpacity(0.5),
+          size: 20,
+          color: theme.colorScheme.primary.withOpacity(0.7),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(height: 4),
         Text(
-          '$label ',
+          label,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurface.withOpacity(0.5),
+            fontSize: 10,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
+        const SizedBox(height: 2),
         Text(
           value,
           style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-            color: valueColor,
+            fontWeight: FontWeight.w600,
+            color: valueColor ?? theme.colorScheme.onSurface,
+            fontSize: 13,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
@@ -397,43 +469,17 @@ class NutritionProfileCard extends StatelessWidget {
   }
 
   String _getHealthGoalText(String goal) {
-    final goals = {
-      'loseWeight': '减脂瘦身',
-      'gainMuscle': '增肌塑形',
-      'maintainWeight': '保持体重',
-      'balancedNutrition': '均衡营养',
-      'manageDisease': '疾病管理',
-      'other': '其他目标',
-    };
-    return goals[goal] ?? goal;
+    // 使用 NutritionConstants 中定义的健康目标选项
+    return NutritionConstants.healthGoalOptions[goal] ?? goal;
   }
 
   String _getAgeGroupText(String ageGroup) {
-    final groups = {
-      'under18': '<18岁',
-      '18to30': '18-30岁',
-      '31to45': '31-45岁',
-      '46to60': '46-60岁',
-      'over60': '>60岁',
-    };
-    return groups[ageGroup] ?? ageGroup;
+    // 使用 NutritionConstants 中定义的年龄组选项
+    return NutritionConstants.ageGroupOptions[ageGroup] ?? ageGroup;
   }
 
   String _getDietaryPreferenceText(String pref) {
-    final prefs = {
-      'vegetarian': '素食',
-      'vegan': '纯素',
-      'light': '清淡',
-      'noSpicy': '不辣',
-      'lowSalt': '低盐',
-      'lowFat': '低脂',
-      'lowSugar': '低糖',
-      'highProtein': '高蛋白',
-      'organic': '有机',
-      'glutenFree': '无麸质',
-      'lactoseFree': '无乳糖',
-      'other': '其他',
-    };
-    return prefs[pref] ?? pref;
+    // 使用 NutritionConstants 中定义的饮食偏好选项
+    return NutritionConstants.dietaryPreferenceOptions[pref] ?? pref;
   }
 }

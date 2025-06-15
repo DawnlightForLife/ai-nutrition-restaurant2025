@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../routes/app_navigator.dart';
 import '../../domain/constants/nutrition_constants.dart';
 import '../providers/nutrition_provider.dart';
+import '../providers/nutrition_profile_list_provider.dart';
+import 'nutrition_profile_selection_page.dart';
 
 class RecommendationEntryPage extends ConsumerStatefulWidget {
   const RecommendationEntryPage({super.key});
@@ -268,11 +270,29 @@ class _RecommendationEntryPageState
     return '夜宵';
   }
 
-  void _handleStartRecommendation() {
-    // TODO: 检查营养档案是否存在
-    final hasProfile = true;
-
-    if (!hasProfile) {
+  void _handleStartRecommendation() async {
+    // 检查用户是否有营养档案
+    final profileState = ref.read(nutritionProfileListProvider);
+    
+    if (profileState.isLoading) {
+      // 显示加载中
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('正在加载营养档案...')),
+      );
+      return;
+    }
+    
+    if (profileState.error != null) {
+      // 显示错误
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('加载失败: ${profileState.error}')),
+      );
+      return;
+    }
+    
+    final profiles = profileState.profiles;
+    
+    if (profiles.isEmpty) {
       // 提示创建营养档案
       showDialog(
         context: context,
@@ -287,16 +307,26 @@ class _RecommendationEntryPageState
             FilledButton(
               onPressed: () {
                 Navigator.pop(context);
-                AppNavigator.toNutritionProfiles(context);
+                AppNavigator.toNutritionProfileWizard(context);
               },
               child: const Text('去创建'),
             ),
           ],
         ),
       );
+    } else if (profiles.length == 1) {
+      // 只有一个档案，直接使用
+      AppNavigator.toAIChat(context, profiles.first.id!);
     } else {
-      // 跳转到AI推荐聊天页
-      AppNavigator.toAIChat(context, 'default_profile_id');
+      // 多个档案，让用户选择
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const NutritionProfileSelectionPage(
+            forAIRecommendation: true,
+          ),
+        ),
+      );
     }
   }
 }

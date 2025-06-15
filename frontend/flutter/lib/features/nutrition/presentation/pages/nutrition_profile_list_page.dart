@@ -634,7 +634,7 @@ class _NutritionProfileListPageState
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const AiRecommendationChatPage(),
+        builder: (context) => AiRecommendationChatPage(profileId: profile.id!),
       ),
     );
   }

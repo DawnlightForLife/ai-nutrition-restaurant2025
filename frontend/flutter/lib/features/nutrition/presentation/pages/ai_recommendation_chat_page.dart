@@ -3,7 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'ai_recommendation_result_page.dart';
 
 class AiRecommendationChatPage extends ConsumerStatefulWidget {
-  const AiRecommendationChatPage({super.key});
+  final String profileId;
+  
+  const AiRecommendationChatPage({
+    super.key,
+    required this.profileId,
+  });
 
   @override
   ConsumerState<AiRecommendationChatPage> createState() =>
@@ -20,10 +25,17 @@ class _AiRecommendationChatPageState
   @override
   void initState() {
     super.initState();
+    // 加载营养档案信息
+    _loadProfileInfo();
+  }
+  
+  Future<void> _loadProfileInfo() async {
+    // TODO: 根据profileId加载档案信息
+    
     // 初始化欢迎消息
     _addBotMessage(
       '嗨！我是元气，您的智能营养助手！😊\n\n'
-      '我可以根据您的健康状况和喜好，为您推荐最合适的美食。\n\n'
+      '我已经了解了您的营养档案，将基于您的健康目标和饮食偏好为您推荐。\n\n'
       '您可以告诉我：\n'
       '• 今天想吃什么风味\n'
       '• 有没有特别的需求\n'

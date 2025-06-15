@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/nutrition_template_model.dart';
@@ -24,17 +25,78 @@ class _ConflictDetectionWidgetState extends ConsumerState<ConflictDetectionWidge
   ConflictDetectionResult? _lastResult;
   bool _isChecking = false;
   String? _error;
+  Timer? _debounceTimer;
+  Map<String, dynamic>? _lastCheckedData;
 
   @override
   void didUpdateWidget(ConflictDetectionWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.profileData != oldWidget.profileData && widget.enabled) {
-      _checkConflicts();
+      // 检查是否只有非关键字段变化
+      if (_shouldTriggerCheck(oldWidget.profileData, widget.profileData)) {
+        _debounceCheck();
+      }
     }
+  }
+  
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+  
+  // 判断是否需要触发检查
+  bool _shouldTriggerCheck(Map<String, dynamic> oldData, Map<String, dynamic> newData) {
+    // 定义关键字段列表
+    const keyFields = [
+      'healthGoals',
+      'dietaryPreferences',
+      'medicalConditions',
+      'allergies',
+      'forbiddenIngredients',
+      'targetCalories',
+    ];
+    
+    // 检查关键字段是否有变化
+    for (final field in keyFields) {
+      if (oldData[field].toString() != newData[field].toString()) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  
+  // 防抖检查
+  void _debounceCheck() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 800), () {
+      _checkConflicts();
+    });
   }
 
   Future<void> _checkConflicts() async {
     if (!widget.enabled || widget.profileData.isEmpty) {
+      return;
+    }
+    
+    // 避免重复检查相同数据
+    if (_lastCheckedData != null && 
+        _lastCheckedData.toString() == widget.profileData.toString()) {
+      return;
+    }
+
+    // 本地预检测
+    final localConflicts = _performLocalCheck(widget.profileData);
+    if (localConflicts.isNotEmpty) {
+      setState(() {
+        _lastResult = ConflictDetectionResult(
+          success: true,
+          hasConflicts: true,
+          conflicts: localConflicts,
+        );
+        _lastCheckedData = Map.from(widget.profileData);
+      });
       return;
     }
 
@@ -53,6 +115,7 @@ class _ConflictDetectionWidgetState extends ConsumerState<ConflictDetectionWidge
       setState(() {
         _lastResult = result;
         _isChecking = false;
+        _lastCheckedData = Map.from(widget.profileData);
       });
     } catch (e) {
       setState(() {
@@ -60,6 +123,40 @@ class _ConflictDetectionWidgetState extends ConsumerState<ConflictDetectionWidge
         _isChecking = false;
       });
     }
+  }
+  
+  // 本地预检测逻辑
+  List<ProfileConflict> _performLocalCheck(Map<String, dynamic> data) {
+    final conflicts = <ProfileConflict>[];
+    
+    // 检查糖尿病与高糖饮食冲突
+    final hasDiabetes = (data['medicalConditions'] as List?)?.contains('diabetes') ?? false;
+    final healthGoals = data['healthGoals'] as List? ?? [];
+    final hasBloodSugarControl = healthGoals.contains('blood_sugar_control');
+    
+    if (hasDiabetes && !hasBloodSugarControl) {
+      conflicts.add(ProfileConflict(
+        type: 'health',
+        message: '您有糖尿病史，建议添加"血糖控制"作为健康目标',
+        severity: ConflictSeverity.high,
+        suggestions: ['添加"血糖控制"健康目标', '咨询营养师制定专门的饮食计划'],
+      ));
+    }
+    
+    // 检查减重目标与热量设置
+    final hasWeightLoss = healthGoals.contains('weight_loss') || healthGoals.contains('fat_loss');
+    final targetCalories = double.tryParse(data['targetCalories']?.toString() ?? '0') ?? 0;
+    
+    if (hasWeightLoss && targetCalories > 2500) {
+      conflicts.add(ProfileConflict(
+        type: 'goal',
+        message: '您的减重目标与较高的热量摄入可能存在冲突',
+        severity: ConflictSeverity.medium,
+        suggestions: ['考虑降低目标热量到1500-2000卡路里', '增加运动频率以提高热量消耗'],
+      ));
+    }
+    
+    return conflicts;
   }
 
   @override

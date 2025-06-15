@@ -10,6 +10,9 @@ import '../../data/models/nutrition_template_model.dart';
 import '../widgets/activity_level_detail_selector.dart';
 import '../widgets/dynamic_health_goals_form.dart';
 import '../widgets/conflict_detection_widget.dart';
+import '../widgets/wheel_number_picker.dart';
+import '../widgets/custom_option_selector.dart';
+import '../../../user/presentation/providers/user_provider.dart';
 
 class NutritionProfileManagementPage extends ConsumerStatefulWidget {
   final String? profileId;
@@ -40,12 +43,16 @@ class _NutritionProfileManagementPageState
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
   
-  // 健康目标
-  String _healthGoal = '';
+  // 健康目标（支持多选）
+  final Set<String> _healthGoals = {};
+  final Map<String, Map<String, dynamic>> _healthGoalDetailsMap = {};
   final _targetCaloriesController = TextEditingController();
   
   // 饮食偏好（多选）
   final Set<String> _dietaryPreferences = {};
+  final Set<String> _cuisinePreferences = {};
+  final Map<String, int> _tastePreferences = {};
+  final Set<String> _specialDietaryRequirements = {};
   
   // 可选字段
   final Set<String> _medicalConditions = {};
@@ -99,7 +106,39 @@ class _NutritionProfileManagementPageState
         _ageGroup = profile.ageGroup;
         _heightController.text = profile.height.toStringAsFixed(0);
         _weightController.text = profile.weight.toStringAsFixed(1);
-        _healthGoal = profile.healthGoal;
+        
+        // 从 healthGoalDetails 中恢复健康目标
+        if (profile.healthGoalDetails != null && profile.healthGoalDetails!['goals'] is List) {
+          _healthGoals.addAll((profile.healthGoalDetails!['goals'] as List).cast<String>());
+          if (profile.healthGoalDetails!['goalsDetails'] is Map) {
+            final goalsDetails = profile.healthGoalDetails!['goalsDetails'] as Map;
+            goalsDetails.forEach((key, value) {
+              if (key is String && value is Map) {
+                _healthGoalDetailsMap[key] = Map<String, dynamic>.from(value);
+              }
+            });
+          }
+          if (profile.healthGoalDetails!['cuisinePreferences'] is List) {
+            _cuisinePreferences.addAll((profile.healthGoalDetails!['cuisinePreferences'] as List).cast<String>());
+          }
+          if (profile.healthGoalDetails!['tastePreferences'] is Map) {
+            final tastePrefs = profile.healthGoalDetails!['tastePreferences'] as Map;
+            tastePrefs.forEach((key, value) {
+              if (key is String && value is int) {
+                _tastePreferences[key] = value;
+              }
+            });
+          }
+          if (profile.healthGoalDetails!['specialDietaryRequirements'] is List) {
+            _specialDietaryRequirements.addAll(
+              (profile.healthGoalDetails!['specialDietaryRequirements'] as List).cast<String>()
+            );
+          }
+        } else {
+          // 兼容旧数据
+          _healthGoals.add(profile.healthGoal);
+        }
+        
         _targetCaloriesController.text = profile.targetCalories.toStringAsFixed(0);
         _dietaryPreferences.addAll(profile.dietaryPreferences);
         _medicalConditions.addAll(profile.medicalConditions);
@@ -281,7 +320,7 @@ class _NutritionProfileManagementPageState
                           'ageGroup': _ageGroup,
                           'height': _heightController.text.isNotEmpty ? double.tryParse(_heightController.text) : null,
                           'weight': _weightController.text.isNotEmpty ? double.tryParse(_weightController.text) : null,
-                          'healthGoal': _healthGoal,
+                          'healthGoal': _healthGoals.isNotEmpty ? _healthGoals.first : '',
                           'targetCalories': _targetCaloriesController.text.isNotEmpty ? double.tryParse(_targetCaloriesController.text) : null,
                           'dietaryPreferences': _dietaryPreferences.toList(),
                           'medicalConditions': _medicalConditions.toList(),
@@ -450,60 +489,65 @@ class _NutritionProfileManagementPageState
         ),
         const SizedBox(height: 16),
         
-        // 身高体重
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _heightController,
-                decoration: const InputDecoration(
-                  labelText: '身高',
-                  suffixText: 'cm',
-                  border: OutlineInputBorder(),
+        // 身高体重 - 编辑模式使用滚轮选择器，查看模式显示文本
+        if (_isEditMode)
+          Row(
+            children: [
+              Expanded(
+                child: WheelNumberPicker(
+                  label: '身高',
+                  initialValue: double.tryParse(_heightController.text) ?? 170.0,
+                  minValue: 50.0,
+                  maxValue: 250.0,
+                  unit: 'cm',
+                  decimals: 0,
+                  onChanged: (value) {
+                    setState(() {
+                      _heightController.text = value.toStringAsFixed(0);
+                      _checkForChanges();
+                    });
+                  },
                 ),
-                enabled: _isEditMode,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(3),
-                ],
-                onChanged: (_) => _checkForChanges(),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return '请输入身高';
-                  final height = double.tryParse(value);
-                  if (height == null || height <= 0) return '请输入有效身高';
-                  if (height < 50 || height > 250) return '身高范围应在50-250cm';
-                  return null;
-                },
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: _weightController,
-                decoration: const InputDecoration(
-                  labelText: '体重',
-                  suffixText: 'kg',
-                  border: OutlineInputBorder(),
+              const SizedBox(width: 16),
+              Expanded(
+                child: WheelNumberPicker(
+                  label: '体重',
+                  initialValue: double.tryParse(_weightController.text) ?? 60.0,
+                  minValue: 20.0,
+                  maxValue: 200.0,
+                  unit: 'kg',
+                  decimals: 1,
+                  onChanged: (value) {
+                    setState(() {
+                      _weightController.text = value.toStringAsFixed(1);
+                      _checkForChanges();
+                    });
+                  },
                 ),
-                enabled: _isEditMode,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-                  LengthLimitingTextInputFormatter(5),
-                ],
-                onChanged: (_) => _checkForChanges(),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return '请输入体重';
-                  final weight = double.tryParse(value);
-                  if (weight == null || weight <= 0) return '请输入有效体重';
-                  if (weight < 20 || weight > 200) return '体重范围应在20-200kg';
-                  return null;
-                },
               ),
-            ),
-          ],
-        ),
+            ],
+          )
+        else
+          Row(
+            children: [
+              Expanded(
+                child: _buildInfoDisplay(
+                  context,
+                  label: '身高',
+                  value: '${_heightController.text}cm',
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildInfoDisplay(
+                  context,
+                  label: '体重',
+                  value: '${_weightController.text}kg',
+                ),
+              ),
+            ],
+          ),
         
         // BMI显示
         if (_heightController.text.isNotEmpty && _weightController.text.isNotEmpty)
@@ -549,44 +593,80 @@ class _NutritionProfileManagementPageState
 
   Widget _buildHealthGoalSectionWithDynamicForm(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 健康目标下拉框
-        _buildDropdownField(
-          context,
-          label: '健康目标',
-          value: _healthGoal.isEmpty ? null : _healthGoal,
-          items: NutritionConstants.healthGoalOptions.entries
-              .map((e) => DropdownMenuItem(
-                    value: e.key,
-                    child: Text(e.value),
+        // 健康目标多选
+        Text(
+          '请选择健康目标（可多选）',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Colors.grey[700],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: NutritionConstants.healthGoalOptions.entries
+              .map((entry) => FilterChip(
+                    label: Text(entry.value),
+                    selected: _healthGoals.contains(entry.key),
+                    onSelected: !_isEditMode ? null : (selected) {
+                      if (selected) {
+                        // 检查冲突
+                        final conflicts = _checkHealthGoalConflicts(entry.key, _healthGoals, _gender);
+                        if (conflicts.isNotEmpty) {
+                          _showConflictDialog(context, entry.key, conflicts);
+                          return;
+                        }
+                      }
+                      
+                      setState(() {
+                        if (selected) {
+                          _healthGoals.add(entry.key);
+                          // 初始化该目标的详情
+                          if (!_healthGoalDetailsMap.containsKey(entry.key)) {
+                            _healthGoalDetailsMap[entry.key] = {};
+                          }
+                        } else {
+                          _healthGoals.remove(entry.key);
+                          _healthGoalDetailsMap.remove(entry.key);
+                        }
+                        _updateSuggestedCalories();
+                        _checkForChanges();
+                      });
+                    },
                   ))
               .toList(),
-          onChanged: _isEditMode ? (value) {
-            setState(() {
-              _healthGoal = value?.toString() ?? '';
-              // 重置健康目标详情
-              _healthGoalDetails = {};
-              // 根据健康目标自动设置建议热量
-              _updateSuggestedCalories();
-              _checkForChanges();
-            });
-          } : null,
-          validator: (value) => value == null || value.isEmpty ? '请选择健康目标' : null,
         ),
         
-        // 动态健康目标表单
-        if (_healthGoal.isNotEmpty && _isEditMode) ...[        
-          const SizedBox(height: 16),
-          DynamicHealthGoalsForm(
-            healthGoal: _healthGoal,
-            initialDetails: _healthGoalDetails,
-            onDetailsChanged: (details) {
-              setState(() {
-                _healthGoalDetails = details;
-                _checkForChanges();
-              });
-            },
-          ),
+        // 为每个选中的健康目标显示详细配置
+        if (_healthGoals.isNotEmpty && _isEditMode) ...[
+          const SizedBox(height: 24),
+          const Divider(),
+          ..._healthGoals.map((goal) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+              Text(
+                '${NutritionConstants.healthGoalOptions[goal]} - 详细配置',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              DynamicHealthGoalsForm(
+                healthGoal: goal,
+                initialDetails: _healthGoalDetailsMap[goal] ?? {},
+                onDetailsChanged: (details) {
+                  setState(() {
+                    _healthGoalDetailsMap[goal] = details;
+                    _checkForChanges();
+                  });
+                },
+              ),
+              const Divider(),
+            ],
+          )).toList(),
         ],
         
         const SizedBox(height: 16),
@@ -619,59 +699,6 @@ class _NutritionProfileManagementPageState
     );
   }
 
-  Widget _buildHealthGoalSection(BuildContext context) {
-    return Column(
-      children: [
-        // 健康目标
-        _buildDropdownField(
-          context,
-          label: '健康目标',
-          value: _healthGoal.isEmpty ? null : _healthGoal,
-          items: NutritionConstants.healthGoalOptions.entries
-              .map((e) => DropdownMenuItem(
-                    value: e.key,
-                    child: Text(e.value),
-                  ))
-              .toList(),
-          onChanged: _isEditMode ? (value) {
-            setState(() {
-              _healthGoal = value?.toString() ?? '';
-              // 根据健康目标自动设置建议热量
-              _updateSuggestedCalories();
-              _checkForChanges();
-            });
-          } : null,
-          validator: (value) => value == null || value.isEmpty ? '请选择健康目标' : null,
-        ),
-        const SizedBox(height: 16),
-        
-        // 目标热量
-        TextFormField(
-          controller: _targetCaloriesController,
-          decoration: InputDecoration(
-            labelText: '目标热量',
-            suffixText: 'kcal/天',
-            border: const OutlineInputBorder(),
-            helperText: _getSuggestedCaloriesText(),
-          ),
-          enabled: _isEditMode,
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(4),
-          ],
-          onChanged: (_) => _checkForChanges(),
-          validator: (value) {
-            if (value == null || value.isEmpty) return '请输入目标热量';
-            final calories = int.tryParse(value);
-            if (calories == null || calories <= 0) return '请输入有效热量值';
-            if (calories < 800 || calories > 5000) return '热量范围应在800-5000kcal';
-            return null;
-          },
-        ),
-      ],
-    );
-  }
 
   Widget _buildDietaryPreferencesSection(BuildContext context) {
     return Wrap(
@@ -875,26 +902,21 @@ class _NutritionProfileManagementPageState
   }
 
   int _calculateCompletion() {
-    int filledFields = 0;
-    const int totalFields = 12;
-
-    // 必填字段
-    if (_gender.isNotEmpty) filledFields++;
-    if (_ageGroup.isNotEmpty) filledFields++;
-    if (_heightController.text.isNotEmpty) filledFields++;
-    if (_weightController.text.isNotEmpty) filledFields++;
-    if (_healthGoal.isNotEmpty) filledFields++;
-    if (_targetCaloriesController.text.isNotEmpty) filledFields++;
-    if (_dietaryPreferences.isNotEmpty) filledFields++;
-
-    // 可选字段
-    if (_medicalConditions.isNotEmpty) filledFields++;
-    if (_exerciseFrequency != null && _exerciseFrequency!.isNotEmpty) filledFields++;
-    if (_nutritionPreferences.isNotEmpty) filledFields++;
-    if (_specialStatus.isNotEmpty) filledFields++;
-    if (_forbiddenIngredients.isNotEmpty || _allergies.isNotEmpty) filledFields++;
-
-    return ((filledFields / totalFields) * 100).round();
+    int filledRequiredFields = 0;
+    const int totalRequiredFields = 6; // 只计算必填字段
+    
+    // 必填字段 - 只有这些字段影响完成度百分比
+    if (_gender.isNotEmpty) filledRequiredFields++;
+    if (_ageGroup.isNotEmpty) filledRequiredFields++;
+    if (_heightController.text.isNotEmpty) filledRequiredFields++;
+    if (_weightController.text.isNotEmpty) filledRequiredFields++;
+    if (_healthGoals.isNotEmpty) filledRequiredFields++;
+    if (_targetCaloriesController.text.isNotEmpty) filledRequiredFields++;
+    
+    // 可选字段不影响完成度计算，但仍然保存到档案中
+    // 这样用户可以在只填写必填字段的情况下达到100%完成度
+    
+    return ((filledRequiredFields / totalRequiredFields) * 100).round();
   }
 
   String _getCompletionHint(int percentage) {
@@ -929,14 +951,17 @@ class _NutritionProfileManagementPageState
     // 根据健康目标调整
     double targetCalories = bmr * 1.5; // 中等活动水平
     
-    switch (_healthGoal) {
-      case 'loseWeight':
+    // 根据主要健康目标调整热量
+    final primaryGoal = _healthGoals.isNotEmpty ? _healthGoals.first : '';
+    switch (primaryGoal) {
+      case 'weight_loss':
         targetCalories *= 0.85; // 减少15%
         break;
-      case 'gainMuscle':
+      case 'weight_gain':
+      case 'muscle_gain':
         targetCalories *= 1.15; // 增加15%
         break;
-      case 'maintainWeight':
+      case 'weight_maintain':
       default:
         // 保持不变
         break;
@@ -948,7 +973,7 @@ class _NutritionProfileManagementPageState
   String? _getSuggestedCaloriesText() {
     if (_gender.isEmpty || _ageGroup.isEmpty || 
         _heightController.text.isEmpty || _weightController.text.isEmpty ||
-        _healthGoal.isEmpty) {
+        _healthGoals.isEmpty) {
       return null;
     }
     return '基于您的信息，建议热量约为 ${_targetCaloriesController.text} kcal';
@@ -966,10 +991,12 @@ class _NutritionProfileManagementPageState
       return;
     }
 
-    if (_dietaryPreferences.isEmpty) {
+    // 移除饮食偏好必填验证 - 这些是可选项
+
+    if (_healthGoals.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('请至少选择一个饮食偏好'),
+          content: Text('请至少选择一个健康目标'),
           backgroundColor: Colors.red,
         ),
       );
@@ -979,16 +1006,29 @@ class _NutritionProfileManagementPageState
     setState(() => _isLoading = true);
 
     try {
+      // 获取当前用户ID
+      final userState = ref.read(userProvider);
+      final userId = userState.userId ?? 'guest_user';
+      
+      // 将多个健康目标和饮食偏好详情存储在 healthGoalDetails 中
+      final healthGoalDetails = {
+        'goals': _healthGoals.toList(),
+        'goalsDetails': _healthGoalDetailsMap,
+        'cuisinePreferences': _cuisinePreferences.toList(),
+        'tastePreferences': _tastePreferences,
+        'specialDietaryRequirements': _specialDietaryRequirements.toList(),
+      };
+      
       final profile = NutritionProfileV2(
         id: _originalProfile?.id,
-        userId: UserId('user1'), // TODO: 从用户状态获取
+        userId: UserId(userId),
         gender: _gender,
         ageGroup: _ageGroup,
         height: double.parse(_heightController.text),
         weight: double.parse(_weightController.text),
-        healthGoal: _healthGoal,
+        healthGoal: _healthGoals.isNotEmpty ? _healthGoals.first : 'maintain_weight',  // 主要目标
         targetCalories: double.parse(_targetCaloriesController.text),
-        healthGoalDetails: _healthGoalDetails.isNotEmpty ? _healthGoalDetails : null,
+        healthGoalDetails: healthGoalDetails,  // 所有目标和详情存储在这里
         dietaryPreferences: _dietaryPreferences.toList(),
         medicalConditions: _medicalConditions.toList(),
         exerciseFrequency: _exerciseFrequency,
@@ -1046,7 +1086,7 @@ class _NutritionProfileManagementPageState
         _ageGroup != _originalProfile!.ageGroup ||
         _heightController.text != _originalProfile!.height.toStringAsFixed(0) ||
         _weightController.text != _originalProfile!.weight.toStringAsFixed(1) ||
-        _healthGoal != _originalProfile!.healthGoal ||
+        !_setEquals(_healthGoals, {_originalProfile!.healthGoal}) ||
         _targetCaloriesController.text != _originalProfile!.targetCalories.toStringAsFixed(0) ||
         !_setEquals(_dietaryPreferences, _originalProfile!.dietaryPreferences.toSet()) ||
         !_setEquals(_medicalConditions, _originalProfile!.medicalConditions.toSet()) ||
@@ -1121,10 +1161,12 @@ class _NutritionProfileManagementPageState
       
       // 健康目标
       if (profileData.nutritionGoals.isNotEmpty) {
-        // 将nutritionGoals转换为healthGoal（取第一个目标）
-        final firstGoal = profileData.nutritionGoals.first;
-        // 这里需要根据实际的目标映射关系进行转换
-        _healthGoal = _mapNutritionGoalToHealthGoal(firstGoal);
+        // 将nutritionGoals转换为healthGoals（映射所有目标）
+        _healthGoals.clear();
+        for (final goal in profileData.nutritionGoals) {
+          final mappedGoal = _mapNutritionGoalToHealthGoal(goal);
+          _healthGoals.add(mappedGoal);
+        }
       }
       
       // 目标热量
@@ -1200,6 +1242,34 @@ class _NutritionProfileManagementPageState
   }
   
   // 将营养目标映射到健康目标
+  Widget _buildInfoDisplay(BuildContext context, {required String label, required String value}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _mapNutritionGoalToHealthGoal(String nutritionGoal) {
     // 根据实际的映射关系进行转换
     switch (nutritionGoal.toLowerCase()) {
@@ -1217,5 +1287,77 @@ class _NutritionProfileManagementPageState
       default:
         return 'maintainWeight'; // 默认值
     }
+  }
+
+  /// 检查健康目标冲突
+  List<String> _checkHealthGoalConflicts(String newGoal, Set<String> currentGoals, String? gender) {
+    final conflicts = <String>[];
+    
+    // 定义冲突组
+    final conflictGroups = [
+      ['weight_loss', 'weight_gain'],  // 减重和增重冲突
+      ['pregnancy', 'menopause'],      // 孕期和更年期冲突
+      ['lactation', 'menopause'],      // 哺乳期和更年期冲突
+    ];
+    
+    // 定义性别限制
+    final maleRestrictedGoals = ['pregnancy', 'lactation', 'menopause'];
+    
+    // 检查性别限制
+    if (gender == 'male' && maleRestrictedGoals.contains(newGoal)) {
+      conflicts.add('男性不能选择该健康目标');
+      return conflicts;
+    }
+    
+    // 检查冲突组
+    for (final group in conflictGroups) {
+      if (group.contains(newGoal)) {
+        for (final goal in group) {
+          if (goal != newGoal && currentGoals.contains(goal)) {
+            final goalName = NutritionConstants.healthGoalOptions[goal] ?? goal;
+            final newGoalName = NutritionConstants.healthGoalOptions[newGoal] ?? newGoal;
+            conflicts.add('$newGoalName 与已选择的 $goalName 冲突');
+          }
+        }
+      }
+    }
+    
+    return conflicts;
+  }
+
+  /// 显示冲突对话框
+  void _showConflictDialog(BuildContext context, String newGoal, List<String> conflicts) {
+    final goalName = NutritionConstants.healthGoalOptions[newGoal] ?? newGoal;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('健康目标冲突'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('无法选择 "$goalName"：'),
+            const SizedBox(height: 8),
+            ...conflicts.map((conflict) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('• '),
+                  Expanded(child: Text(conflict)),
+                ],
+              ),
+            )),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('知道了'),
+          ),
+        ],
+      ),
+    );
   }
 }

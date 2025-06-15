@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:collection/collection.dart';
 import '../../domain/entities/nutrition_profile_v2.dart';
 import '../../data/repositories/nutrition_profile_repository.dart';
 import '../../../user/domain/value_objects/user_id.dart';
+import '../../../user/presentation/providers/user_provider.dart';
 
 /// 营养档案列表状态
 class NutritionProfileListState {
@@ -170,8 +172,9 @@ class NutritionProfileListNotifier extends StateNotifier<NutritionProfileListSta
 /// 营养档案列表Provider
 final nutritionProfileListProvider = 
     StateNotifierProvider<NutritionProfileListNotifier, NutritionProfileListState>((ref) {
-  // TODO: 从用户状态获取真实的用户ID
-  final userId = UserId('user1');
+  // 从用户状态获取真实的用户ID
+  final userState = ref.watch(userProvider);
+  final userId = UserId(userState.userId ?? 'guest_user');
   final repository = ref.watch(nutritionProfileRepositoryProvider);
   
   return NutritionProfileListNotifier(repository, userId);

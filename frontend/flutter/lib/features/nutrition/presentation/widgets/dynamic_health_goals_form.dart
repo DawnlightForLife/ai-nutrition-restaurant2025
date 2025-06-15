@@ -77,6 +77,27 @@ class _DynamicHealthGoalsFormState extends State<DynamicHealthGoalsForm> {
   }
 
   Widget _buildGoalForm(String goal) {
+    // 定义需要详细配置的健康目标
+    const goalsNeedingDetails = {
+      'blood_sugar_control',
+      'blood_pressure_control', 
+      'cholesterol_management',
+      'weight_loss',
+      'weight_gain',
+      'weight_maintain',
+      'muscle_gain',
+      'sports_performance',
+      'pregnancy',
+      'lactation',
+      'gut_health',
+      'immunity_boost',
+    };
+    
+    // 如果不需要详细配置，返回空
+    if (!goalsNeedingDetails.contains(goal)) {
+      return const SizedBox.shrink();
+    }
+    
     switch (goal) {
       case 'blood_sugar_control':
         return _buildBloodSugarForm();

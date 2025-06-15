@@ -103,6 +103,15 @@ class AppNavigator {
     );
   }
 
+  /// 跳转到营养档案创建向导
+  static Future<void> toNutritionProfileWizard(BuildContext context) {
+    return pushNamed(
+      context,
+      RouteNames.nutritionProfileEditor,
+      arguments: {'isNewProfile': true},
+    );
+  }
+
   /// 跳转到AI聊天
   static Future<void> toAIChat(BuildContext context, String profileId) {
     return pushNamed(
