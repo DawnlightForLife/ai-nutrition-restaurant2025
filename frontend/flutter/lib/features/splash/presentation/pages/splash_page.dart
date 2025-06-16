@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
 import '../../../../theme/app_colors.dart';
-import '../../../auth/presentation/pages/login_page.dart';
+import '../../../../routes/route_names.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
-class SplashPage extends StatefulWidget {
+class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
 
   @override
-  State<SplashPage> createState() => _SplashPageState();
+  ConsumerState<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
+class _SplashPageState extends ConsumerState<SplashPage> with TickerProviderStateMixin {
   late AnimationController _cubeController;
   late AnimationController _textController;
   late Animation<double> _cubeAnimation;
@@ -65,24 +67,52 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     _cubeController.repeat();
     _textController.forward();
     
-    // 3.5秒后跳转到登录页，让用户有足够时间欣赏动画
+    // 3.5秒后检查登录状态并跳转
     Timer(const Duration(milliseconds: 3500), () {
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const LoginPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: child,
-              );
-            },
-            transitionDuration: const Duration(milliseconds: 500),
-          ),
-        );
+        _checkAuthAndNavigate();
       }
     });
+  }
+
+  /// 检查认证状态并导航
+  Future<void> _checkAuthAndNavigate() async {
+    try {
+      // 等待认证状态初始化完成，给更多时间
+      await Future.delayed(const Duration(milliseconds: 1000));
+      
+      final authState = ref.read(authStateProvider);
+      
+      print('=== Splash页面认证状态检查 ===');
+      print('isAuthenticated: ${authState.isAuthenticated}');
+      print('user: ${authState.user?.name}');
+      print('token: ${authState.token != null ? "存在" : "不存在"}');
+      print('isLoading: ${authState.isLoading}');
+      print('error: ${authState.error}');
+      
+      // 检查是否已认证
+      if (authState.isAuthenticated && authState.user != null && authState.token != null) {
+        print('✅ 用户已登录，跳转到主页');
+        _navigateToMainPage();
+      } else {
+        print('❌ 用户未登录，跳转到登录页');
+        _navigateToLoginPage();
+      }
+    } catch (e) {
+      print('❌ 检查认证状态失败: $e');
+      // 发生错误时默认跳转到登录页
+      _navigateToLoginPage();
+    }
+  }
+
+  /// 跳转到主页
+  void _navigateToMainPage() {
+    Navigator.pushReplacementNamed(context, RouteNames.main);
+  }
+
+  /// 跳转到登录页
+  void _navigateToLoginPage() {
+    Navigator.pushReplacementNamed(context, RouteNames.login);
   }
 
   @override

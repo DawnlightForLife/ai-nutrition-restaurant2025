@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const nutritionProfileController = require('../../controllers/nutrition/nutritionProfileController');
+const { generateRecommendationByProfileId } = require('../../controllers/nutrition/aiRecommendationController');
 const { authenticate } = require('../../middleware/auth/authMiddleware');
 const { 
   validateProfileCreation, 
@@ -48,5 +49,8 @@ router.put('/:id/health-goals', authenticate, validateHealthGoalDetailsUpdate, n
 
 // [GET] 获取营养档案完成度详情
 router.get('/:id/completeness', authenticate, nutritionProfileController.getProfileCompleteness);
+
+// [POST] 根据营养档案ID生成AI推荐
+router.post('/:profileId/recommendations', authenticate, generateRecommendationByProfileId);
 
 module.exports = router;

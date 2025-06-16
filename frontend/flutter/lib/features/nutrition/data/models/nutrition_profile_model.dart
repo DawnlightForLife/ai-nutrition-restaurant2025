@@ -51,6 +51,13 @@ class NutritionProfileModel {
   final bool archived;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  
+  // 营养立方进度追踪
+  final Map<String, dynamic>? nutritionProgress;
+  final int totalEnergyPoints;
+  final int currentStreak;
+  final int bestStreak;
+  final DateTime? lastActiveDate;
 
   NutritionProfileModel({
     this.id,
@@ -83,6 +90,11 @@ class NutritionProfileModel {
     this.archived = false,
     this.createdAt,
     this.updatedAt,
+    this.nutritionProgress,
+    this.totalEnergyPoints = 0,
+    this.currentStreak = 0,
+    this.bestStreak = 0,
+    this.lastActiveDate,
   });
 
   factory NutritionProfileModel.fromJson(Map<String, dynamic> json) =>
@@ -121,6 +133,75 @@ class NutritionProfileModel {
     return ((completedFields / totalFields) * 100).round();
   }
 
+  /// 获取能量等级
+  String get energyLevel {
+    if (totalEnergyPoints < 100) return 'starter';
+    if (totalEnergyPoints < 500) return 'bronze';
+    if (totalEnergyPoints < 1500) return 'silver';
+    if (totalEnergyPoints < 3000) return 'gold';
+    if (totalEnergyPoints < 6000) return 'platinum';
+    return 'diamond';
+  }
+
+  /// 获取能量等级显示名称
+  String get energyLevelName {
+    switch (energyLevel) {
+      case 'starter': return '新手';
+      case 'bronze': return '青铜';
+      case 'silver': return '白银';
+      case 'gold': return '黄金';
+      case 'platinum': return '铂金';
+      case 'diamond': return '钻石';
+      default: return '未知';
+    }
+  }
+
+  /// 获取当前等级进度百分比
+  double get energyLevelProgress {
+    final currentLevel = energyLevel;
+    int currentThreshold = 0;
+    int nextThreshold = 100;
+    
+    switch (currentLevel) {
+      case 'starter':
+        currentThreshold = 0;
+        nextThreshold = 100;
+        break;
+      case 'bronze':
+        currentThreshold = 100;
+        nextThreshold = 500;
+        break;
+      case 'silver':
+        currentThreshold = 500;
+        nextThreshold = 1500;
+        break;
+      case 'gold':
+        currentThreshold = 1500;
+        nextThreshold = 3000;
+        break;
+      case 'platinum':
+        currentThreshold = 3000;
+        nextThreshold = 6000;
+        break;
+      case 'diamond':
+        return 1.0; // 最高等级
+    }
+    
+    if (totalEnergyPoints <= currentThreshold) return 0.0;
+    if (totalEnergyPoints >= nextThreshold) return 1.0;
+    
+    return (totalEnergyPoints - currentThreshold) / (nextThreshold - currentThreshold);
+  }
+
+  /// 检查连续天数
+  bool get isStreakActive {
+    if (lastActiveDate == null) return false;
+    final now = DateTime.now();
+    final lastActive = lastActiveDate!;
+    final difference = now.difference(lastActive).inDays;
+    return difference <= 1; // 昨天或今天活跃算连续
+  }
+
   /// 复制并更新
   NutritionProfileModel copyWith({
     String? id,
@@ -153,6 +234,11 @@ class NutritionProfileModel {
     bool? archived,
     DateTime? createdAt,
     DateTime? updatedAt,
+    Map<String, dynamic>? nutritionProgress,
+    int? totalEnergyPoints,
+    int? currentStreak,
+    int? bestStreak,
+    DateTime? lastActiveDate,
   }) {
     return NutritionProfileModel(
       id: id ?? this.id,
@@ -185,6 +271,11 @@ class NutritionProfileModel {
       archived: archived ?? this.archived,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      nutritionProgress: nutritionProgress ?? this.nutritionProgress,
+      totalEnergyPoints: totalEnergyPoints ?? this.totalEnergyPoints,
+      currentStreak: currentStreak ?? this.currentStreak,
+      bestStreak: bestStreak ?? this.bestStreak,
+      lastActiveDate: lastActiveDate ?? this.lastActiveDate,
     );
   }
 }

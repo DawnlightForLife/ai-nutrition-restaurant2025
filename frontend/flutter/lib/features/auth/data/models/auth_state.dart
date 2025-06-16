@@ -83,4 +83,7 @@ class UserInfo {
   
   // 获取头像URL（优先使用avatarUrl，兼容avatar字段）
   String? get displayAvatarUrl => avatarUrl ?? avatar;
+  
+  // 获取显示名称（优先使用nickname，否则使用phone）
+  String get name => nickname ?? phone;
 }

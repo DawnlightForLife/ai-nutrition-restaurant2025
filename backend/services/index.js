@@ -23,6 +23,9 @@ module.exports = {
   nutritionistService: require('./nutrition/nutritionistService'),
   userFavoriteService: require('./nutrition/FavoriteService'),
   nutritionPlanService: require('./nutrition/nutritionPlanService'),
+  
+  // ai
+  aiNutritionService: require('./ai/aiNutritionService'),
 
   // merchant
   merchantService: require('./merchant/merchantService'),

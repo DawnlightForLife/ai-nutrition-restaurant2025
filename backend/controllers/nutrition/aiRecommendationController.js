@@ -254,3 +254,28 @@ exports.submitFeedback = catchAsync(async (req, res) => {
     data: result.data
   });
 });
+
+/**
+ * 根据营养档案ID生成AI推荐
+ * - 根据营养档案ID获取用户营养信息
+ * - 调用AI服务生成个性化推荐
+ * - 返回生成的推荐数据
+ */
+exports.generateRecommendationByProfileId = catchAsync(async (req, res) => {
+  const { profileId } = req.params;
+  
+  const result = await aiRecommendationService.generateRecommendationByProfileId(profileId);
+  
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      message: result.message
+    });
+  }
+  
+  res.status(201).json({
+    success: true,
+    message: '推荐生成成功',
+    data: result.data
+  });
+});

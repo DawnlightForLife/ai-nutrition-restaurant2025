@@ -144,13 +144,17 @@ class _ProfileTemplateSelectorState extends ConsumerState<ProfileTemplateSelecto
     }
 
     // 后台异步获取最新模板数据
-    _loadTemplatesFromAPI();
+    // 暂时禁用API加载，使用预设模板
+    // _loadTemplatesFromAPI();
   }
 
   Future<void> _loadTemplatesFromAPI() async {
     try {
       final apiService = ref.read(nutritionProfileExtendedApiServiceProvider);
       final templatesData = await apiService.getTemplates();
+      
+      print('从API获取的模板数量: ${templatesData.length}');
+      print('API模板列表: ${templatesData.map((t) => t['name']).toList()}');
       
       // 更新缓存
       _templateCache['templates'] = templatesData;
@@ -250,34 +254,34 @@ class _ProfileTemplateSelectorState extends ConsumerState<ProfileTemplateSelecto
   }
 
   Widget _buildTemplateGrid() {
-    // 使用响应式布局，根据屏幕宽度调整列数
+    // 显示8个模板，4行2列
+    final displayTemplates = templates.take(8).toList(); // 显示前8个，4行
+    
+    // 调试信息
+    print('ProfileTemplateSelector - 总模板数: ${templates.length}');
+    print('ProfileTemplateSelector - 显示模板数: ${displayTemplates.length}');
+    print('ProfileTemplateSelector - 模板列表: ${displayTemplates.map((t) => t['name']).toList()}');
+    
+    // 使用LayoutBuilder获取可用宽度
     return LayoutBuilder(
       builder: (context, constraints) {
-        int crossAxisCount = 2;
-        if (constraints.maxWidth > 600) {
-          crossAxisCount = 4;
-        } else if (constraints.maxWidth > 400) {
-          crossAxisCount = 3;
-        }
+        final availableWidth = constraints.maxWidth;
+        final cardWidth = (availableWidth - 10) / 2; // 减去spacing
         
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            childAspectRatio: 0.85, // 调整宽高比，给文字更多空间
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
-          itemCount: templates.length,
-          itemBuilder: (context, index) {
-            final templateData = templates[index];
-            
-            // 直接使用原始数据而不是解析为模型
-            final templateKey = templateData['key']?.toString() ?? 'template_$index';
-            final templateName = templateData['name']?.toString() ?? '未命名模板';
-            
-            return _SimpleTemplateCard(
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          alignment: WrapAlignment.start,
+          children: [
+            ...displayTemplates.asMap().entries.map((entry) {
+              final index = entry.key;
+              final templateData = entry.value;
+              final templateKey = templateData['key']?.toString() ?? 'template_$index';
+              final templateName = templateData['name']?.toString() ?? '未命名模板';
+              
+              return SizedBox(
+                width: cardWidth,
+                child: _SimpleTemplateCard(
               templateKey: templateKey,
               name: templateName,
               description: templateData['description']?.toString(),
@@ -300,10 +304,138 @@ class _ProfileTemplateSelectorState extends ConsumerState<ProfileTemplateSelecto
                   ),
                 );
               },
+            ),
             );
-          },
-        );
-      },
+          }).toList(),
+          if (templates.length > 8)
+            SizedBox(
+              width: cardWidth,
+              child: _buildMoreTemplatesCard(),
+            ),
+        ],
+      );
+    },
+  );
+  }
+  
+  Widget _buildMoreTemplatesCard() {
+    return InkWell(
+      onTap: () => _showAllTemplatesDialog(),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+          color: Colors.grey[50],
+        ),
+        child: const Padding(
+          padding: EdgeInsets.all(8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.more_horiz,
+                size: 20,
+                color: Colors.grey,
+              ),
+              SizedBox(height: 4),
+              Flexible(
+                child: Text(
+                  '更多模板',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  void _showAllTemplatesDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Container(
+          constraints: const BoxConstraints(maxHeight: 600, maxWidth: 500),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        '选择营养档案模板',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      childAspectRatio: 1.0,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemCount: templates.length,
+                    itemBuilder: (context, index) {
+                      final templateData = templates[index];
+                      final templateKey = templateData['key']?.toString() ?? 'template_$index';
+                      final templateName = templateData['name']?.toString() ?? '未命名模板';
+                      
+                      return _SimpleTemplateCard(
+                        templateKey: templateKey,
+                        name: templateName,
+                        description: templateData['description']?.toString(),
+                        isSelected: selectedTemplateKey == templateKey,
+                        onTap: () {
+                          setState(() {
+                            selectedTemplateKey = templateKey;
+                          });
+                          
+                          final mockTemplate = _createMockTemplate(templateData);
+                          widget.onTemplateSelected(mockTemplate);
+                          
+                          Navigator.of(context).pop(); // 关闭对话框
+                          
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('已应用"$templateName"模板'),
+                              duration: const Duration(seconds: 2),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
     );
   }
   
@@ -349,14 +481,38 @@ class _SimpleTemplateCard extends StatelessWidget {
 
   IconData _getIconForTemplate(String key) {
     switch (key) {
-      case 'diabetic':
-        return Icons.medical_services;
-      case 'fitness':
-        return Icons.fitness_center;
-      case 'pregnancy':
-        return Icons.pregnant_woman;
       case 'weightLoss':
         return Icons.trending_down;
+      case 'fitness':
+        return Icons.fitness_center;
+      case 'diabetic':
+        return Icons.medical_services;
+      case 'balanced':
+        return Icons.balance;
+      case 'hypertension':
+        return Icons.favorite;
+      case 'pregnancy':
+        return Icons.pregnant_woman;
+      case 'lactation':
+        return Icons.child_care;
+      case 'vegetarian':
+        return Icons.eco;
+      case 'elderly':
+        return Icons.elderly;
+      case 'teenager':
+        return Icons.school;
+      case 'allergic':
+        return Icons.warning;
+      case 'gut_health':
+        return Icons.health_and_safety;
+      case 'immune_boost':
+        return Icons.shield;
+      case 'heart_health':
+        return Icons.favorite_border;
+      case 'brain_health':
+        return Icons.psychology;
+      case 'menopause':
+        return Icons.woman;
       default:
         return Icons.person;
     }
@@ -364,14 +520,38 @@ class _SimpleTemplateCard extends StatelessWidget {
 
   Color _getColorForTemplate(String key) {
     switch (key) {
-      case 'diabetic':
-        return Colors.blue;
-      case 'fitness':
-        return Colors.orange;
-      case 'pregnancy':
-        return Colors.pink;
       case 'weightLoss':
         return Colors.green;
+      case 'fitness':
+        return Colors.orange;
+      case 'diabetic':
+        return Colors.blue;
+      case 'balanced':
+        return Colors.teal;
+      case 'hypertension':
+        return Colors.red;
+      case 'pregnancy':
+        return Colors.pink;
+      case 'lactation':
+        return Colors.purple;
+      case 'vegetarian':
+        return Colors.lightGreen;
+      case 'elderly':
+        return Colors.brown;
+      case 'teenager':
+        return Colors.indigo;
+      case 'allergic':
+        return Colors.amber;
+      case 'gut_health':
+        return Colors.deepOrange;
+      case 'immune_boost':
+        return Colors.cyan;
+      case 'heart_health':
+        return Colors.pinkAccent;
+      case 'brain_health':
+        return Colors.deepPurple;
+      case 'menopause':
+        return Colors.blueGrey;
       default:
         return Colors.grey;
     }
@@ -394,34 +574,31 @@ class _SimpleTemplateCard extends StatelessWidget {
           color: isSelected ? color.withOpacity(0.1) : null,
         ),
         child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  _getIconForTemplate(templateKey),
-                  size: 32,
-                  color: color,
-                ),
-                const SizedBox(height: 8),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 150),
-                  child: Text(
-                    name,
-                    style: TextStyle(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? color : null,
-                      fontSize: 14,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _getIconForTemplate(templateKey),
+                size: 20,
+                color: color,
+              ),
+              const SizedBox(height: 4),
+              Flexible(
+                child: Text(
+                  name,
+                  style: TextStyle(
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? color : null,
+                    fontSize: 11,
                   ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -444,14 +621,38 @@ class _TemplateCard extends StatelessWidget {
 
   IconData _getIconForTemplate(String key) {
     switch (key) {
-      case 'diabetic':
-        return Icons.medical_services;
-      case 'fitness':
-        return Icons.fitness_center;
-      case 'pregnancy':
-        return Icons.pregnant_woman;
       case 'weightLoss':
         return Icons.trending_down;
+      case 'fitness':
+        return Icons.fitness_center;
+      case 'diabetic':
+        return Icons.medical_services;
+      case 'balanced':
+        return Icons.balance;
+      case 'hypertension':
+        return Icons.favorite;
+      case 'pregnancy':
+        return Icons.pregnant_woman;
+      case 'lactation':
+        return Icons.child_care;
+      case 'vegetarian':
+        return Icons.eco;
+      case 'elderly':
+        return Icons.elderly;
+      case 'teenager':
+        return Icons.school;
+      case 'allergic':
+        return Icons.warning;
+      case 'gut_health':
+        return Icons.health_and_safety;
+      case 'immune_boost':
+        return Icons.shield;
+      case 'heart_health':
+        return Icons.favorite_border;
+      case 'brain_health':
+        return Icons.psychology;
+      case 'menopause':
+        return Icons.woman;
       default:
         return Icons.person;
     }
@@ -459,14 +660,38 @@ class _TemplateCard extends StatelessWidget {
 
   Color _getColorForTemplate(String key) {
     switch (key) {
-      case 'diabetic':
-        return Colors.blue;
-      case 'fitness':
-        return Colors.orange;
-      case 'pregnancy':
-        return Colors.pink;
       case 'weightLoss':
         return Colors.green;
+      case 'fitness':
+        return Colors.orange;
+      case 'diabetic':
+        return Colors.blue;
+      case 'balanced':
+        return Colors.teal;
+      case 'hypertension':
+        return Colors.red;
+      case 'pregnancy':
+        return Colors.pink;
+      case 'lactation':
+        return Colors.purple;
+      case 'vegetarian':
+        return Colors.lightGreen;
+      case 'elderly':
+        return Colors.brown;
+      case 'teenager':
+        return Colors.indigo;
+      case 'allergic':
+        return Colors.amber;
+      case 'gut_health':
+        return Colors.deepOrange;
+      case 'immune_boost':
+        return Colors.cyan;
+      case 'heart_health':
+        return Colors.pinkAccent;
+      case 'brain_health':
+        return Colors.deepPurple;
+      case 'menopause':
+        return Colors.blueGrey;
       default:
         return Colors.grey;
     }

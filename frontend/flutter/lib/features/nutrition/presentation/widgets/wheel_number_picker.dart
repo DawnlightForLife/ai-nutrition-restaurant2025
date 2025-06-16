@@ -85,11 +85,14 @@ class _WheelNumberPickerState extends State<WheelNumberPicker> {
   }
 
   void _showPicker(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final bottomSheetHeight = (screenHeight * 0.4).clamp(280.0, 350.0);
+    
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
         return Container(
-          height: 300,
+          height: bottomSheetHeight,
           child: Column(
             children: [
               Container(

@@ -1,6 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { createAiRecommendation, getAiRecommendationList, getAiRecommendationById, updateAiRecommendation, deleteAiRecommendation } = require('../../controllers/nutrition/aiRecommendationController');
+const { 
+  createAiRecommendation, 
+  getAiRecommendationList, 
+  getAiRecommendationById, 
+  updateAiRecommendation, 
+  deleteAiRecommendation,
+  submitFeedback
+} = require('../../controllers/nutrition/aiRecommendationController');
 
 /**
  * AI 推荐管理路由
@@ -22,5 +29,13 @@ router.put('/:id', updateAiRecommendation);
 
 // [DELETE] 删除 AI 推荐
 router.delete('/:id', deleteAiRecommendation);
+
+// [POST] 提交推荐反馈
+router.post('/:id/feedback', submitFeedback);
+
+// Note: This route is mounted under /nutrition/ai-recommendations
+// So this becomes /nutrition/ai-recommendations/profiles/:profileId/recommendations
+// But Flutter expects /nutrition/profiles/:profileId/recommendations
+// This should be handled in the nutritionProfileRoutes.js instead
 
 module.exports = router;

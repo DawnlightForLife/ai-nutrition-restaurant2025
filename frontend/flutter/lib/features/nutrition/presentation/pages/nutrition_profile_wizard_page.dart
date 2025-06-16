@@ -13,10 +13,18 @@ import '../widgets/custom_option_selector.dart';
 import '../../data/models/nutrition_template_model.dart';
 import '../../data/datasources/local/draft_storage_service.dart';
 import '../providers/nutrition_profile_list_provider.dart';
+import '../providers/ai_recommendation_provider.dart';
+import '../providers/nutrition_progress_provider.dart';
+import '../../domain/entities/ai_recommendation.dart';
 import '../../../user/presentation/providers/user_provider.dart';
 
 class NutritionProfileWizardPage extends ConsumerStatefulWidget {
-  const NutritionProfileWizardPage({super.key});
+  final NutritionProfileV2? cloneFromProfile;
+  
+  const NutritionProfileWizardPage({
+    super.key,
+    this.cloneFromProfile,
+  });
 
   @override
   ConsumerState<NutritionProfileWizardPage> createState() =>
@@ -29,7 +37,7 @@ class _NutritionProfileWizardPageState
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   
   int _currentStep = 0;
-  final int _totalSteps = 6;
+  final int _totalSteps = 7;  // 增加AI推荐步骤
   
   // 档案数据
   String _profileName = '';
@@ -52,6 +60,10 @@ class _NutritionProfileWizardPageState
   final Set<String> _allergies = {};
   Map<String, dynamic> _activityDetails = {};
   
+  // AI推荐相关状态
+  AIRecommendation? _aiRecommendation;
+  bool _aiRecommendationAccepted = false;
+  
   bool _isLoading = false;
   Map<String, dynamic> _draftData = {};
   DraftStorageService? _draftService;
@@ -61,6 +73,11 @@ class _NutritionProfileWizardPageState
   void initState() {
     super.initState();
     _initializeDraftService();
+    
+    // 如果是克隆模式，初始化数据
+    if (widget.cloneFromProfile != null) {
+      _initializeFromClonedProfile();
+    }
   }
 
   @override
@@ -75,7 +92,60 @@ class _NutritionProfileWizardPageState
   Future<void> _initializeDraftService() async {
     final prefs = await SharedPreferences.getInstance();
     _draftService = DraftStorageService(prefs);
-    await _loadDraft();
+    // 不再自动加载草稿，只有在用户明确选择时才加载
+    // await _loadDraft();
+  }
+
+  void _initializeFromClonedProfile() {
+    final clonedProfile = widget.cloneFromProfile!;
+    
+    // 复制基本信息
+    _profileName = '${clonedProfile.profileName} 副本';
+    _gender = clonedProfile.gender;
+    _ageGroup = clonedProfile.ageGroup ?? '';
+    _heightController.text = clonedProfile.height.toString();
+    _weightController.text = clonedProfile.weight.toString();
+    
+    // 复制健康目标
+    if (clonedProfile.healthGoalDetails != null) {
+      final goalDetails = clonedProfile.healthGoalDetails!;
+      if (goalDetails['goals'] != null) {
+        _healthGoals.addAll(List<String>.from(goalDetails['goals']));
+      }
+      if (goalDetails['goalsDetails'] != null) {
+        _healthGoalDetailsMap.addAll(
+          Map<String, Map<String, dynamic>>.from(goalDetails['goalsDetails'])
+        );
+      }
+      if (goalDetails['cuisinePreferences'] != null) {
+        _cuisinePreferences.addAll(List<String>.from(goalDetails['cuisinePreferences']));
+      }
+      if (goalDetails['tastePreferences'] != null) {
+        _tastePreferences.addAll(
+          Map<String, int>.from(goalDetails['tastePreferences'])
+        );
+      }
+      if (goalDetails['specialDietaryRequirements'] != null) {
+        _specialDietaryRequirements.addAll(
+          List<String>.from(goalDetails['specialDietaryRequirements'])
+        );
+      }
+    }
+    
+    // 复制其他信息
+    _targetCaloriesController.text = clonedProfile.targetCalories.toString();
+    _dietaryPreferences.addAll(clonedProfile.dietaryPreferences);
+    _medicalConditions.addAll(clonedProfile.medicalConditions);
+    _exerciseFrequency = clonedProfile.exerciseFrequency;
+    _nutritionPreferences.addAll(clonedProfile.nutritionPreferences);
+    _specialStatus.addAll(clonedProfile.specialStatus);
+    _forbiddenIngredients.addAll(clonedProfile.forbiddenIngredients);
+    _allergies.addAll(clonedProfile.allergies);
+    _activityDetails = clonedProfile.activityDetails != null 
+        ? Map<String, dynamic>.from(clonedProfile.activityDetails!) 
+        : {};
+    
+    print('🔄 克隆档案初始化完成: ${clonedProfile.profileName} -> $_profileName');
   }
 
   Future<void> _loadDraft() async {
@@ -168,18 +238,18 @@ class _NutritionProfileWizardPageState
       _currentDraftId = draft.id;
       final data = draft.data;
       
-      _profileName = data['profileName'] ?? '';
-      _gender = data['gender'] ?? '';
-      _ageGroup = data['ageGroup'] ?? '';
-      _heightController.text = data['height'] ?? '';
-      _weightController.text = data['weight'] ?? '';
+      _profileName = (data['profileName'] as String?) ?? '';
+      _gender = (data['gender'] as String?) ?? '';
+      _ageGroup = (data['ageGroup'] as String?) ?? '';
+      _heightController.text = (data['height'] as String?) ?? '';
+      _weightController.text = (data['weight'] as String?) ?? '';
       // 恢复健康目标（支持多选）
       _healthGoals.clear();
       if (data['healthGoals'] is List) {
         _healthGoals.addAll((data['healthGoals'] as List).cast<String>());
-      } else if (data['healthGoal'] is String && data['healthGoal'].isNotEmpty) {
+      } else if (data['healthGoal'] is String && (data['healthGoal'] as String).isNotEmpty) {
         // 兼容旧版本单选数据
-        _healthGoals.add(data['healthGoal']);
+        _healthGoals.add(data['healthGoal'] as String);
       }
       
       // 恢复健康目标详情
@@ -187,15 +257,15 @@ class _NutritionProfileWizardPageState
       if (data['healthGoalDetailsMap'] is Map) {
         (data['healthGoalDetailsMap'] as Map).forEach((key, value) {
           if (value is Map) {
-            _healthGoalDetailsMap[key] = Map<String, dynamic>.from(value);
+            _healthGoalDetailsMap[key.toString()] = Map<String, dynamic>.from(value as Map);
           }
         });
       } else if (data['healthGoalDetails'] is Map && _healthGoals.isNotEmpty) {
         // 兼容旧版本数据
-        _healthGoalDetailsMap[_healthGoals.first] = Map<String, dynamic>.from(data['healthGoalDetails']);
+        _healthGoalDetailsMap[_healthGoals.first] = Map<String, dynamic>.from(data['healthGoalDetails'] as Map);
       }
       
-      _targetCaloriesController.text = data['targetCalories'] ?? '';
+      _targetCaloriesController.text = (data['targetCalories'] as String?) ?? '';
       
       _dietaryPreferences.clear();
       if (data['dietaryPreferences'] is List) {
@@ -211,7 +281,7 @@ class _NutritionProfileWizardPageState
       if (data['tastePreferences'] is Map) {
         (data['tastePreferences'] as Map).forEach((key, value) {
           if (value is int) {
-            _tastePreferences[key] = value;
+            _tastePreferences[key.toString()] = value;
           }
         });
       }
@@ -226,7 +296,7 @@ class _NutritionProfileWizardPageState
         _medicalConditions.addAll((data['medicalConditions'] as List).cast<String>());
       }
       
-      _exerciseFrequency = data['exerciseFrequency'];
+      _exerciseFrequency = data['exerciseFrequency'] as String?;
       
       _nutritionPreferences.clear();
       if (data['nutritionPreferences'] is List) {
@@ -249,11 +319,11 @@ class _NutritionProfileWizardPageState
       }
       
       if (data['activityDetails'] is Map) {
-        _activityDetails = Map<String, dynamic>.from(data['activityDetails']);
+        _activityDetails = Map<String, dynamic>.from(data['activityDetails'] as Map);
       }
       
       // 恢复到之前的步骤
-      _currentStep = data['currentStep'] ?? 0;
+      _currentStep = (data['currentStep'] as int?) ?? 0;
       _pageController.animateToPage(
         _currentStep,
         duration: const Duration(milliseconds: 300),
@@ -277,6 +347,35 @@ class _NutritionProfileWizardPageState
     }
   }
 
+  /// 档案创建成功后清除草稿
+  Future<void> _clearDraftAfterSuccess() async {
+    try {
+      if (_draftService != null) {
+        // 清除当前草稿
+        if (_currentDraftId != null) {
+          await _draftService!.deleteDraft(_currentDraftId!);
+          print('✅ 草稿已清除: $_currentDraftId');
+          _currentDraftId = null;
+        }
+        
+        // 清除所有相关草稿（防止重复草稿）
+        final allDrafts = await _draftService!.getAllDrafts();
+        for (final draft in allDrafts) {
+          // 如果草稿名称相同或数据相似，也一并清除
+          if (draft.profileName == _profileName || draft.id == _currentDraftId) {
+            await _draftService!.deleteDraft(draft.id);
+            print('✅ 相关草稿已清除: ${draft.id}');
+          }
+        }
+        
+        _draftData.clear();
+      }
+    } catch (e) {
+      print('清除草稿失败: $e');
+      // 不影响主流程，静默处理
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -284,9 +383,9 @@ class _NutritionProfileWizardPageState
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text(
-          '创建营养档案',
-          style: TextStyle(
+        title: Text(
+          widget.cloneFromProfile != null ? '克隆营养档案' : '创建营养档案',
+          style: const TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 20,
           ),
@@ -346,7 +445,8 @@ class _NutritionProfileWizardPageState
                   _buildStep3HealthGoals(),
                   _buildStep4DietaryPreferences(),
                   _buildStep5HealthStatus(),
-                  _buildStep6Review(),
+                  _buildStep6AIRecommendation(),  // 新增AI推荐步骤
+                  _buildStep7Review(),  // 重命名确认步骤
                 ],
               ),
             ),
@@ -513,35 +613,86 @@ class _NutritionProfileWizardPageState
       case 2: return '健康目标';
       case 3: return '饮食偏好';
       case 4: return '健康状况';
-      case 5: return '确认信息';
+      case 5: return 'AI营养推荐';  // 新增步骤
+      case 6: return '确认信息';
       default: return '';
     }
   }
 
   Widget _buildStep1Template() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 如果是克隆模式，显示克隆信息
+          if (widget.cloneFromProfile != null) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(Icons.copy, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '正在克隆档案',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: Colors.blue[700],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          '来源：${widget.cloneFromProfile!.profileName}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.blue[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+          
           Text(
-            '为了更好地为您服务，请选择一个营养档案模板',
+            widget.cloneFromProfile != null 
+                ? '档案信息已从源档案复制，您可以选择模板进一步调整' 
+                : '为了更好地为您服务，请选择一个营养档案模板',
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 16),
           Text(
-            '您也可以跳过此步骤，从零开始创建',
+            widget.cloneFromProfile != null
+                ? '如果当前信息已满足需求，也可以跳过模板选择直接进入下一步'
+                : '您也可以跳过此步骤，从零开始创建',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Colors.grey[600],
             ),
           ),
           const SizedBox(height: 24),
-          Expanded(
-            child: ProfileTemplateSelector(
-              onTemplateSelected: _applyTemplate,
-              isEnabled: true,
-            ),
+          ProfileTemplateSelector(
+            onTemplateSelected: _applyTemplate,
+            isEnabled: true,
           ),
+          const SizedBox(height: 80), // 底部留白，避免被导航栏遮挡
         ],
       ),
     );
@@ -1033,7 +1184,418 @@ class _NutritionProfileWizardPageState
     );
   }
 
-  Widget _buildStep6Review() {
+  Widget _buildStep6AIRecommendation() {
+    final tempProfileId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    
+    return Consumer(
+      builder: (context, ref, child) {
+        final aiState = ref.watch(aiRecommendationProvider(tempProfileId));
+        
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 说明文字
+              Card(
+                color: Colors.blue[50],
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(Icons.psychology, color: Colors.blue[700], size: 24),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'AI智能营养推荐',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blue[700],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '基于您的信息，AI将为您生成个性化的营养目标和建议',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.blue[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // AI推荐内容
+              if (aiState.isLoading)
+                _buildAIAnalyzingWidget()
+              else if (aiState.hasError)
+                _buildAIErrorWidget(aiState.errorMessage!, tempProfileId, ref)
+              else if (aiState.recommendation != null)
+                _buildAIRecommendationResults(aiState.recommendation!, ref)
+              else
+                _buildAIStartWidget(tempProfileId, ref),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAIAnalyzingWidget() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            // AI分析动画
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(seconds: 3),
+              builder: (context, value, child) {
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 80,
+                      height: 80,
+                      child: CircularProgressIndicator(
+                        value: value,
+                        strokeWidth: 4,
+                        backgroundColor: Colors.grey[200],
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.psychology,
+                      size: 32,
+                      color: Colors.blue,
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'AI正在分析您的营养需求',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _getAnalysisStatusText(),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAIErrorWidget(String errorMessage, String profileId, WidgetRef ref) {
+    return Card(
+      color: Colors.red[50],
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Icon(Icons.error_outline, size: 48, color: Colors.red[400]),
+            const SizedBox(height: 16),
+            Text(
+              'AI推荐生成失败',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.red[700],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              errorMessage,
+              style: TextStyle(fontSize: 14, color: Colors.red[600]),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        _aiRecommendationAccepted = true;
+                      });
+                    },
+                    child: const Text('跳过AI推荐'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _triggerAIRecommendation(profileId, ref),
+                    child: const Text('重试'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAIStartWidget(String profileId, WidgetRef ref) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Icon(Icons.auto_awesome, size: 64, color: Colors.orange[400]),
+            const SizedBox(height: 16),
+            const Text(
+              '准备获取AI营养推荐',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '点击下方按钮，让AI为您分析最适合的营养方案',
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _triggerAIRecommendation(profileId, ref),
+                icon: const Icon(Icons.psychology),
+                label: const Text('获取AI推荐'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _aiRecommendationAccepted = true;
+                });
+              },
+              child: const Text('跳过此步骤'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAIRecommendationResults(AIRecommendation recommendation, WidgetRef ref) {
+    return Column(
+      children: [
+        // 推荐结果标题
+        Card(
+          color: Colors.green[50],
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green[600], size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'AI推荐方案已生成',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '推荐置信度: ${(recommendation.confidence * 100).toInt()}%',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => _triggerAIRecommendation('temp_${DateTime.now().millisecondsSinceEpoch}', ref),
+                  icon: const Icon(Icons.refresh),
+                  tooltip: '重新生成推荐',
+                ),
+              ],
+            ),
+          ),
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // 营养目标卡片
+        _buildNutritionTargetCard('每日热量', '${recommendation.nutritionTargets.dailyCalories.toInt()} kcal', 
+            '基于您的身体指标和健康目标计算'),
+        
+        _buildNutritionTargetCard('饮水目标', '${recommendation.nutritionTargets.hydrationGoal.toInt()} ml', 
+            '保持充足的水分摄入'),
+        
+        _buildNutritionTargetCard('用餐频次', '${recommendation.nutritionTargets.mealFrequency} 次/天', 
+            '合理安排用餐时间'),
+        
+        // 宏量营养素比例
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('宏量营养素比例', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                _buildMacroRatioItem('蛋白质', recommendation.nutritionTargets.macroRatio.protein, Colors.red),
+                _buildMacroRatioItem('脂肪', recommendation.nutritionTargets.macroRatio.fat, Colors.orange),
+                _buildMacroRatioItem('碳水化合物', recommendation.nutritionTargets.macroRatio.carbs, Colors.blue),
+              ],
+            ),
+          ),
+        ),
+        
+        const SizedBox(height: 24),
+        
+        // 接受推荐按钮
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              setState(() {
+                _aiRecommendation = recommendation;
+                _aiRecommendationAccepted = true;
+              });
+              
+              // 提交反馈
+              ref.read(aiRecommendationProvider(recommendation.profileId).notifier)
+                  .submitFeedback(rating: 5, isAccepted: true);
+                  
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('AI推荐已接受'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            icon: const Icon(Icons.check),
+            label: const Text('接受此推荐'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNutritionTargetCard(String title, String value, String description) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text(description, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.blue[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blue[700],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMacroRatioItem(String name, double ratio, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: Text(name)),
+          Text('${(ratio * 100).toInt()}%', style: const TextStyle(fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  void _triggerAIRecommendation(String profileId, WidgetRef ref) {
+    final profile = _buildCurrentProfile();
+    ref.read(aiRecommendationProvider(profileId).notifier).generateRecommendation(profile);
+  }
+
+  String _getAnalysisStatusText() {
+    final messages = [
+      '正在评估您的基础代谢率...',
+      '计算营养素需求量...',
+      '分析饮食偏好匹配度...',
+      '生成个性化推荐方案...',
+    ];
+    
+    return messages[DateTime.now().millisecond % messages.length];
+  }
+
+  NutritionProfileV2 _buildCurrentProfile() {
+    return NutritionProfileV2(
+      userId: UserId('current_user'),
+      profileName: _profileName.isNotEmpty ? _profileName : '临时档案',
+      gender: _gender,
+      ageGroup: _ageGroup,
+      height: double.tryParse(_heightController.text) ?? 0,
+      weight: double.tryParse(_weightController.text) ?? 0,
+      healthGoal: _healthGoals.isNotEmpty ? _healthGoals.first : '',
+      targetCalories: double.tryParse(_targetCaloriesController.text) ?? 0,
+      dietaryPreferences: _dietaryPreferences.toList(),
+      nutritionPreferences: _nutritionPreferences.toList(),
+      medicalConditions: _medicalConditions.toList(),
+      specialStatus: _specialStatus.toList(),
+      forbiddenIngredients: _forbiddenIngredients.toList(),
+      allergies: _allergies.toList(),
+      exerciseFrequency: _exerciseFrequency,
+      activityDetails: _activityDetails,
+      healthGoalDetails: _healthGoalDetailsMap,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  Widget _buildStep7Review() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -1116,6 +1678,20 @@ class _NutritionProfileWizardPageState
                 '特殊状态：${_specialStatus.map((key) => 
                   NutritionConstants.specialStatusOptions[key] ?? key
                 ).join('、')}',
+            ]),
+          ],
+          
+          // AI推荐信息
+          if (_aiRecommendation != null) ...[
+            const SizedBox(height: 12),
+            _buildReviewCard('AI营养推荐', [
+              '每日热量：${_aiRecommendation!.nutritionTargets.dailyCalories.toInt()} kcal',
+              '饮水目标：${_aiRecommendation!.nutritionTargets.hydrationGoal.toInt()} ml',
+              '用餐频次：${_aiRecommendation!.nutritionTargets.mealFrequency} 次/天',
+              '蛋白质比例：${(_aiRecommendation!.nutritionTargets.macroRatio.protein * 100).toInt()}%',
+              '脂肪比例：${(_aiRecommendation!.nutritionTargets.macroRatio.fat * 100).toInt()}%',
+              '碳水比例：${(_aiRecommendation!.nutritionTargets.macroRatio.carbs * 100).toInt()}%',
+              '推荐置信度：${(_aiRecommendation!.confidence * 100).toInt()}%',
             ]),
           ],
         ],
@@ -1300,7 +1876,9 @@ class _NutritionProfileWizardPageState
         return true;
       case 4: // 健康状况（可选）
         return true;
-      case 5: // 确认信息
+      case 5: // AI推荐（新增步骤）
+        return _aiRecommendationAccepted;
+      case 6: // 确认信息
         return true;
       default:
         return false;
@@ -1309,60 +1887,187 @@ class _NutritionProfileWizardPageState
 
   void _applyTemplate(NutritionTemplateModel template) {
     setState(() {
-      // 简化的模板应用逻辑
-      _profileName = template.name;
+      print('🎯 应用模板: ${template.key} - ${template.name}');
       
-      // 根据模板类型设置基本的预设值
+      // 清除之前的设置
+      _healthGoals.clear();
+      _dietaryPreferences.clear();
+      _medicalConditions.clear();
+      _specialStatus.clear();
+      _nutritionPreferences.clear();
+      _allergies.clear();
+      _forbiddenIngredients.clear();
+      
+      // 设置档案名称
+      _profileName = '${template.name}档案';
+      
+      // 根据模板类型设置预设值
       switch (template.key) {
-        case 'weightLoss':
-          _gender = 'female';
+        case 'weightLoss': // 减重塑形
           _ageGroup = '26to35';
-          _heightController.text = '165';
-          _weightController.text = '70';
-          _healthGoals.clear();
-          _healthGoals.add('weight_loss');
-          _healthGoals.add('fat_loss');
+          _healthGoals.addAll(['weight_loss', 'fat_loss']);
           _targetCaloriesController.text = '1500';
-          _dietaryPreferences.clear();
           _dietaryPreferences.add('lowCarb');
-          _exerciseFrequency = 'daily';
+          _nutritionPreferences.addAll(['high_protein', 'low_fat']);
+          _exerciseFrequency = 'frequent';
           break;
           
-        case 'fitness':
-          _gender = 'male';
+        case 'fitness': // 健身增肌
           _ageGroup = '18to25';
-          _heightController.text = '175';
-          _weightController.text = '70';
-          _healthGoals.clear();
-          _healthGoals.add('muscle_gain');
-          _healthGoals.add('sports_performance');
+          _healthGoals.addAll(['muscle_gain', 'sports_performance']);
           _targetCaloriesController.text = '2800';
-          _dietaryPreferences.clear();
-          _dietaryPreferences.add('highProtein');
+          _nutritionPreferences.addAll(['high_protein']);
           _exerciseFrequency = 'daily';
           break;
           
-        case 'diabetic':
-          _gender = 'male';
+        case 'diabetic': // 血糖管理
           _ageGroup = '46to55';
-          _heightController.text = '170';
-          _weightController.text = '75';
-          _healthGoals.clear();
-          _healthGoals.add('blood_sugar_control');
-          _healthGoals.add('weight_maintain');
+          _healthGoals.addAll(['blood_sugar_control', 'weight_maintain']);
           _targetCaloriesController.text = '1800';
-          _dietaryPreferences.clear();
-          _dietaryPreferences.addAll(['lowSugar', 'lowCarb']);
-          _medicalConditions.clear();
+          _dietaryPreferences.addAll(['lowCarb']);
           _medicalConditions.add('diabetes');
+          _nutritionPreferences.addAll(['low_fat', 'high_fiber']);
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'balanced': // 均衡营养
+          _ageGroup = '26to35';
+          _healthGoals.add('weight_maintain');
+          _targetCaloriesController.text = '2000';
+          _nutritionPreferences.add('balanced');
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'hypertension': // 血压管理
+          _ageGroup = '46to55';
+          _healthGoals.addAll(['blood_pressure_control', 'weight_maintain']);
+          _targetCaloriesController.text = '1800';
+          _medicalConditions.add('hypertension');
+          _nutritionPreferences.addAll(['low_sodium', 'high_fiber']);
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'pregnancy': // 孕期营养
+          _gender = 'female'; // 必须为女性
+          _ageGroup = '26to35';
+          _healthGoals.add('pregnancy');
+          _specialStatus.add('pregnancy');
+          _targetCaloriesController.text = '2200';
+          _nutritionPreferences.addAll(['high_protein', 'high_fiber']);
+          _exerciseFrequency = 'sometimes';
+          // 避免高风险食材
+          _forbiddenIngredients.addAll(['alcohol', 'caffeine']);
+          print('✅ 孕期营养模板已应用 - 性别:$_gender, 特殊状态:$_specialStatus');
+          break;
+          
+        case 'lactation': // 哺乳期营养
+          _gender = 'female'; // 必须为女性
+          _ageGroup = '26to35';
+          _healthGoals.add('lactation');
+          _specialStatus.add('lactation');
+          _targetCaloriesController.text = '2500';
+          _nutritionPreferences.addAll(['high_protein', 'balanced']);
+          _exerciseFrequency = 'sometimes';
+          _forbiddenIngredients.add('alcohol');
+          break;
+          
+        case 'vegetarian': // 素食主义
+          _healthGoals.add('weight_maintain');
+          _dietaryPreferences.add('vegetarian');
+          _targetCaloriesController.text = '2000';
+          _nutritionPreferences.addAll(['plant_based', 'high_fiber']);
+          _exerciseFrequency = 'moderate';
+          // 素食者常见营养关注点
+          break;
+          
+        case 'elderly': // 老年养生
+          _ageGroup = 'above65';
+          _healthGoals.addAll(['weight_maintain', 'immunity_boost']);
+          _targetCaloriesController.text = '1600';
+          _specialStatus.add('elderly');
+          _nutritionPreferences.addAll(['high_protein', 'balanced']);
+          _exerciseFrequency = 'sometimes';
+          break;
+          
+        case 'teenager': // 青少年成长
+          _ageGroup = 'under18';
+          _healthGoals.addAll(['weight_maintain', 'energy_boost']);
+          _targetCaloriesController.text = '2300';
+          _nutritionPreferences.add('balanced');
+          _exerciseFrequency = 'frequent';
+          break;
+          
+        case 'allergic': // 过敏体质
+          _healthGoals.add('weight_maintain');
+          _targetCaloriesController.text = '2000';
+          _nutritionPreferences.add('balanced');
+          _exerciseFrequency = 'moderate';
+          // 用户需要手动选择具体过敏原
+          break;
+          
+        case 'gut_health': // 肠道健康
+          _healthGoals.addAll(['gut_health', 'digestion_improvement']);
+          _targetCaloriesController.text = '1900';
+          _medicalConditions.add('gastric_issues');
+          _nutritionPreferences.addAll(['high_fiber', 'balanced']);
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'immune_boost': // 免疫增强
+          _healthGoals.addAll(['immunity_boost', 'energy_boost']);
+          _targetCaloriesController.text = '2000';
+          _nutritionPreferences.addAll(['balanced', 'high_fiber']);
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'heart_health': // 心脏健康
+          _ageGroup = '46to55';
+          _healthGoals.addAll(['cholesterol_management', 'weight_maintain']);
+          _targetCaloriesController.text = '1800';
+          _medicalConditions.add('heart_disease');
+          _nutritionPreferences.addAll(['low_fat', 'low_sodium']);
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'brain_health': // 健脑益智
+          _ageGroup = '18to25';
+          _healthGoals.addAll(['mental_health', 'energy_boost']);
+          _targetCaloriesController.text = '2100';
+          _nutritionPreferences.addAll(['balanced', 'high_protein']);
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'menopause': // 更年期调理
+          _gender = 'female'; // 必须为女性
+          _ageGroup = '46to55';
+          _healthGoals.addAll(['menopause', 'weight_maintain']);
+          _specialStatus.add('none'); // 更年期不在特殊状态选项中，可能需要在健康目标中体现
+          _targetCaloriesController.text = '1700';
+          _nutritionPreferences.addAll(['balanced', 'high_fiber']);
           _exerciseFrequency = 'moderate';
           break;
           
         default:
           // 通用模板设置
           _profileName = template.name;
+          _healthGoals.add('weight_maintain');
+          _targetCaloriesController.text = '2000';
+          _nutritionPreferences.add('balanced');
+          _exerciseFrequency = 'moderate';
           break;
       }
+      
+      // 触发热量重新计算
+      _updateSuggestedCalories();
+      
+      // 输出最终结果
+      print('📋 模板应用完成:');
+      print('  - 性别: $_gender');
+      print('  - 年龄段: $_ageGroup');
+      print('  - 健康目标: $_healthGoals');
+      print('  - 特殊状态: $_specialStatus');
+      print('  - 目标热量: ${_targetCaloriesController.text}');
+      print('  - 运动频率: $_exerciseFrequency');
     });
   }
 
@@ -1459,16 +2164,58 @@ class _NutritionProfileWizardPageState
         forbiddenIngredients: _forbiddenIngredients.toList(),
         allergies: _allergies.toList(),
         activityDetails: _activityDetails,
+        // AI推荐信息
+        aiRecommendationId: _aiRecommendation?.id,
+        aiNutritionTargets: _aiRecommendation != null 
+            ? {
+                'dailyCalories': _aiRecommendation!.nutritionTargets.dailyCalories,
+                'hydrationGoal': _aiRecommendation!.nutritionTargets.hydrationGoal,
+                'mealFrequency': _aiRecommendation!.nutritionTargets.mealFrequency.toDouble(),
+                'proteinRatio': _aiRecommendation!.nutritionTargets.macroRatio.protein,
+                'fatRatio': _aiRecommendation!.nutritionTargets.macroRatio.fat,
+                'carbsRatio': _aiRecommendation!.nutritionTargets.macroRatio.carbs,
+                'confidence': _aiRecommendation!.confidence,
+              }
+            : null,
+        hasAIRecommendation: _aiRecommendation != null,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
       
-      await ref.read(nutritionProfileListProvider.notifier).createProfile(profile);
+      final createdProfile = await ref.read(nutritionProfileListProvider.notifier).createProfile(profile);
+      
+      // 给用户奖励能量点数 - 创建档案
+      int completionPercentage = 0;
+      if (createdProfile?.id != null) {
+        await ref.read(nutritionProgressProvider.notifier).recordProfileCreation(createdProfile!.id!);
+        
+        // 如果档案信息比较完整，额外给奖励
+        completionPercentage = createdProfile.completionPercentage;
+        if (completionPercentage >= 80) {
+          await ref.read(nutritionProgressProvider.notifier).recordProfileCompletion(createdProfile.id!);
+        }
+      }
+      
+      // 创建成功后清除草稿
+      await _clearDraftAfterSuccess();
       
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('营养档案创建成功！')),
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('营养档案创建成功！'),
+                if (createdProfile?.id != null)
+                  Text(
+                    '🎉 获得 ${completionPercentage >= 80 ? '80' : '50'} 能量点奖励！',
+                    style: const TextStyle(fontSize: 12, color: Colors.white70),
+                  ),
+              ],
+            ),
+          ),
         );
       }
     } catch (e) {

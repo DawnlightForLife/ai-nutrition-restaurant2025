@@ -5,6 +5,7 @@ import '../../domain/constants/nutrition_constants.dart';
 import '../../domain/entities/nutrition_profile_v2.dart';
 import '../../../user/domain/value_objects/user_id.dart';
 import '../providers/nutrition_profile_list_provider.dart';
+import '../providers/nutrition_progress_provider.dart';
 import '../widgets/profile_template_selector.dart';
 import '../../data/models/nutrition_template_model.dart';
 import '../widgets/activity_level_detail_selector.dart';
@@ -158,6 +159,9 @@ class _NutritionProfileManagementPageState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
 
     return WillPopScope(
       onWillPop: _onWillPop,
@@ -236,16 +240,23 @@ class _NutritionProfileManagementPageState
                     ? AutovalidateMode.disabled
                     : AutovalidateMode.disabled,
                 child: ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmallScreen ? 12 : 16,
+                    vertical: 16,
+                  ),
                   children: [
                     // 档案名称
                     if (_isEditMode) ...[                     
                       TextFormField(
                         initialValue: _profileName,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: '档案名称',
                           hintText: '例如：日常饮食、减脂计划等',
-                          border: OutlineInputBorder(),
+                          hintStyle: TextStyle(
+                            fontSize: isSmallScreen ? 12 : 14,
+                          ),
+                          border: const OutlineInputBorder(),
+                          errorMaxLines: 2,
                         ),
                         enabled: _isEditMode,
                         onChanged: (value) {
@@ -314,51 +325,64 @@ class _NutritionProfileManagementPageState
                     
                     // 冲突检测
                     if (_isEditMode)
-                      ConflictDetectionWidget(
-                        profileData: {
-                          'gender': _gender,
-                          'ageGroup': _ageGroup,
-                          'height': _heightController.text.isNotEmpty ? double.tryParse(_heightController.text) : null,
-                          'weight': _weightController.text.isNotEmpty ? double.tryParse(_weightController.text) : null,
-                          'healthGoal': _healthGoals.isNotEmpty ? _healthGoals.first : '',
-                          'targetCalories': _targetCaloriesController.text.isNotEmpty ? double.tryParse(_targetCaloriesController.text) : null,
-                          'dietaryPreferences': _dietaryPreferences.toList(),
-                          'medicalConditions': _medicalConditions.toList(),
-                          'exerciseFrequency': _exerciseFrequency,
-                          'activityLevelDetail': _activityDetails['activityLevelDetail'],
-                          'nutritionPreferences': _nutritionPreferences.toList(),
-                          'specialStatus': _specialStatus.toList(),
-                          'forbiddenIngredients': _forbiddenIngredients.toList(),
-                          'allergies': _allergies.toList(),
-                          'activityDetails': _activityDetails,
-                          'healthGoalDetails': _healthGoalDetails,
-                        },
-                        enabled: _isEditMode,
+                      Container(
+                        margin: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 0 : 16,
+                        ),
+                        child: ConflictDetectionWidget(
+                          profileData: {
+                            'gender': _gender,
+                            'ageGroup': _ageGroup,
+                            'height': _heightController.text.isNotEmpty ? double.tryParse(_heightController.text) : null,
+                            'weight': _weightController.text.isNotEmpty ? double.tryParse(_weightController.text) : null,
+                            'healthGoal': _healthGoals.isNotEmpty ? _healthGoals.first : '',
+                            'targetCalories': _targetCaloriesController.text.isNotEmpty ? double.tryParse(_targetCaloriesController.text) : null,
+                            'dietaryPreferences': _dietaryPreferences.toList(),
+                            'medicalConditions': _medicalConditions.toList(),
+                            'exerciseFrequency': _exerciseFrequency,
+                            'activityLevelDetail': _activityDetails['activityLevelDetail'],
+                            'nutritionPreferences': _nutritionPreferences.toList(),
+                            'specialStatus': _specialStatus.toList(),
+                            'forbiddenIngredients': _forbiddenIngredients.toList(),
+                            'allergies': _allergies.toList(),
+                            'activityDetails': _activityDetails,
+                            'healthGoalDetails': _healthGoalDetails,
+                          },
+                          enabled: _isEditMode,
+                        ),
                       ),
                     const SizedBox(height: 32),
                     
                     // 保存按钮
                     if (_isEditMode)
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _handleSave,
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 0 : screenWidth * 0.1,
+                        ),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: isSmallScreen ? 44 : 48,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _handleSave,
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              textStyle: TextStyle(
+                                fontSize: isSmallScreen ? 14 : 16,
+                              ),
                             ),
+                            child: _isLoading
+                                ? SizedBox(
+                                    width: isSmallScreen ? 18 : 20,
+                                    height: isSmallScreen ? 18 : 20,
+                                    child: const CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : const Text('保存档案'),
                           ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                  ),
-                                )
-                              : const Text('保存档案'),
                         ),
                       ),
                     const SizedBox(height: 32),
@@ -445,6 +469,9 @@ class _NutritionProfileManagementPageState
   }
 
   Widget _buildBasicInfoSection(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    
     return Column(
       children: [
         // 性别
@@ -491,63 +518,113 @@ class _NutritionProfileManagementPageState
         
         // 身高体重 - 编辑模式使用滚轮选择器，查看模式显示文本
         if (_isEditMode)
-          Row(
-            children: [
-              Expanded(
-                child: WheelNumberPicker(
-                  label: '身高',
-                  initialValue: double.tryParse(_heightController.text) ?? 170.0,
-                  minValue: 50.0,
-                  maxValue: 250.0,
-                  unit: 'cm',
-                  decimals: 0,
-                  onChanged: (value) {
-                    setState(() {
-                      _heightController.text = value.toStringAsFixed(0);
-                      _checkForChanges();
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: WheelNumberPicker(
-                  label: '体重',
-                  initialValue: double.tryParse(_weightController.text) ?? 60.0,
-                  minValue: 20.0,
-                  maxValue: 200.0,
-                  unit: 'kg',
-                  decimals: 1,
-                  onChanged: (value) {
-                    setState(() {
-                      _weightController.text = value.toStringAsFixed(1);
-                      _checkForChanges();
-                    });
-                  },
-                ),
-              ),
-            ],
-          )
+          isSmallScreen 
+            ? Column(
+                children: [
+                  WheelNumberPicker(
+                    label: '身高',
+                    initialValue: double.tryParse(_heightController.text) ?? 170.0,
+                    minValue: 50.0,
+                    maxValue: 250.0,
+                    unit: 'cm',
+                    decimals: 0,
+                    onChanged: (value) {
+                      setState(() {
+                        _heightController.text = value.toStringAsFixed(0);
+                        _checkForChanges();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  WheelNumberPicker(
+                    label: '体重',
+                    initialValue: double.tryParse(_weightController.text) ?? 60.0,
+                    minValue: 20.0,
+                    maxValue: 200.0,
+                    unit: 'kg',
+                    decimals: 1,
+                    onChanged: (value) {
+                      setState(() {
+                        _weightController.text = value.toStringAsFixed(1);
+                        _checkForChanges();
+                      });
+                    },
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  Expanded(
+                    child: WheelNumberPicker(
+                      label: '身高',
+                      initialValue: double.tryParse(_heightController.text) ?? 170.0,
+                      minValue: 50.0,
+                      maxValue: 250.0,
+                      unit: 'cm',
+                      decimals: 0,
+                      onChanged: (value) {
+                        setState(() {
+                          _heightController.text = value.toStringAsFixed(0);
+                          _checkForChanges();
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: WheelNumberPicker(
+                      label: '体重',
+                      initialValue: double.tryParse(_weightController.text) ?? 60.0,
+                      minValue: 20.0,
+                      maxValue: 200.0,
+                      unit: 'kg',
+                      decimals: 1,
+                      onChanged: (value) {
+                        setState(() {
+                          _weightController.text = value.toStringAsFixed(1);
+                          _checkForChanges();
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              )
         else
-          Row(
-            children: [
-              Expanded(
-                child: _buildInfoDisplay(
-                  context,
-                  label: '身高',
-                  value: '${_heightController.text}cm',
-                ),
+          isSmallScreen
+            ? Column(
+                children: [
+                  _buildInfoDisplay(
+                    context,
+                    label: '身高',
+                    value: '${_heightController.text}cm',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildInfoDisplay(
+                    context,
+                    label: '体重',
+                    value: '${_weightController.text}kg',
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  Expanded(
+                    child: _buildInfoDisplay(
+                      context,
+                      label: '身高',
+                      value: '${_heightController.text}cm',
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildInfoDisplay(
+                      context,
+                      label: '体重',
+                      value: '${_weightController.text}kg',
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildInfoDisplay(
-                  context,
-                  label: '体重',
-                  value: '${_weightController.text}kg',
-                ),
-              ),
-            ],
-          ),
         
         // BMI显示
         if (_heightController.text.isNotEmpty && _weightController.text.isNotEmpty)
@@ -592,6 +669,9 @@ class _NutritionProfileManagementPageState
   }
 
   Widget _buildHealthGoalSectionWithDynamicForm(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -604,12 +684,28 @@ class _NutritionProfileManagementPageState
         ),
         const SizedBox(height: 8),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: isSmallScreen ? 6 : 8,
+          runSpacing: isSmallScreen ? 6 : 8,
           children: NutritionConstants.healthGoalOptions.entries
-              .map((entry) => FilterChip(
-                    label: Text(entry.value),
+              .map((entry) => ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: isSmallScreen 
+                          ? (screenWidth - 24 - 6) / 2 - 6  // 2列布局
+                          : double.infinity,
+                    ),
+                    child: FilterChip(
+                    label: Text(
+                      entry.value,
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 12 : 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     selected: _healthGoals.contains(entry.key),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSmallScreen ? 8 : 12,
+                      vertical: isSmallScreen ? 4 : 8,
+                    ),
                     onSelected: !_isEditMode ? null : (selected) {
                       if (selected) {
                         // 检查冲突
@@ -635,7 +731,8 @@ class _NutritionProfileManagementPageState
                         _checkForChanges();
                       });
                     },
-                  ))
+                  ),
+                ))
               .toList(),
         ),
         
@@ -691,7 +788,29 @@ class _NutritionProfileManagementPageState
             if (value == null || value.isEmpty) return '请输入目标热量';
             final calories = int.tryParse(value);
             if (calories == null || calories <= 0) return '请输入有效热量值';
-            if (calories < 800 || calories > 5000) return '热量范围应在800-5000kcal';
+            
+            // 根据性别和年龄动态调整热量范围
+            int minCalories = 800;
+            int maxCalories = 5000;
+            
+            if (_gender == 'female') {
+              minCalories = 800;
+              maxCalories = 3500;
+            } else if (_gender == 'male') {
+              minCalories = 1000;
+              maxCalories = 5000;
+            }
+            
+            // 根据年龄调整
+            if (_ageGroup == 'children' || _ageGroup == 'teenager') {
+              maxCalories = 3500;
+            } else if (_ageGroup == 'elderly') {
+              maxCalories = 3000;
+            }
+            
+            if (calories < minCalories || calories > maxCalories) {
+              return '热量范围应在$minCalories-${maxCalories}kcal';
+            }
             return null;
           },
         ),
@@ -701,13 +820,32 @@ class _NutritionProfileManagementPageState
 
 
   Widget _buildDietaryPreferencesSection(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: isSmallScreen ? 6 : 8,
+      runSpacing: isSmallScreen ? 6 : 8,
       children: NutritionConstants.dietaryPreferenceOptions.entries
-          .map((entry) => FilterChip(
-                label: Text(entry.value),
+          .map((entry) => ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isSmallScreen 
+                      ? (screenWidth - 24 - 6) / 2 - 6
+                      : double.infinity,
+                ),
+                child: FilterChip(
+                label: Text(
+                  entry.value,
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 12 : 14,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
                 selected: _dietaryPreferences.contains(entry.key),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 8 : 12,
+                  vertical: isSmallScreen ? 4 : 8,
+                ),
                 onSelected: _isEditMode ? (selected) {
                   setState(() {
                     if (selected) {
@@ -718,7 +856,8 @@ class _NutritionProfileManagementPageState
                     _checkForChanges();
                   });
                 } : null,
-              ))
+              ),
+            ))
           .toList(),
     );
   }
@@ -877,13 +1016,33 @@ class _NutritionProfileManagementPageState
           ),
           const SizedBox(height: 8),
         ],
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: options.entries
-              .map((entry) => FilterChip(
-                    label: Text(entry.value),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isSmallScreen = constraints.maxWidth < 600;
+            
+            return Wrap(
+              spacing: isSmallScreen ? 6 : 8,
+              runSpacing: isSmallScreen ? 6 : 8,
+              children: options.entries
+                  .map((entry) => ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isSmallScreen 
+                              ? (constraints.maxWidth - 6) / 2 - 6
+                              : double.infinity,
+                        ),
+                        child: FilterChip(
+                    label: Text(
+                      entry.value,
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 12 : 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     selected: selectedValues.contains(entry.key),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSmallScreen ? 8 : 12,
+                      vertical: isSmallScreen ? 4 : 8,
+                    ),
                     onSelected: _isEditMode ? (selected) {
                       final newValues = Set<String>.from(selectedValues);
                       if (selected) {
@@ -894,29 +1053,46 @@ class _NutritionProfileManagementPageState
                       onSelectionChanged(newValues);
                       _checkForChanges();
                     } : null,
-                  ))
+                  ),
+                ))
               .toList(),
+            );
+          },
         ),
       ],
     );
   }
 
   int _calculateCompletion() {
-    int filledRequiredFields = 0;
-    const int totalRequiredFields = 6; // 只计算必填字段
+    int filledFields = 0;
+    int totalFields = 8; // 必填字段总数，与实体类保持一致
+
+    // 检查必填字段（与实体类NutritionProfileV2保持一致）
+    if (_profileName.isNotEmpty) filledFields++;
+    if (_gender.isNotEmpty) filledFields++;
+    if (_ageGroup.isNotEmpty) filledFields++;
+    if (_heightController.text.isNotEmpty && double.tryParse(_heightController.text) != null && double.parse(_heightController.text) > 0) filledFields++;
+    if (_weightController.text.isNotEmpty && double.tryParse(_weightController.text) != null && double.parse(_weightController.text) > 0) filledFields++;
+    if (_healthGoals.isNotEmpty) filledFields++;
+    if (_targetCaloriesController.text.isNotEmpty && double.tryParse(_targetCaloriesController.text) != null && double.parse(_targetCaloriesController.text) > 0) filledFields++;
+    if (_dietaryPreferences.isNotEmpty) filledFields++;
+
+    // 计算可选字段的完整度（权重较低），与实体类保持一致
+    int optionalFilledFields = 0;
+    int optionalTotalFields = 6;
     
-    // 必填字段 - 只有这些字段影响完成度百分比
-    if (_gender.isNotEmpty) filledRequiredFields++;
-    if (_ageGroup.isNotEmpty) filledRequiredFields++;
-    if (_heightController.text.isNotEmpty) filledRequiredFields++;
-    if (_weightController.text.isNotEmpty) filledRequiredFields++;
-    if (_healthGoals.isNotEmpty) filledRequiredFields++;
-    if (_targetCaloriesController.text.isNotEmpty) filledRequiredFields++;
+    if (_medicalConditions.isNotEmpty) optionalFilledFields++;
+    if (_exerciseFrequency != null && _exerciseFrequency!.isNotEmpty) optionalFilledFields++;
+    if (_nutritionPreferences.isNotEmpty) optionalFilledFields++;
+    if (_specialStatus.isNotEmpty) optionalFilledFields++;
+    if (_forbiddenIngredients.isNotEmpty) optionalFilledFields++;
+    if (_allergies.isNotEmpty) optionalFilledFields++;
+
+    // 必填字段占80%权重，可选字段占20%权重
+    final requiredPercentage = (filledFields / totalFields) * 80;
+    final optionalPercentage = (optionalFilledFields / optionalTotalFields) * 20;
     
-    // 可选字段不影响完成度计算，但仍然保存到档案中
-    // 这样用户可以在只填写必填字段的情况下达到100%完成度
-    
-    return ((filledRequiredFields / totalRequiredFields) * 100).round();
+    return (requiredPercentage + optionalPercentage).round();
   }
 
   String _getCompletionHint(int percentage) {
@@ -1044,7 +1220,18 @@ class _NutritionProfileManagementPageState
       );
 
       if (widget.isNewProfile) {
-        await ref.read(nutritionProfileListProvider.notifier).createProfile(profile);
+        final createdProfile = await ref.read(nutritionProfileListProvider.notifier).createProfile(profile);
+        
+        // 给用户奖励能量点数 - 创建档案
+        if (createdProfile?.id != null) {
+          await ref.read(nutritionProgressProvider.notifier).recordProfileCreation(createdProfile!.id!);
+          
+          // 如果档案信息比较完整，额外给奖励
+          final completionPercentage = createdProfile.completionPercentage;
+          if (completionPercentage >= 80) {
+            await ref.read(nutritionProgressProvider.notifier).recordProfileCompletion(createdProfile.id!);
+          }
+        }
       } else {
         await ref.read(nutritionProfileListProvider.notifier).updateProfile(profile);
       }
@@ -1052,7 +1239,7 @@ class _NutritionProfileManagementPageState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.isNewProfile ? '营养档案创建成功' : '营养档案更新成功'),
+            content: Text(widget.isNewProfile ? '营养档案创建成功！🎉 获得能量点奖励' : '营养档案更新成功'),
             backgroundColor: Colors.green,
           ),
         );
@@ -1151,93 +1338,186 @@ class _NutritionProfileManagementPageState
   // 应用模板到表单
   void _applyTemplate(NutritionTemplateModel template) {
     setState(() {
-      final profileData = template.data;
+      print('🎯 快速创建应用模板: ${template.key} - ${template.name}');
       
-      // 基本信息
-      if (profileData.gender != null) _gender = profileData.gender!;
-      if (profileData.ageGroup != null) _ageGroup = profileData.ageGroup!;
-      if (profileData.height != null) _heightController.text = profileData.height!.toStringAsFixed(0);
-      if (profileData.weight != null) _weightController.text = profileData.weight!.toStringAsFixed(1);
+      // 清除之前的设置
+      _healthGoals.clear();
+      _dietaryPreferences.clear();
+      _medicalConditions.clear();
+      _specialStatus.clear();
+      _nutritionPreferences.clear();
+      _allergies.clear();
+      _forbiddenIngredients.clear();
       
-      // 健康目标
-      if (profileData.nutritionGoals.isNotEmpty) {
-        // 将nutritionGoals转换为healthGoals（映射所有目标）
-        _healthGoals.clear();
-        for (final goal in profileData.nutritionGoals) {
-          final mappedGoal = _mapNutritionGoalToHealthGoal(goal);
-          _healthGoals.add(mappedGoal);
-        }
+      // 设置档案名称
+      _profileName = '${template.name}档案';
+      
+      // 根据模板类型设置预设值（与向导页面保持一致）
+      switch (template.key) {
+        case 'weightLoss': // 减重塑形
+          _ageGroup = '26to35';
+          _healthGoals.addAll(['weight_loss', 'fat_loss']);
+          _targetCaloriesController.text = '1500';
+          _dietaryPreferences.add('lowCarb');
+          _nutritionPreferences.addAll(['high_protein', 'low_fat']);
+          _exerciseFrequency = 'frequent';
+          break;
+          
+        case 'fitness': // 健身增肌
+          _ageGroup = '18to25';
+          _healthGoals.addAll(['muscle_gain', 'sports_performance']);
+          _targetCaloriesController.text = '2800';
+          _nutritionPreferences.addAll(['high_protein']);
+          _exerciseFrequency = 'daily';
+          break;
+          
+        case 'diabetic': // 血糖管理
+          _ageGroup = '46to55';
+          _healthGoals.addAll(['blood_sugar_control', 'weight_maintain']);
+          _targetCaloriesController.text = '1800';
+          _dietaryPreferences.addAll(['lowCarb']);
+          _medicalConditions.add('diabetes');
+          _nutritionPreferences.addAll(['low_fat', 'high_fiber']);
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'balanced': // 均衡营养
+          _ageGroup = '26to35';
+          _healthGoals.add('weight_maintain');
+          _targetCaloriesController.text = '2000';
+          _nutritionPreferences.add('balanced');
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'hypertension': // 血压管理
+          _ageGroup = '46to55';
+          _healthGoals.addAll(['blood_pressure_control', 'weight_maintain']);
+          _targetCaloriesController.text = '1800';
+          _medicalConditions.add('hypertension');
+          _nutritionPreferences.addAll(['low_sodium', 'high_fiber']);
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'pregnancy': // 孕期营养
+          _gender = 'female'; // 必须为女性
+          _ageGroup = '26to35';
+          _healthGoals.add('pregnancy');
+          _specialStatus.add('pregnancy');
+          _targetCaloriesController.text = '2200';
+          _nutritionPreferences.addAll(['high_protein', 'high_fiber']);
+          _exerciseFrequency = 'sometimes';
+          // 避免高风险食材
+          _forbiddenIngredients.addAll(['alcohol', 'caffeine']);
+          print('✅ 孕期营养模板已应用 - 性别:$_gender, 特殊状态:$_specialStatus');
+          break;
+          
+        case 'lactation': // 哺乳期营养
+          _gender = 'female'; // 必须为女性
+          _ageGroup = '26to35';
+          _healthGoals.add('lactation');
+          _specialStatus.add('lactation');
+          _targetCaloriesController.text = '2500';
+          _nutritionPreferences.addAll(['high_protein', 'balanced']);
+          _exerciseFrequency = 'sometimes';
+          _forbiddenIngredients.add('alcohol');
+          break;
+          
+        case 'vegetarian': // 素食主义
+          _healthGoals.add('weight_maintain');
+          _dietaryPreferences.add('vegetarian');
+          _targetCaloriesController.text = '2000';
+          _nutritionPreferences.addAll(['plant_based', 'high_fiber']);
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'elderly': // 老年养生
+          _ageGroup = 'above65';
+          _healthGoals.addAll(['weight_maintain', 'immunity_boost']);
+          _targetCaloriesController.text = '1600';
+          _specialStatus.add('elderly');
+          _nutritionPreferences.addAll(['high_protein', 'balanced']);
+          _exerciseFrequency = 'sometimes';
+          break;
+          
+        case 'teenager': // 青少年成长
+          _ageGroup = 'under18';
+          _healthGoals.addAll(['weight_maintain', 'energy_boost']);
+          _targetCaloriesController.text = '2300';
+          _nutritionPreferences.add('balanced');
+          _exerciseFrequency = 'frequent';
+          break;
+          
+        case 'allergic': // 过敏体质
+          _healthGoals.add('weight_maintain');
+          _targetCaloriesController.text = '2000';
+          _nutritionPreferences.add('balanced');
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'gut_health': // 肠道健康
+          _healthGoals.addAll(['gut_health', 'digestion_improvement']);
+          _targetCaloriesController.text = '1900';
+          _medicalConditions.add('gastric_issues');
+          _nutritionPreferences.addAll(['high_fiber', 'balanced']);
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'immune_boost': // 免疫增强
+          _healthGoals.addAll(['immunity_boost', 'energy_boost']);
+          _targetCaloriesController.text = '2000';
+          _nutritionPreferences.addAll(['balanced', 'high_fiber']);
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'heart_health': // 心脏健康
+          _ageGroup = '46to55';
+          _healthGoals.addAll(['cholesterol_management', 'weight_maintain']);
+          _targetCaloriesController.text = '1800';
+          _medicalConditions.add('heart_disease');
+          _nutritionPreferences.addAll(['low_fat', 'low_sodium']);
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'brain_health': // 健脑益智
+          _ageGroup = '18to25';
+          _healthGoals.addAll(['mental_health', 'energy_boost']);
+          _targetCaloriesController.text = '2100';
+          _nutritionPreferences.addAll(['balanced', 'high_protein']);
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        case 'menopause': // 更年期调理
+          _gender = 'female'; // 必须为女性
+          _ageGroup = '46to55';
+          _healthGoals.addAll(['menopause', 'weight_maintain']);
+          _specialStatus.add('none');
+          _targetCaloriesController.text = '1700';
+          _nutritionPreferences.addAll(['balanced', 'high_fiber']);
+          _exerciseFrequency = 'moderate';
+          break;
+          
+        default:
+          // 通用模板设置
+          _profileName = template.name;
+          _healthGoals.add('weight_maintain');
+          _targetCaloriesController.text = '2000';
+          _nutritionPreferences.add('balanced');
+          _exerciseFrequency = 'moderate';
+          break;
       }
       
-      // 目标热量
-      if (profileData.dailyCalorieTarget != null) {
-        _targetCaloriesController.text = profileData.dailyCalorieTarget!.toStringAsFixed(0);
-      }
-      
-      // 饮食偏好
-      if (profileData.dietaryPreferences != null) {
-        _dietaryPreferences.clear();
-        if (profileData.dietaryPreferences!.vegetarian == true) _dietaryPreferences.add('vegetarian');
-        if (profileData.dietaryPreferences!.vegan == true) _dietaryPreferences.add('vegan');
-        if (profileData.dietaryPreferences!.lowCarb == true) _dietaryPreferences.add('lowCarb');
-        if (profileData.dietaryPreferences!.glutenFree == true) _dietaryPreferences.add('glutenFree');
-        if (profileData.dietaryPreferences!.dairyFree == true) _dietaryPreferences.add('dairyFree');
-        if (profileData.dietaryPreferences!.keto == true) _dietaryPreferences.add('keto');
-        if (profileData.dietaryPreferences!.paleo == true) _dietaryPreferences.add('paleo');
-        if (profileData.dietaryPreferences!.halal == true) _dietaryPreferences.add('halal');
-        if (profileData.dietaryPreferences!.kosher == true) _dietaryPreferences.add('kosher');
-      }
-      
-      // 健康状况
-      if (profileData.medicalConditions != null) {
-        _medicalConditions.clear();
-        _medicalConditions.addAll(profileData.medicalConditions!);
-      }
-      
-      // 运动频率
-      if (profileData.lifestyle?.exerciseFrequency != null) {
-        _exerciseFrequency = profileData.lifestyle!.exerciseFrequency;
-      }
-      
-      // 特殊状态
-      if (profileData.lifestyle?.specialStatus != null) {
-        _specialStatus.clear();
-        _specialStatus.addAll(profileData.lifestyle!.specialStatus!);
-      }
-      
-      // 过敏原
-      if (profileData.dietaryPreferences?.allergies != null) {
-        _allergies.clear();
-        _allergies.addAll(profileData.dietaryPreferences!.allergies!);
-      }
-      
-      // 禁忌食材
-      if (profileData.dietaryPreferences?.forbiddenIngredients != null) {
-        _forbiddenIngredients.clear();
-        _forbiddenIngredients.addAll(profileData.dietaryPreferences!.forbiddenIngredients!);
-      }
-      
-      // 营养偏好
-      if (profileData.dietaryPreferences?.nutritionPreferences != null) {
-        _nutritionPreferences.clear();
-        _nutritionPreferences.addAll(profileData.dietaryPreferences!.nutritionPreferences!);
-      }
-      
-      // 活动详情和健康目标详情
-      if (profileData.activityDetails != null) {
-        _activityDetails = Map<String, dynamic>.from(profileData.activityDetails!);
-      }
-      if (profileData.healthGoalDetails != null) {
-        _healthGoalDetails = profileData.healthGoalDetails!.toJson();
-      }
-      
-      // 更新档案名称
-      if (template.name.isNotEmpty) {
-        _profileName = '${template.name}档案';
-      }
+      // 输出最终结果
+      print('📋 快速创建模板应用完成:');
+      print('  - 性别: $_gender');
+      print('  - 年龄段: $_ageGroup');
+      print('  - 健康目标: $_healthGoals');
+      print('  - 特殊状态: $_specialStatus');
+      print('  - 目标热量: ${_targetCaloriesController.text}');
+      print('  - 运动频率: $_exerciseFrequency');
       
       // 标记为有更改
       _hasChanges = true;
+      _checkForChanges();
     });
   }
   
@@ -1270,24 +1550,6 @@ class _NutritionProfileManagementPageState
     );
   }
 
-  String _mapNutritionGoalToHealthGoal(String nutritionGoal) {
-    // 根据实际的映射关系进行转换
-    switch (nutritionGoal.toLowerCase()) {
-      case 'weight_loss':
-      case 'lose_weight':
-        return 'loseWeight';
-      case 'muscle_gain':
-      case 'gain_muscle':
-        return 'gainMuscle';
-      case 'maintain_weight':
-      case 'maintain':
-        return 'maintainWeight';
-      case 'improve_health':
-        return 'improveHealth';
-      default:
-        return 'maintainWeight'; // 默认值
-    }
-  }
 
   /// 检查健康目标冲突
   List<String> _checkHealthGoalConflicts(String newGoal, Set<String> currentGoals, String? gender) {

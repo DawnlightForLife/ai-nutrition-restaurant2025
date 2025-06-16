@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/entities/nutrition_profile.dart';
 import '../../data/models/nutrition_profile_model.dart';
 import '../../data/datasources/nutrition_api.dart';
 import '../../../../core/network/api_client.dart';
@@ -72,10 +73,11 @@ class NutritionProfileNotifier extends StateNotifier<NutritionProfileState> {
       
       if (response.response.statusCode == 200) {
         final data = response.data;
-        if (data['profiles'] != null && data['profiles'].isNotEmpty) {
+        if (data['profiles'] != null && (data['profiles'] as List).isNotEmpty) {
           // 获取第一个或主档案
-          final profileData = data['profiles'][0];
-          final profile = NutritionProfile.fromJson(profileData);
+          final profileData = (data['profiles'] as List)[0] as Map<String, dynamic>;
+          final profileModel = NutritionProfileModel.fromJson(profileData);
+          final profile = _modelToEntity(profileModel);
           
           // 计算完成度
           final completionStats = _calculateCompletionStats(profile);
@@ -120,14 +122,16 @@ class NutritionProfileNotifier extends StateNotifier<NutritionProfileState> {
         return false;
       }
       
+      final profileModel = _entityToModel(profile);
       final response = await _nutritionApi.updateNutritionProfile(
         userId,
-        profile.toJson(),
+        profileModel.toJson(),
       );
       
       if (response.response.statusCode == 200 || response.response.statusCode == 201) {
-        final profileData = response.data['profile'] ?? response.data;
-        final newProfile = NutritionProfile.fromJson(profileData);
+        final profileData = (response.data['profile'] ?? response.data) as Map<String, dynamic>;
+        final newProfileModel = NutritionProfileModel.fromJson(profileData);
+        final newProfile = _modelToEntity(newProfileModel);
         
         state = state.copyWith(
           isLoading: false,
@@ -157,7 +161,7 @@ class NutritionProfileNotifier extends StateNotifier<NutritionProfileState> {
   
   // 更新档案
   Future<bool> updateProfile(NutritionProfile profile) async {
-    if (profile.id == null) return false;
+    if (profile.id.isEmpty) return false;
     
     state = state.copyWith(isLoading: true, error: null);
     
@@ -171,14 +175,16 @@ class NutritionProfileNotifier extends StateNotifier<NutritionProfileState> {
         return false;
       }
       
+      final profileModel = _entityToModel(profile);
       final response = await _nutritionApi.updateNutritionProfile(
         userId,
-        profile.toJson(),
+        profileModel.toJson(),
       );
       
       if (response.response.statusCode == 200) {
-        final profileData = response.data['profile'] ?? response.data;
-        final updatedProfile = NutritionProfile.fromJson(profileData);
+        final profileData = (response.data['profile'] ?? response.data) as Map<String, dynamic>;
+        final updatedProfileModel = NutritionProfileModel.fromJson(profileData);
+        final updatedProfile = _modelToEntity(updatedProfileModel);
         
         state = state.copyWith(
           isLoading: false,
@@ -211,86 +217,57 @@ class NutritionProfileNotifier extends StateNotifier<NutritionProfileState> {
     int completedFields = 0;
     List<String> missingFields = [];
     final Map<String, String> fieldNames = {
-      'profileName': '档案名称',
+      'name': '档案名称',
+      'age': '年龄',
       'gender': '性别',
       'height': '身高',
       'weight': '体重',
       'activityLevel': '活动水平',
-      'nutritionGoals': '营养目标',
-      'targetWeight': '目标体重',
-      'allergies': '过敏源',
-      'medicalConditions': '健康状况',
-      'dailyCalorieTarget': '每日卡路里目标',
-      'hydrationGoal': '水分摄入目标',
+      'dietaryPreferences': '饮食偏好',
+      'healthConditions': '健康状况',
     };
     
-    if (profile.profileName.isNotEmpty) {
+    if (profile.name.isNotEmpty) {
       completedFields++;
     } else {
-      missingFields.add(fieldNames['profileName']!);
+      missingFields.add(fieldNames['name']!);
     }
     
-    if (profile.gender != null) {
+    if (profile.basicInfo.age > 0) {
       completedFields++;
     } else {
-      missingFields.add(fieldNames['gender']!);
+      missingFields.add(fieldNames['age']!);
     }
     
-    if (profile.height != null && profile.height! > 0) {
+    completedFields++; // gender is always set
+    
+    if (profile.basicInfo.height > 0) {
       completedFields++;
     } else {
       missingFields.add(fieldNames['height']!);
     }
     
-    if (profile.weight != null && profile.weight! > 0) {
+    if (profile.basicInfo.weight > 0) {
       completedFields++;
     } else {
       missingFields.add(fieldNames['weight']!);
     }
     
-    if (profile.activityLevel != null) {
+    completedFields++; // activityLevel is always set
+    
+    if (profile.dietaryPreferences.isNotEmpty) {
       completedFields++;
     } else {
-      missingFields.add(fieldNames['activityLevel']!);
+      missingFields.add(fieldNames['dietaryPreferences']!);
     }
     
-    if (profile.nutritionGoals.isNotEmpty) {
+    if (profile.healthConditions.isNotEmpty) {
       completedFields++;
     } else {
-      missingFields.add(fieldNames['nutritionGoals']!);
+      missingFields.add(fieldNames['healthConditions']!);
     }
     
-    if (profile.targetWeight != null && profile.targetWeight! > 0) {
-      completedFields++;
-    } else {
-      missingFields.add(fieldNames['targetWeight']!);
-    }
-    
-    if (profile.dietaryPreferences?.allergies?.isNotEmpty == true) {
-      completedFields++;
-    } else {
-      missingFields.add(fieldNames['allergies']!);
-    }
-    
-    if (profile.medicalConditions?.isNotEmpty == true) {
-      completedFields++;
-    } else {
-      missingFields.add(fieldNames['medicalConditions']!);
-    }
-    
-    if (profile.dailyCalorieTarget != null && profile.dailyCalorieTarget! > 0) {
-      completedFields++;
-    } else {
-      missingFields.add(fieldNames['dailyCalorieTarget']!);
-    }
-    
-    if (profile.hydrationGoal != null && profile.hydrationGoal! > 0) {
-      completedFields++;
-    } else {
-      missingFields.add(fieldNames['hydrationGoal']!);
-    }
-    
-    final int totalFields = 11;
+    final int totalFields = 8;
     final int completionPercentage = ((completedFields / totalFields) * 100).round();
     
     return CompletionStats(
@@ -307,7 +284,7 @@ class NutritionProfileNotifier extends StateNotifier<NutritionProfileState> {
       
       final response = await _nutritionApi.getNutritionProfile(userId);
       if (response.response.statusCode == 200) {
-        return response.data;
+        return response.data as Map<String, dynamic>;
       }
       return null;
     } catch (e) {
@@ -320,11 +297,78 @@ class NutritionProfileNotifier extends StateNotifier<NutritionProfileState> {
   void clearError() {
     state = state.copyWith(error: null);
   }
+
+  // 模型转实体
+  NutritionProfile _modelToEntity(NutritionProfileModel model) {
+    // 创建基本信息
+    final basicInfo = BasicInfo(
+      age: 25, // 默认值，因为model使用ageGroup
+      gender: model.gender == 'male' ? Gender.male : Gender.female,
+      height: model.height ?? 170.0,
+      weight: model.weight ?? 60.0,
+      activityLevel: _parseActivityLevel(model.activityLevel),
+    );
+
+    // 创建饮食偏好列表（简化）
+    final dietaryPreferences = <DietaryPreference>[];
+    
+    // 创建健康状况列表（简化）
+    final healthConditions = <HealthCondition>[];
+
+    // 创建生活习惯（使用默认值）
+    const lifestyleHabits = LifestyleHabits(
+      sleepPattern: SleepPattern.regular,
+      exerciseFrequency: ExerciseFrequency.sometimes,
+      dailyWaterIntake: 2000,
+      smokingStatus: false,
+      alcoholConsumption: AlcoholConsumption.occasionally,
+    );
+
+    return NutritionProfile(
+      id: model.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      userId: model.userId,
+      name: model.profileName,
+      basicInfo: basicInfo,
+      dietaryPreferences: dietaryPreferences,
+      healthConditions: healthConditions,
+      lifestyleHabits: lifestyleHabits,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  // 实体转模型
+  NutritionProfileModel _entityToModel(NutritionProfile entity) {
+    return NutritionProfileModel(
+      id: entity.id,
+      userId: entity.userId,
+      profileName: entity.name,
+      gender: entity.basicInfo.gender.name,
+      height: entity.basicInfo.height,
+      weight: entity.basicInfo.weight,
+      activityLevel: entity.basicInfo.activityLevel.name,
+      nutritionGoals: const [], // 简化
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+    );
+  }
+
+  // 解析活动水平
+  ActivityLevel _parseActivityLevel(String? level) {
+    switch (level) {
+      case 'sedentary': return ActivityLevel.sedentary;
+      case 'light': return ActivityLevel.light;
+      case 'moderate': return ActivityLevel.moderate;
+      case 'active': return ActivityLevel.active;
+      case 'very_active': return ActivityLevel.veryActive;
+      default: return ActivityLevel.moderate;
+    }
+  }
 }
 
 // Providers
-final nutritionApiProvider = Provider((ref) => ApiClient().getClient(NutritionApi));
-final authServiceProvider = Provider((ref) => AuthLocalDataSource());
+final nutritionApiProvider = Provider<NutritionApi>((ref) => ApiClient().getClient(NutritionApi));
+final authServiceProvider = Provider<AuthLocalDataSource>((ref) => AuthLocalDataSource());
 
 final nutritionProfileProvider = StateNotifierProvider<NutritionProfileNotifier, NutritionProfileState>((ref) {
   final nutritionApi = ref.watch(nutritionApiProvider);

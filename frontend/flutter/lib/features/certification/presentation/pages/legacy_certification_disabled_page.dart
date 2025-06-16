@@ -244,7 +244,7 @@ class LegacyCertificationDisabledPage extends ConsumerWidget {
 
   void _showContactInfo(BuildContext context) {
     // 动态获取联系信息
-    final contactInfo = ...; // TODO: 通过Provider或参数传入
+    final contactInfo = '客服电话：400-123-4567'; // TODO: 通过Provider或参数传入
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

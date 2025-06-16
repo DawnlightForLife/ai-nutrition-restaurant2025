@@ -184,22 +184,47 @@ class DraftInfo {
     required this.updatedAt,
   });
 
-  /// 获取草稿完成度
+  /// 获取草稿完成度（与实体类NutritionProfileV2保持一致）
   double get completionPercentage {
-    int completedFields = 0;
-    int totalFields = 8; // 总字段数
+    int filledFields = 0;
+    int totalFields = 8; // 必填字段总数
 
-    // 检查必填字段
-    if (data['profileName']?.toString().isNotEmpty == true) completedFields++;
-    if (data['gender']?.toString().isNotEmpty == true) completedFields++;
-    if (data['ageGroup']?.toString().isNotEmpty == true) completedFields++;
-    if (data['height']?.toString().isNotEmpty == true) completedFields++;
-    if (data['weight']?.toString().isNotEmpty == true) completedFields++;
-    if (data['healthGoal']?.toString().isNotEmpty == true) completedFields++;
-    if (data['targetCalories']?.toString().isNotEmpty == true) completedFields++;
-    if (data['dietaryPreferences'] is List && (data['dietaryPreferences'] as List).isNotEmpty) completedFields++;
+    // 检查必填字段（与实体类保持一致）
+    if (data['profileName']?.toString().isNotEmpty == true) filledFields++;
+    if (data['gender']?.toString().isNotEmpty == true) filledFields++;
+    if (data['ageGroup']?.toString().isNotEmpty == true) filledFields++;
+    if (data['height']?.toString().isNotEmpty == true) {
+      final height = double.tryParse(data['height'].toString());
+      if (height != null && height > 0) filledFields++;
+    }
+    if (data['weight']?.toString().isNotEmpty == true) {
+      final weight = double.tryParse(data['weight'].toString());
+      if (weight != null && weight > 0) filledFields++;
+    }
+    if (data['healthGoal']?.toString().isNotEmpty == true || 
+        (data['healthGoals'] is List && (data['healthGoals'] as List).isNotEmpty)) filledFields++;
+    if (data['targetCalories']?.toString().isNotEmpty == true) {
+      final calories = double.tryParse(data['targetCalories'].toString());
+      if (calories != null && calories > 0) filledFields++;
+    }
+    if (data['dietaryPreferences'] is List && (data['dietaryPreferences'] as List).isNotEmpty) filledFields++;
 
-    return completedFields / totalFields;
+    // 计算可选字段的完整度（权重较低）
+    int optionalFilledFields = 0;
+    int optionalTotalFields = 6;
+    
+    if (data['medicalConditions'] is List && (data['medicalConditions'] as List).isNotEmpty) optionalFilledFields++;
+    if (data['exerciseFrequency']?.toString().isNotEmpty == true) optionalFilledFields++;
+    if (data['nutritionPreferences'] is List && (data['nutritionPreferences'] as List).isNotEmpty) optionalFilledFields++;
+    if (data['specialStatus'] is List && (data['specialStatus'] as List).isNotEmpty) optionalFilledFields++;
+    if (data['forbiddenIngredients'] is List && (data['forbiddenIngredients'] as List).isNotEmpty) optionalFilledFields++;
+    if (data['allergies'] is List && (data['allergies'] as List).isNotEmpty) optionalFilledFields++;
+
+    // 必填字段占80%权重，可选字段占20%权重
+    final requiredPercentage = (filledFields / totalFields) * 0.8;
+    final optionalPercentage = (optionalFilledFields / optionalTotalFields) * 0.2;
+    
+    return requiredPercentage + optionalPercentage;
   }
 
   /// 获取草稿摘要

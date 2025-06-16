@@ -30,22 +30,41 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   /// 初始化，检查登录状态
   Future<void> _init() async {
     try {
+      print('=== 开始初始化认证状态 ===');
+      
       final secureStorage = _ref.read(secureStorageProvider);
       final token = await secureStorage.read(key: 'auth_token');
       
+      print('从存储读取token: ${token != null ? "存在" : "不存在"}');
+      
       if (token != null && token.isNotEmpty) {
-        // 获取用户信息
-        final authService = _ref.read(authServiceProvider);
-        final userInfo = await authService.getUserInfo(token);
-        
-        state = AuthState(
-          isAuthenticated: true,
-          token: token,
-          user: userInfo,
-        );
+        try {
+          // 获取用户信息
+          final authService = _ref.read(authServiceProvider);
+          final userInfo = await authService.getUserInfo(token);
+          
+          print('成功获取用户信息: ${userInfo.name}');
+          
+          state = AuthState(
+            isAuthenticated: true,
+            token: token,
+            user: userInfo,
+          );
+          
+          print('认证状态已设置为已登录');
+        } catch (e) {
+          print('获取用户信息失败: $e');
+          // Token可能已过期，清除存储
+          await secureStorage.delete(key: 'auth_token');
+          print('已清除过期token');
+        }
+      } else {
+        print('没有找到token，用户未登录');
       }
     } catch (e) {
       print('初始化认证状态失败: $e');
+    } finally {
+      print('=== 认证状态初始化完成 ===');
     }
   }
   
@@ -95,13 +114,20 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       final authService = _ref.read(authServiceProvider);
       final response = await authService.loginWithCode(phone, code);
       
+      print('=== 验证码登录成功 ===');
+      print('响应数据: ${response.keys.toList()}');
+      
       // 保存token
       final token = response['token'];
       final secureStorage = _ref.read(secureStorageProvider);
       await secureStorage.write(key: 'auth_token', value: token);
       
+      print('✅ Token已保存到安全存储');
+      
       // 解析用户信息
       final userInfo = UserInfo.fromJson(response['user']);
+      
+      print('✅ 用户信息解析成功: ${userInfo.name}');
       
       state = AuthState(
         isAuthenticated: true,
@@ -109,6 +135,8 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         token: token,
         user: userInfo,
       );
+      
+      print('✅ 认证状态已更新为已登录');
       
       // 登录成功后重置导航状态到首页
       _resetNavigationToHome();

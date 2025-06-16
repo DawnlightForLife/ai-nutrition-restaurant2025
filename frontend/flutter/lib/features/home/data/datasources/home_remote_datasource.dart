@@ -114,7 +114,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         id: 'banner_welcome',
         title: '欢迎来到营养立方',
         subtitle: '智能AI为您推荐健康营养餐',
-        imageUrl: 'https://via.placeholder.com/400x200/FF6B35/FFFFFF?text=Welcome',
+        imageUrl: 'assets/images/banner_welcome.png',
         type: 'feature',
         isActive: true,
         order: 1,

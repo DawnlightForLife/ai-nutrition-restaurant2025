@@ -62,6 +62,12 @@ dependencies:
   share_plus: ^10.0.3  # 分享功能
   csv: ^6.0.0  # CSV导出
   
+  # 数据导出相关
+  pdf: ^3.11.1  # PDF生成
+  printing: ^5.13.2  # PDF打印和分享
+  excel: ^4.0.6  # Excel文件操作
+  open_file: ^3.5.7  # 打开文件
+  
   # 动画系统 - 简化为一种方案
   flutter_animate: ^4.5.0
   # rive: ^0.13.17  # 移除，对单人开发过于复杂
