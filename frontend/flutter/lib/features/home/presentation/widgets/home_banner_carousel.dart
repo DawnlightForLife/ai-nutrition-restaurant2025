@@ -90,6 +90,52 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
     );
   }
 
+  /// 智能构建图片组件，支持assets和网络图片
+  Widget _buildImage(String imageUrl) {
+    if (imageUrl.startsWith('assets/')) {
+      // 本地资源图片
+      return Image.asset(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildImagePlaceholder();
+        },
+      );
+    } else {
+      // 网络图片
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildImagePlaceholder();
+        },
+      );
+    }
+  }
+
+  /// 构建图片占位符
+  Widget _buildImagePlaceholder() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Theme.of(context).primaryColor,
+            Theme.of(context).primaryColor.withOpacity(0.8),
+          ],
+        ),
+      ),
+      child: const Center(
+        child: Icon(
+          Icons.image,
+          color: Colors.white,
+          size: 48,
+        ),
+      ),
+    );
+  }
+
   Widget _buildBannerItem(HomeBanner banner) {
     return GestureDetector(
       onTap: () => widget.onBannerTap?.call(banner),
@@ -111,13 +157,7 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
             fit: StackFit.expand,
             children: [
               // 背景图片
-              Image.network(
-                banner.imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _buildDefaultBanner(banner);
-                },
-              ),
+              _buildImage(banner.imageUrl),
               
               // 渐变遮罩
               Container(

@@ -11,6 +11,7 @@ import '../widgets/quick_filter_tags.dart';
 import '../widgets/advanced_filter_dialog.dart';
 import '../widgets/export_config_dialog.dart';
 import '../widgets/export_progress_dialog.dart';
+import '../widgets/nutrition_chart_widget.dart';
 import '../providers/nutrition_progress_provider.dart';
 import '../providers/search_filter_provider.dart';
 import '../providers/data_export_provider.dart';
@@ -980,6 +981,11 @@ class _NutritionProfileListPageState
               ),
               
               const SizedBox(height: 24),
+              
+              // 营养数据图表
+              NutritionChartWidget(profile: profile),
+              
+              const SizedBox(height: 16),
               
               // 详细统计
               Expanded(
