@@ -124,7 +124,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         id: 'banner_ai',
         title: 'AI智能推荐',
         subtitle: '根据您的营养档案，精准推荐适合的餐品',
-        imageUrl: 'https://via.placeholder.com/400x200/4ECDC4/FFFFFF?text=AI+Recommendation',
+        imageUrl: 'assets/images/banner_ai_recommendation.png',
         targetUrl: '/ai/chat',
         type: 'promotion',
         isActive: true,
