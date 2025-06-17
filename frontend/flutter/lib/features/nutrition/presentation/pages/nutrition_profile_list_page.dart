@@ -12,6 +12,7 @@ import '../widgets/advanced_filter_dialog.dart';
 import '../widgets/export_config_dialog.dart';
 import '../widgets/export_progress_dialog.dart';
 import '../widgets/nutrition_chart_widget.dart';
+// import '../widgets/nutrition_cube_container.dart'; // 移除立方体组件
 import '../providers/nutrition_progress_provider.dart';
 import '../providers/search_filter_provider.dart';
 import '../providers/data_export_provider.dart';
@@ -925,8 +926,8 @@ class _NutritionProfileListPageState
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize: 0.9,
+        initialChildSize: 0.85,
+        maxChildSize: 0.95,
         minChildSize: 0.3,
         builder: (context, scrollController) => Container(
           padding: const EdgeInsets.all(20),
@@ -985,7 +986,7 @@ class _NutritionProfileListPageState
               // 营养数据图表
               NutritionChartWidget(profile: profile),
               
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               
               // 详细统计
               Expanded(

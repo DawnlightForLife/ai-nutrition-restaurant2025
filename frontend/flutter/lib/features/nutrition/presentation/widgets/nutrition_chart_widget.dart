@@ -3,15 +3,20 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../domain/entities/nutrition_profile_v2.dart';
 
 /// 营养数据图表组件
-class NutritionChartWidget extends StatelessWidget {
+class NutritionChartWidget extends StatefulWidget {
   final NutritionProfileV2 profile;
-  final bool showPieChart;
 
   const NutritionChartWidget({
     super.key,
     required this.profile,
-    this.showPieChart = true,
   });
+
+  @override
+  State<NutritionChartWidget> createState() => _NutritionChartWidgetState();
+}
+
+class _NutritionChartWidgetState extends State<NutritionChartWidget> {
+  bool _showPieChart = true;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +69,7 @@ class NutritionChartWidget extends StatelessWidget {
           
           // 图表区域
           Expanded(
-            child: showPieChart ? _buildPieChart(context) : _buildBarChart(context),
+            child: _showPieChart ? _buildPieChart(context) : _buildBarChart(context),
           ),
         ],
       ),
@@ -86,14 +91,22 @@ class NutritionChartWidget extends StatelessWidget {
           _buildToggleItem(
             context,
             icon: Icons.pie_chart,
-            isSelected: showPieChart,
-            onTap: () {/* TODO: 实现切换功能 */},
+            isSelected: _showPieChart,
+            onTap: () {
+              setState(() {
+                _showPieChart = true;
+              });
+            },
           ),
           _buildToggleItem(
             context,
             icon: Icons.bar_chart,
-            isSelected: !showPieChart,
-            onTap: () {/* TODO: 实现切换功能 */},
+            isSelected: !_showPieChart,
+            onTap: () {
+              setState(() {
+                _showPieChart = false;
+              });
+            },
           ),
         ],
       ),
@@ -297,8 +310,8 @@ class NutritionChartWidget extends StatelessWidget {
   List<NutritionData> _getNutritionData() {
     // 根据用户的活动水平生成基础数据
     int activityIndex = 1; // 默认中等活动水平
-    if (profile.exerciseFrequency != null) {
-      switch (profile.exerciseFrequency) {
+    if (widget.profile.exerciseFrequency != null) {
+      switch (widget.profile.exerciseFrequency) {
         case '很少':
           activityIndex = 0;
           break;
@@ -327,25 +340,25 @@ class NutritionChartWidget extends StatelessWidget {
     double fatMultiplier = 1.0;
     
     // 检查健康目标
-    if (profile.healthGoal.contains('减肥') || profile.healthGoal.contains('减脂')) {
+    if (widget.profile.healthGoal.contains('减肥') || widget.profile.healthGoal.contains('减脂')) {
       carbsMultiplier = 0.7;
       fatMultiplier = 0.8;
       proteinMultiplier = 1.2;
-    } else if (profile.healthGoal.contains('增肌') || profile.healthGoal.contains('增重')) {
+    } else if (widget.profile.healthGoal.contains('增肌') || widget.profile.healthGoal.contains('增重')) {
       proteinMultiplier = 1.5;
       carbsMultiplier = 1.2;
     }
     
     // 检查饮食偏好
-    if (profile.dietaryPreferences.contains('低碳水化合物')) {
+    if (widget.profile.dietaryPreferences.contains('低碳水化合物')) {
       carbsMultiplier *= 0.6;
       fatMultiplier *= 1.3;
     }
-    if (profile.nutritionPreferences.contains('高蛋白')) {
+    if (widget.profile.nutritionPreferences.contains('高蛋白')) {
       proteinMultiplier *= 1.4;
       carbsMultiplier *= 0.9;
     }
-    if (profile.nutritionPreferences.contains('低脂肪')) {
+    if (widget.profile.nutritionPreferences.contains('低脂肪')) {
       fatMultiplier *= 0.7;
       carbsMultiplier *= 1.2;
     }
