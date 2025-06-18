@@ -8,6 +8,8 @@ import '../widgets/forum_placeholder.dart';
 import '../widgets/order_placeholder.dart';
 // TODO: Import proper UserProfilePage when created
 import '../widgets/user_profile_placeholder.dart';
+import '../../../workspace/presentation/widgets/workspace_gesture_detector.dart';
+import '../../../cart/presentation/pages/nutrition_cart_page.dart';
 
 /// 主页面 - 包含底部导航栏
 class MainPage extends ConsumerStatefulWidget {
@@ -60,17 +62,30 @@ class _MainPageState extends ConsumerState<MainPage> {
     });
 
     return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(), // 禁止滑动切换
-        onPageChanged: (index) {
-          // 确保页面切换和导航状态同步
-          if (ref.read(navigationProvider) != index) {
-            ref.read(navigationProvider.notifier).setIndex(index);
-          }
-        },
-        children: _pages,
+      body: WorkspaceGestureDetector(
+        child: PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(), // 禁止滑动切换
+          onPageChanged: (index) {
+            // 确保页面切换和导航状态同步
+            if (ref.read(navigationProvider) != index) {
+              ref.read(navigationProvider.notifier).setIndex(index);
+            }
+          },
+          children: _pages,
+        ),
       ),
+      floatingActionButton: currentIndex == 0 || currentIndex == 1 ? FloatingActionButton(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const NutritionCartPage(userId: 'current_user'),
+            ),
+          );
+        },
+        child: const Icon(Icons.shopping_cart),
+        tooltip: '购物车',
+      ) : null,
       bottomNavigationBar: AppBottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (index) {

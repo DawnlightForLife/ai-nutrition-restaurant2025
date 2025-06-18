@@ -11,6 +11,9 @@ router.use(roleMiddleware(['admin', 'super_admin']));
 // 获取已授权用户列表
 router.get('/authorized', userPermissionController.getAuthorizedUsers);
 
+// 获取所有用户列表（用于授权选择）
+router.get('/users', userPermissionController.getAllUsers);
+
 // 搜索用户
 router.get('/search', userPermissionController.searchUsers);
 

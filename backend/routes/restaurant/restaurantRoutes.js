@@ -7,9 +7,9 @@ const router = require('express').Router();
 const restaurantController = require('../../controllers/restaurant/restaurantController');
 const { authenticateUser } = require('../../middleware/auth/authMiddleware');
 const roleMiddleware = require('../../middleware/auth/roleMiddleware');
-const permissionMiddleware = require('../../middleware/auth/permissionMiddleware');
+const { permissionMiddleware } = require('../../middleware/auth/permissionMiddleware');
 // const { validationMiddleware } = require('../../middleware/validation/validationMiddleware'); // TODO: 实现验证中间件
-const { createDynamicLimiter, defaultLimiter } = require('../../middleware/security/rateLimitMiddleware');
+const { createDynamicLimiter } = require('../../middleware/security/rateLimitMiddleware');
 
 // ========== 餐厅管理路由 ==========
 

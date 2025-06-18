@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/auth/presentation/providers/auth_provider.dart';
+import '../core/constants/permissions.dart';
 import 'route_names.dart';
 
 /// 路由守卫
@@ -62,23 +63,76 @@ class RouteGuards {
       return false;
     }
 
-    // 检查角色权限
+    // 如果未登录但不需要登录，允许访问
+    if (!authState.isAuthenticated) {
+      return true;
+    }
+
+    final user = authState.user;
+    if (user == null) return false;
+
+    // 检查营养师权限
     if (nutritionistOnlyRoutes.contains(routeName)) {
-      // TODO: 检查是否为营养师
-      return false;
+      return _hasNutritionistPermissions(user);
     }
 
+    // 检查商家权限
     if (merchantOnlyRoutes.contains(routeName)) {
-      // TODO: 检查是否为商家
-      return false;
+      return _hasMerchantPermissions(user);
     }
 
+    // 检查员工权限
     if (employeeOnlyRoutes.contains(routeName)) {
-      // TODO: 检查是否为员工
-      return false;
+      return _hasEmployeePermissions(user);
     }
 
     return true;
+  }
+
+  /// 检查是否有营养师权限
+  static bool _hasNutritionistPermissions(dynamic user) {
+    if (PermissionChecker.isNutritionist(user.role)) return true;
+    
+    // 检查特殊权限
+    final permissions = _getUserPermissions(user);
+    return PermissionChecker.hasAnyPermission(permissions, [
+      Permissions.nutritionistRead,
+      Permissions.consultationManage,
+    ]);
+  }
+
+  /// 检查是否有商家权限
+  static bool _hasMerchantPermissions(dynamic user) {
+    if (PermissionChecker.isMerchant(user.role)) return true;
+    
+    // 检查特殊权限
+    final permissions = _getUserPermissions(user);
+    return PermissionChecker.hasAnyPermission(permissions, [
+      Permissions.merchantRead,
+      Permissions.dishRead,
+      Permissions.inventoryRead,
+    ]);
+  }
+
+  /// 检查是否有员工权限
+  static bool _hasEmployeePermissions(dynamic user) {
+    if (PermissionChecker.isMerchant(user.role)) return true;
+    
+    // 检查特殊权限
+    final permissions = _getUserPermissions(user);
+    return PermissionChecker.hasAnyPermission(permissions, [
+      Permissions.orderRead,
+      Permissions.dishRead,
+    ]);
+  }
+  
+  /// 获取用户权限列表
+  static List<String> _getUserPermissions(dynamic user) {
+    final userPermissions = user.permissions as List<dynamic>?;
+    final permissions = userPermissions?.cast<String>() ?? <String>[];
+    
+    // 合并角色权限和特殊权限
+    return RolePermissions.getUserPermissions(user.role, permissions);
   }
 
   /// 获取重定向路由

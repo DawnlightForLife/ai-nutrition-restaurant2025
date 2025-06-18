@@ -1,12 +1,10 @@
-import 'package:dartz/dartz.dart';
-import 'package:ai_nutrition_restaurant/core/failures/failures.dart';
 import '../entities/admin.dart';
 
 /// Uadmin 仓储接口
 abstract class UadminRepository {
-  Future<Either<Failure, List<Uadmin>>> getUadmins();
-  Future<Either<Failure, Uadmin>> getUadmin(String id);
-  Future<Either<Failure, Uadmin>> createUadmin(Uadmin admin);
-  Future<Either<Failure, Uadmin>> updateUadmin(Uadmin admin);
-  Future<Either<Failure, Unit>> deleteUadmin(String id);
+  Future<List<Uadmin>> getUadmins();
+  Future<Uadmin?> getUadmin(String id);
+  Future<Uadmin> createUadmin(Uadmin admin);
+  Future<Uadmin> updateUadmin(Uadmin admin);
+  Future<void> deleteUadmin(String id);
 }

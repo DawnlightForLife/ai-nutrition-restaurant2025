@@ -87,7 +87,7 @@ class UserPermissionService {
       
       const [applications, total] = await Promise.all([
         UserPermission.find(query)
-          .populate('userId', 'username email profile phone')
+          .populate('userId', 'nickname phone realName role')
           .sort(sort)
           .skip(skip)
           .limit(limit)
@@ -249,13 +249,17 @@ class UserPermissionService {
    */
   async getUserPermissionDetails(userId) {
     try {
+      console.log('[UserPermissionService] 开始查询用户权限:', userId);
+      
       const permissions = await UserPermission.find({ userId })
-        .populate('grantedBy', 'username email')
-        .populate('reviewData.reviewedBy', 'username email')
-        .sort({ createdAt: -1 });
+        .sort({ createdAt: -1 })
+        .lean();
+      
+      console.log('[UserPermissionService] 查询到权限数量:', permissions.length);
       
       return permissions;
     } catch (error) {
+      console.error('[UserPermissionService] 获取用户权限详情失败:', error);
       logger.error('获取用户权限详情失败:', error);
       throw error;
     }

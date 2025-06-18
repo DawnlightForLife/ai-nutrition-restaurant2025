@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'ai_recommendation_chat_page.dart';
+import '../../../cart/presentation/pages/nutrition_cart_page.dart';
 
 class AiRecommendationResultPage extends ConsumerStatefulWidget {
   final List<RecommendationItem> recommendations;
@@ -664,7 +665,11 @@ class _AiRecommendationResultPageState
         action: SnackBarAction(
           label: '查看',
           onPressed: () {
-            // TODO: 跳转到购物车
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const NutritionCartPage(userId: 'current_user'),
+              ),
+            );
           },
         ),
       ),

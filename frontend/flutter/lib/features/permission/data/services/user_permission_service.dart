@@ -1,15 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
+import '../../../../core/providers/dio_provider.dart';
 import '../datasources/user_permission_remote_datasource.dart';
 import '../models/user_permission_model.dart';
 
 // DI Provider
 final userPermissionRemoteDatasourceProvider = Provider<UserPermissionRemoteDatasource>((ref) {
-  // TODO: 替换为实际的 Dio 实例
-  final dio = Dio(BaseOptions(
-    baseUrl: 'http://localhost:3000/api',
-    headers: {'Content-Type': 'application/json'},
-  ));
+  final dio = ref.watch(dioProvider);
   return UserPermissionRemoteDatasource(dio);
 });
 

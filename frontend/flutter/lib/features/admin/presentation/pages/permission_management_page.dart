@@ -199,16 +199,7 @@ class _PermissionManagementPageState extends ConsumerState<PermissionManagementP
         if (!matchesSearch) return false;
       }
       
-      // 权限类型过滤
-      if (_filterPermission != 'all') {
-        if (_filterPermission == 'merchant' && !user.permissions.contains('merchant')) {
-          return false;
-        }
-        if (_filterPermission == 'nutritionist' && !user.permissions.contains('nutritionist')) {
-          return false;
-        }
-      }
-      
+      // 权限类型过滤已在后端处理，这里不再重复过滤
       return true;
     }).toList();
     
@@ -248,6 +239,10 @@ class _PermissionManagementPageState extends ConsumerState<PermissionManagementP
                   setState(() {
                     _filterPermission = value!;
                   });
+                  // 重新加载用户列表
+                  ref.read(permissionManagementProvider.notifier).loadAuthorizedUsers(
+                    permissionFilter: value == 'all' ? null : value,
+                  );
                 },
               ),
             ],
@@ -295,40 +290,122 @@ class _PermissionManagementPageState extends ConsumerState<PermissionManagementP
 
   /// 构建历史记录标签页
   Widget _buildHistoryTab() {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: ref.read(permissionManagementProvider.notifier).getPermissionHistory(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text('加载历史记录失败'),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => setState(() {}), // 重新构建触发重新加载
+                  child: const Text('重试'),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        final historyRecords = snapshot.data ?? [];
+        
+        if (historyRecords.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.history, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
+                Text('暂无历史记录'),
+              ],
+            ),
+          );
+        }
+        
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: historyRecords.length,
+          itemBuilder: (context, index) {
+            final record = historyRecords[index];
+            return _buildHistoryItem(record);
+          },
+        );
+      },
+    );
+  }
+  
+  /// 构建历史记录项
+  Widget _buildHistoryItem(Map<String, dynamic> record) {
     final theme = Theme.of(context);
+    final action = record['action'] as String?;
+    final permission = record['permission'] as String?;
+    final isGrant = action == 'grant';
     
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.history,
-            size: 64,
-            color: theme.colorScheme.outline,
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isGrant
+                ? Colors.green.withOpacity(0.1)
+                : Colors.orange.withOpacity(0.1),
+            shape: BoxShape.circle,
           ),
-          const SizedBox(height: 16),
-          Text(
-            '授权历史记录',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.colorScheme.outline,
+          child: Icon(
+            isGrant ? Icons.add_circle : Icons.remove_circle,
+            color: isGrant ? Colors.green : Colors.orange,
+          ),
+        ),
+        title: Row(
+          children: [
+            Text(
+              isGrant ? '授予' : '撤销',
+              style: TextStyle(
+                color: isGrant ? Colors.green : Colors.orange,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '查看所有权限变更记录',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.outline,
-            ),
-          ),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-            onPressed: () => _showHistoryDialog(),
-            icon: const Icon(Icons.open_in_new),
-            label: const Text('查看历史记录'),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Text(permission == 'merchant' ? '加盟商权限' : '营养师权限'),
+          ],
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (record['userName'] != null)
+              Text('用户: ${record['userName']}'),
+            if (record['operatorName'] != null)
+              Text('操作人: ${record['operatorName']}'),
+            if (record['reason'] != null)
+              Text('原因: ${record['reason']}'),
+            if (record['createdAt'] != null)
+              Text(
+                '时间: ${_formatDateTime(record['createdAt'])}',
+                style: theme.textTheme.bodySmall,
+              ),
+          ],
+        ),
       ),
     );
+  }
+  
+  /// 格式化时间
+  String _formatDateTime(String dateTimeStr) {
+    try {
+      final dateTime = DateTime.parse(dateTimeStr);
+      return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return dateTimeStr;
+    }
   }
 
   /// 构建统计卡片区域
@@ -518,19 +595,21 @@ class _PermissionManagementPageState extends ConsumerState<PermissionManagementP
       builder: (context) => UserSearchDialog(
         permissionType: permissionType,
         onUserSelected: (userId) async {
+          // 先关闭对话框
+          Navigator.of(context).pop();
+          
           // 授权用户
           final success = await ref
               .read(permissionManagementProvider.notifier)
               .grantPermission(userId, permissionType);
           
-          if (success && mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  permissionType == 'merchant' ? '加盟商权限授权成功' : '营养师权限授权成功',
-                ),
-                backgroundColor: Colors.green,
-              ),
+          // 使用页面的 context 显示结果
+          if (mounted && this.context.mounted) {
+            _showPermissionFeedback(
+              success: success,
+              action: '授权',
+              permissionType: permissionType,
+              errorMessage: success ? null : ref.read(permissionManagementProvider).error,
             );
           }
         },
@@ -589,12 +668,12 @@ class _PermissionManagementPageState extends ConsumerState<PermissionManagementP
                   .read(permissionManagementProvider.notifier)
                   .revokePermission(user.id, permissionType);
               
-              if (success && mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('已撤销$permissionName权限'),
-                    backgroundColor: Colors.orange,
-                  ),
+              if (mounted) {
+                _showPermissionFeedback(
+                  success: success,
+                  action: '撤销',
+                  permissionType: permissionType,
+                  errorMessage: success ? null : ref.read(permissionManagementProvider).error,
                 );
               }
             },
@@ -611,13 +690,12 @@ class _PermissionManagementPageState extends ConsumerState<PermissionManagementP
         .read(permissionManagementProvider.notifier)
         .grantPermission(user.id, permissionType);
     
-    if (success && mounted) {
-      final permissionName = permissionType == 'merchant' ? '加盟商' : '营养师';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('已授予$permissionName权限'),
-          backgroundColor: Colors.green,
-        ),
+    if (mounted) {
+      _showPermissionFeedback(
+        success: success,
+        action: '授权',
+        permissionType: permissionType,
+        errorMessage: success ? null : ref.read(permissionManagementProvider).error,
       );
     }
   }
@@ -628,5 +706,58 @@ class _PermissionManagementPageState extends ConsumerState<PermissionManagementP
       context: context,
       builder: (context) => PermissionHistoryDialog(userId: user.id),
     );
+  }
+
+  /// 显示权限操作反馈
+  void _showPermissionFeedback({
+    required bool success,
+    required String action,
+    required String permissionType,
+    String? errorMessage,
+  }) {
+    final permissionName = permissionType == 'merchant' ? '商家' : '营养师';
+    final theme = Theme.of(context);
+    
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                Icons.check_circle,
+                color: theme.colorScheme.onInverseSurface,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text('${permissionName}权限${action}成功'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                Icons.error,
+                color: theme.colorScheme.onError,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  errorMessage ?? '${permissionName}权限${action}失败',
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: theme.colorScheme.error,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 }

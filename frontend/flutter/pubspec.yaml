@@ -88,7 +88,8 @@ dependencies:
   
   # 依赖注入 - 已移除get_it和injectable，统一使用riverpod
   
-  # 路由 - 使用原生Navigator
+  # 路由
+  go_router: ^14.2.7
   
   # 领域驱动设计支持
   freezed_annotation: ^2.4.4

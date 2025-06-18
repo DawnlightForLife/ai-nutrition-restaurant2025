@@ -1,6 +1,4 @@
-import 'package:dartz/dartz.dart';
 import '../../../../core/base/use_case.dart';
-import 'package:ai_nutrition_restaurant/core/failures/failures.dart';
 import '../entities/order.dart';
 import '../repositories/order_repository.dart';
 
@@ -11,7 +9,7 @@ class GetUordersUseCase implements UseCase<List<Uorder>, NoParams> {
   GetUordersUseCase(this.repository);
 
   @override
-  Future<Either<Failure, List<Uorder>>> call(NoParams params) async {
+  Future<List<Uorder>> call(NoParams params) async {
     return await repository.getUorders();
   }
 }

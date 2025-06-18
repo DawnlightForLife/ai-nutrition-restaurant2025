@@ -30,12 +30,20 @@ router.use('/forum-comments', require('./forum/forumCommentRoutes'));
 router.use('/forum-tags', require('./forum/forumTagRoutes'));
 
 // =================== Nutrition 模块 ===================
+// 营养档案相关
 router.use('/nutrition/nutrition-profiles', require('./nutrition/nutritionProfileRoutes'));
 router.use('/nutrition/nutrition-profiles-extended', require('./nutrition/nutritionProfileExtendedRoutes'));
 router.use('/nutrition/constants', require('./nutrition/nutritionConstantsRoutes'));
+
+// 营养元素系统v2 - 新增
+router.use('/nutrition/elements', require('./nutrition/nutritionElementRoutes'));
+
+// AI推荐和营养师
 router.use('/ai-recommendations', require('./nutrition/aiRecommendationRoutes'));
 router.use('/nutritionists', require('./nutrition/nutritionistRoutes'));
 router.use('/nutritionist-certification', require('./nutrition/nutritionistCertificationRoutes'));
+
+// 用户偏好和计划
 router.use('/favorites', require('./nutrition/favoriteRoutes'));
 router.use('/dietary-preferences', require('./nutrition/dietaryPreferenceRoutes'));
 router.use('/nutrition-plans', require('./nutrition/nutritionPlanRoutes'));

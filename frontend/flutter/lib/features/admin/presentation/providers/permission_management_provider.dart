@@ -1,6 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/dio_provider.dart';
+import '../../../permission/presentation/providers/user_permission_provider.dart';
+
+/// 权限详情模型
+class PermissionDetail {
+  final String type;
+  final DateTime grantedAt;
+  final String? grantedBy;
+
+  PermissionDetail({
+    required this.type,
+    required this.grantedAt,
+    this.grantedBy,
+  });
+
+  factory PermissionDetail.fromJson(Map<String, dynamic> json) {
+    return PermissionDetail(
+      type: json['type'] ?? '',
+      grantedAt: DateTime.parse(json['grantedAt']),
+      grantedBy: json['grantedBy'],
+    );
+  }
+}
 
 /// 已授权用户模型
 class AuthorizedUser {
@@ -9,6 +31,7 @@ class AuthorizedUser {
   final String phone;
   final String? realName;
   final List<String> permissions;
+  final List<PermissionDetail> permissionDetails;
   final DateTime? lastLoginAt;
   final DateTime createdAt;
 
@@ -18,6 +41,7 @@ class AuthorizedUser {
     required this.phone,
     this.realName,
     required this.permissions,
+    required this.permissionDetails,
     this.lastLoginAt,
     required this.createdAt,
   });
@@ -29,6 +53,7 @@ class AuthorizedUser {
       phone: json['phone'] ?? '',
       realName: json['realName'],
       permissions: _extractPermissions(json),
+      permissionDetails: _extractPermissionDetails(json),
       lastLoginAt: json['lastLogin'] != null 
           ? DateTime.tryParse(json['lastLogin']) 
           : null,
@@ -68,6 +93,24 @@ class AuthorizedUser {
     }
     
     return permissions;
+  }
+
+  static List<PermissionDetail> _extractPermissionDetails(Map<String, dynamic> json) {
+    final details = <PermissionDetail>[];
+    
+    if (json['permissionDetails'] is List) {
+      for (final detail in json['permissionDetails']) {
+        if (detail is Map<String, dynamic>) {
+          try {
+            details.add(PermissionDetail.fromJson(detail));
+          } catch (e) {
+            // 忽略解析错误的权限详情
+          }
+        }
+      }
+    }
+    
+    return details;
   }
 }
 
@@ -116,60 +159,53 @@ class PermissionManagementState {
 /// 权限管理Provider
 final permissionManagementProvider = StateNotifierProvider<PermissionManagementNotifier, PermissionManagementState>((ref) {
   final apiClient = ref.watch(apiClientProvider);
-  return PermissionManagementNotifier(apiClient);
+  return PermissionManagementNotifier(apiClient, ref);
 });
 
 /// 权限管理状态管理器
 class PermissionManagementNotifier extends StateNotifier<PermissionManagementState> {
   final ApiClient _apiClient;
+  final Ref _ref;
 
-  PermissionManagementNotifier(this._apiClient) : super(const PermissionManagementState());
+  PermissionManagementNotifier(this._apiClient, this._ref) : super(const PermissionManagementState());
 
   /// 加载已授权用户列表
-  Future<void> loadAuthorizedUsers() async {
+  Future<void> loadAuthorizedUsers({String? permissionFilter}) async {
     if (state.isLoading) return;
 
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      // 临时使用模拟数据，直到后端API准备好
-      await Future.delayed(const Duration(milliseconds: 500)); // 模拟网络延迟
-      
-      final mockUsers = [
-        AuthorizedUser(
-          id: '1',
-          nickname: '张三',
-          phone: '13812345678',
-          realName: '张三',
-          permissions: ['merchant'],
-          createdAt: DateTime.now().subtract(const Duration(days: 30)),
-        ),
-        AuthorizedUser(
-          id: '2',
-          nickname: '李营养师',
-          phone: '13823456789',
-          realName: '李四',
-          permissions: ['nutritionist'],
-          createdAt: DateTime.now().subtract(const Duration(days: 15)),
-        ),
-        AuthorizedUser(
-          id: '3',
-          nickname: '王店长',
-          phone: '13834567890',
-          realName: '王五',
-          permissions: ['merchant', 'nutritionist'],
-          createdAt: DateTime.now().subtract(const Duration(days: 7)),
-        ),
-      ];
+      // 构建查询参数
+      final queryParameters = <String, dynamic>{};
+      if (permissionFilter != null && permissionFilter.isNotEmpty) {
+        queryParameters['permissions'] = permissionFilter;
+      }
 
-      // 计算统计信息
-      final stats = _calculateStats(mockUsers);
-
-      state = state.copyWith(
-        authorizedUsers: mockUsers,
-        stats: stats,
-        isLoading: false,
+      // 调用真实的后端API
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/admin/user-permissions/authorized',
+        queryParameters: queryParameters,
       );
+
+      if (response.data != null && response.data!['success'] == true) {
+        final Map<String, dynamic> data = response.data!['data'] ?? {};
+        final List<dynamic> usersData = data['users'] ?? [];
+        final users = usersData.map((userData) => 
+          AuthorizedUser.fromJson(userData as Map<String, dynamic>)
+        ).toList();
+
+        // 计算统计信息
+        final stats = _calculateStats(users);
+
+        state = state.copyWith(
+          authorizedUsers: users,
+          stats: stats,
+          isLoading: false,
+        );
+      } else {
+        throw Exception(response.data?['message'] ?? '加载失败');
+      }
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -181,49 +217,24 @@ class PermissionManagementNotifier extends StateNotifier<PermissionManagementSta
   /// 授予权限
   Future<bool> grantPermission(String userId, String permissionType) async {
     try {
-      // 模拟网络延迟
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      // 模拟成功授权
-      final currentUsers = List<AuthorizedUser>.from(state.authorizedUsers);
-      
-      // 查找是否已存在该用户
-      final existingUserIndex = currentUsers.indexWhere((user) => user.id == userId);
-      
-      if (existingUserIndex != -1) {
-        // 用户已存在，添加权限
-        final existingUser = currentUsers[existingUserIndex];
-        if (!existingUser.permissions.contains(permissionType)) {
-          final updatedPermissions = List<String>.from(existingUser.permissions)..add(permissionType);
-          currentUsers[existingUserIndex] = AuthorizedUser(
-            id: existingUser.id,
-            nickname: existingUser.nickname,
-            phone: existingUser.phone,
-            realName: existingUser.realName,
-            permissions: updatedPermissions,
-            createdAt: existingUser.createdAt,
-          );
-        }
-      } else {
-        // 创建新用户（从搜索结果中获取信息）
-        currentUsers.add(AuthorizedUser(
-          id: userId,
-          nickname: '新授权用户',
-          phone: '138000000XX',
-          permissions: [permissionType],
-          createdAt: DateTime.now(),
-        ));
-      }
-      
-      // 重新计算统计信息
-      final stats = _calculateStats(currentUsers);
-      
-      state = state.copyWith(
-        authorizedUsers: currentUsers,
-        stats: stats,
+      // 调用真实的后端API授权
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/admin/user-permissions/$userId/permissions',
+        data: {
+          'permission': permissionType,
+        },
       );
-      
-      return true;
+
+      if (response.data != null && response.data!['success'] == true) {
+        // 重新加载授权用户列表以获取最新数据
+        await loadAuthorizedUsers();
+        // 刷新全局用户权限状态
+        _ref.read(refreshUserPermissionsProvider)();
+        return true;
+      } else {
+        state = state.copyWith(error: response.data?['message'] ?? '授权失败');
+        return false;
+      }
     } catch (e) {
       state = state.copyWith(error: e.toString());
       return false;
@@ -233,43 +244,21 @@ class PermissionManagementNotifier extends StateNotifier<PermissionManagementSta
   /// 撤销权限
   Future<bool> revokePermission(String userId, String permissionType) async {
     try {
-      // 模拟网络延迟
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      final currentUsers = List<AuthorizedUser>.from(state.authorizedUsers);
-      final userIndex = currentUsers.indexWhere((user) => user.id == userId);
-      
-      if (userIndex != -1) {
-        final user = currentUsers[userIndex];
-        final updatedPermissions = List<String>.from(user.permissions)..remove(permissionType);
-        
-        if (updatedPermissions.isEmpty) {
-          // 如果没有权限了，移除用户
-          currentUsers.removeAt(userIndex);
-        } else {
-          // 更新用户权限
-          currentUsers[userIndex] = AuthorizedUser(
-            id: user.id,
-            nickname: user.nickname,
-            phone: user.phone,
-            realName: user.realName,
-            permissions: updatedPermissions,
-            createdAt: user.createdAt,
-          );
-        }
-        
-        // 重新计算统计信息
-        final stats = _calculateStats(currentUsers);
-        
-        state = state.copyWith(
-          authorizedUsers: currentUsers,
-          stats: stats,
-        );
-        
+      // 调用真实的后端API撤销权限
+      final response = await _apiClient.delete<Map<String, dynamic>>(
+        '/admin/user-permissions/$userId/permissions/$permissionType',
+      );
+
+      if (response.data != null && response.data!['success'] == true) {
+        // 重新加载授权用户列表以获取最新数据
+        await loadAuthorizedUsers();
+        // 刷新全局用户权限状态
+        _ref.read(refreshUserPermissionsProvider)();
         return true;
+      } else {
+        state = state.copyWith(error: response.data?['message'] ?? '撤销权限失败');
+        return false;
       }
-      
-      return false;
     } catch (e) {
       state = state.copyWith(error: e.toString());
       return false;
@@ -279,67 +268,50 @@ class PermissionManagementNotifier extends StateNotifier<PermissionManagementSta
   /// 搜索用户
   Future<List<Map<String, dynamic>>> searchUsers(String query) async {
     try {
-      // 模拟网络延迟
-      await Future.delayed(const Duration(milliseconds: 300));
-      
-      // 模拟用户数据
-      final mockUsers = [
-        {
-          '_id': 'user1',
-          'nickname': '普通用户1',
-          'phone': '13800000001',
-          'realName': '张一',
-          'role': 'user',
-          'permissions': [],
+      // 调用真实的后端API搜索用户
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/admin/user-permissions/search',
+        queryParameters: {
+          'q': query,  // 修正参数名为后端期望的 'q'
+          'limit': 20,
         },
-        {
-          '_id': 'user2',
-          'nickname': '普通用户2',
-          'phone': '13800000002',
-          'realName': '李二',
-          'role': 'user',
-          'permissions': [],
-        },
-        {
-          '_id': 'user3',
-          'nickname': '测试商家',
-          'phone': '13800000003',
-          'realName': '王三',
-          'role': 'user',
-          'permissions': [],
-        },
-        {
-          '_id': 'user4',
-          'nickname': '测试营养师',
-          'phone': '13800000004',
-          'realName': '赵四',
-          'role': 'user',
-          'permissions': [],
-        },
-        {
-          '_id': 'user5',
-          'nickname': '新用户五',
-          'phone': '13800000005',
-          'realName': '钱五',
-          'role': 'user',
-          'permissions': [],
-        },
-      ];
-      
-      // 根据查询条件过滤用户
-      final filteredUsers = mockUsers.where((user) {
-        final nickname = (user['nickname'] as String).toLowerCase();
-        final phone = user['phone'] as String;
-        final realName = (user['realName'] as String? ?? '').toLowerCase();
-        final searchQuery = query.toLowerCase();
-        
-        return nickname.contains(searchQuery) || 
-               phone.contains(searchQuery) || 
-               realName.contains(searchQuery);
-      }).toList();
-      
-      return filteredUsers;
+      );
+
+      if (response.data != null && response.data!['success'] == true) {
+        // 后端直接返回数组，所以data就是用户数组
+        final List<dynamic> usersData = response.data!['data'] ?? [];
+        return usersData.cast<Map<String, dynamic>>();
+      } else {
+        return [];
+      }
     } catch (e) {
+      print('[PermissionManagementProvider] searchUsers error: $e');
+      return [];
+    }
+  }
+
+  /// 获取所有用户列表（用于初始显示）
+  Future<List<Map<String, dynamic>>> getAllUsers({int page = 1, int limit = 50}) async {
+    try {
+      // 使用专门的用户列表API
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/admin/user-permissions/users',
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+        },
+      );
+
+      if (response.data != null && response.data!['success'] == true) {
+        // 修正数据解析：后端返回的是 { data: { users: [...] } }
+        final Map<String, dynamic> responseData = response.data!['data'] ?? {};
+        final List<dynamic> usersData = responseData['users'] ?? [];
+        return usersData.cast<Map<String, dynamic>>();
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print('[PermissionManagementProvider] getAllUsers error: $e');
       return [];
     }
   }
@@ -351,13 +323,26 @@ class PermissionManagementNotifier extends StateNotifier<PermissionManagementSta
       if (userId != null) queryParams['userId'] = userId;
 
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '/api/admin/permissions/history',
+        '/admin/user-permissions/history',
         queryParameters: queryParams,
       );
 
       if (response.data != null && response.data!['success'] == true) {
-        final List<dynamic> historyData = response.data!['data'] ?? [];
-        return historyData.cast<Map<String, dynamic>>();
+        final Map<String, dynamic> data = response.data!['data'] ?? {};
+        final List<dynamic> historyData = data['history'] ?? [];
+        
+        // 处理历史记录数据，提取需要的字段
+        return historyData.map((record) {
+          final Map<String, dynamic> historyRecord = record as Map<String, dynamic>;
+          return {
+            'action': historyRecord['action'],
+            'permission': historyRecord['permissionType'],
+            'userName': historyRecord['userId']?['nickname'] ?? '未知用户',
+            'operatorName': historyRecord['operatorId']?['nickname'] ?? '未知操作员',
+            'reason': historyRecord['reason'] ?? '',
+            'createdAt': historyRecord['createdAt'],
+          };
+        }).toList();
       } else {
         throw Exception(response.data?['message'] ?? '获取历史记录失败');
       }
@@ -382,7 +367,18 @@ class PermissionManagementNotifier extends StateNotifier<PermissionManagementSta
       if (user.permissions.contains('nutritionist')) {
         nutritionistCount++;
       }
-      if (user.createdAt.isAfter(startOfMonth)) {
+      
+      // 检查是否有本月新授权的权限
+      bool hasNewPermissionThisMonth = false;
+      
+      for (final detail in user.permissionDetails) {
+        if (detail.grantedAt.isAfter(startOfMonth)) {
+          hasNewPermissionThisMonth = true;
+          break;
+        }
+      }
+      
+      if (hasNewPermissionThisMonth) {
         monthlyNewCount++;
       }
     }

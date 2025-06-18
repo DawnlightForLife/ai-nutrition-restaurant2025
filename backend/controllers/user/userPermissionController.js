@@ -1,5 +1,5 @@
 const userPermissionService = require('../../services/user/userPermissionService');
-const { responseHelper } = require('../../utils');
+const responseHelper = require('../../utils/responseHelper');
 
 /**
  * 用户权限管理控制器
@@ -46,12 +46,16 @@ class UserPermissionController {
    */
   async getUserPermissions(req, res) {
     try {
+      console.log('[UserPermissionController] 开始获取用户权限，用户ID:', req.user.id);
       const userId = req.user.id;
       
       const permissions = await userPermissionService.getUserPermissionDetails(userId);
       
-      return responseHelper.success(res, permissions);
+      console.log('[UserPermissionController] 权限查询成功，准备返回响应');
+      
+      return responseHelper.success(res, permissions, '获取用户权限成功');
     } catch (error) {
+      console.error('[UserPermissionController] 获取用户权限失败:', error);
       return responseHelper.error(res, error.message, 500);
     }
   }

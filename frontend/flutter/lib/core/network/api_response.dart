@@ -35,11 +35,11 @@ class ApiResponse<T> {
     T Function(dynamic) fromJsonT,
   ) {
     return ApiResponse(
-      success: json['success'] ?? false,
+      success: (json['success'] as bool?) ?? false,
       data: json['data'] != null ? fromJsonT(json['data']) : null,
-      message: json['message'],
-      error: json['error'],
-      code: json['code'],
+      message: json['message'] as String?,
+      error: json['error'] as String?,
+      code: json['code'] as int?,
     );
   }
 

@@ -24,16 +24,49 @@ class _UserSearchDialogState extends ConsumerState<UserSearchDialog> {
   String? _selectedUserId;
 
   @override
+  void initState() {
+    super.initState();
+    // 初始化时加载所有用户
+    _loadAllUsers();
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
 
+  Future<void> _loadAllUsers() async {
+    setState(() {
+      _isSearching = true;
+    });
+
+    try {
+      final results = await ref
+          .read(permissionManagementProvider.notifier)
+          .getAllUsers();
+      
+      // 过滤掉已有相应权限的用户
+      final filteredResults = results.where((user) {
+        final permissions = _extractPermissions(user);
+        return !permissions.contains(widget.permissionType);
+      }).toList();
+
+      setState(() {
+        _searchResults = filteredResults;
+        _isSearching = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isSearching = false;
+      });
+    }
+  }
+
   Future<void> _performSearch(String query) async {
     if (query.isEmpty) {
-      setState(() {
-        _searchResults = [];
-      });
+      // 如果搜索框为空，重新加载所有用户
+      _loadAllUsers();
       return;
     }
 
@@ -136,9 +169,8 @@ class _UserSearchDialogState extends ConsumerState<UserSearchDialog> {
                 ),
               ),
               onChanged: (value) {
-                if (value.length >= 3) {
-                  _performSearch(value);
-                }
+                // 输入内容变化时立即搜索，不再限制最小长度
+                _performSearch(value);
               },
             ),
             const SizedBox(height: 16),
@@ -149,11 +181,9 @@ class _UserSearchDialogState extends ConsumerState<UserSearchDialog> {
               child: _searchResults.isEmpty
                   ? Center(
                       child: Text(
-                        _searchController.text.isEmpty
-                            ? '请输入关键词搜索用户'
-                            : _isSearching
-                                ? '搜索中...'
-                                : '未找到符合条件的用户',
+                        _isSearching
+                            ? '加载中...'
+                            : '未找到符合条件的用户',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurface.withOpacity(0.6),
                         ),

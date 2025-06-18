@@ -7,11 +7,15 @@ import '../../domain/entities/workspace.dart';
 class WorkspaceSwitcher extends ConsumerWidget {
   final bool showAsBottomSheet;
   final VoidCallback? onWorkspaceChanged;
+  final bool showCompact; // 新增：紧凑模式
+  final bool showDropdownStyle; // 新增：下拉菜单样式
 
   const WorkspaceSwitcher({
     super.key,
     this.showAsBottomSheet = true,
     this.onWorkspaceChanged,
+    this.showCompact = false,
+    this.showDropdownStyle = false,
   });
 
   @override
@@ -27,6 +31,14 @@ class WorkspaceSwitcher extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
+    if (showDropdownStyle) {
+      return _buildDropdownButton(context, ref, workspaceState, isSwitching);
+    }
+    
+    if (showCompact) {
+      return _buildCompactButton(context, ref, workspaceState, isSwitching);
+    }
+    
     return IconButton(
       onPressed: isSwitching ? null : () => _showWorkspaceSwitcher(context, ref),
       icon: const Icon(Icons.swap_horiz),
@@ -53,6 +65,258 @@ class WorkspaceSwitcher extends ConsumerWidget {
           onWorkspaceChanged: onWorkspaceChanged,
         ),
       );
+    }
+  }
+  
+  /// 构建下拉按钮样式
+  Widget _buildDropdownButton(BuildContext context, WidgetRef ref, WorkspaceState workspaceState, bool isSwitching) {
+    final currentWorkspace = workspaceState.availableWorkspaces.firstWhere(
+      (w) => w.type == workspaceState.currentWorkspace,
+      orElse: () => const Workspace(
+        type: WorkspaceType.user,
+        title: '用户工作台',
+        description: '浏览菜品、营养咨询、健康管理',
+        iconPath: 'person',
+      ),
+    );
+    
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
+      ),
+      child: DropdownButton<WorkspaceType>(
+        value: workspaceState.currentWorkspace,
+        underline: const SizedBox.shrink(),
+        borderRadius: BorderRadius.circular(8),
+        icon: isSwitching 
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.keyboard_arrow_down),
+        selectedItemBuilder: (context) => workspaceState.availableWorkspaces.map((workspace) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _getIconData(workspace.iconPath),
+                  size: 18,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  workspace.title,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+        items: workspaceState.availableWorkspaces
+            .where((w) => w.isAvailable)
+            .map((workspace) => DropdownMenuItem<WorkspaceType>(
+                  value: workspace.type,
+                  child: Row(
+                    children: [
+                      Icon(
+                        _getIconData(workspace.iconPath),
+                        size: 20,
+                        color: workspace.type == workspaceState.currentWorkspace
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              workspace.title,
+                              style: TextStyle(
+                                fontWeight: workspace.type == workspaceState.currentWorkspace
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                                color: workspace.type == workspaceState.currentWorkspace
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null,
+                              ),
+                            ),
+                            Text(
+                              workspace.description,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (workspace.type == workspaceState.currentWorkspace)
+                        Icon(
+                          Icons.check,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                    ],
+                  ),
+                ))
+            .toList(),
+        onChanged: isSwitching ? null : (WorkspaceType? newWorkspace) {
+          if (newWorkspace != null && newWorkspace != workspaceState.currentWorkspace) {
+            _switchWorkspace(context, ref, newWorkspace);
+          }
+        },
+      ),
+    );
+  }
+  
+  /// 构建紧凑按钮样式（身份切换）
+  Widget _buildCompactButton(BuildContext context, WidgetRef ref, WorkspaceState workspaceState, bool isSwitching) {
+    final currentWorkspace = workspaceState.availableWorkspaces.firstWhere(
+      (w) => w.type == workspaceState.currentWorkspace,
+      orElse: () => const Workspace(
+        type: WorkspaceType.user,
+        title: '用户',
+        description: '浏览菜品、营养咨询、健康管理',
+        iconPath: 'person',
+      ),
+    );
+    
+    // 简化标题显示
+    String displayName;
+    switch (currentWorkspace.type) {
+      case WorkspaceType.merchant:
+        displayName = '商家';
+        break;
+      case WorkspaceType.nutritionist:
+        displayName = '营养师';
+        break;
+      default:
+        displayName = '用户';
+    }
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: isSwitching ? null : () => _showWorkspaceSwitcher(context, ref),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _getIconData(currentWorkspace.iconPath),
+                  size: 14,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  displayName,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                if (isSwitching)
+                  const SizedBox(
+                    width: 10,
+                    height: 10,
+                    child: CircularProgressIndicator(strokeWidth: 1),
+                  )
+                else
+                  Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 12,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  /// 切换工作台（用于下拉菜单）
+  Future<void> _switchWorkspace(
+    BuildContext context,
+    WidgetRef ref,
+    WorkspaceType workspaceType,
+  ) async {
+    try {
+      await ref.read(workspaceSwitchProvider.notifier).switchTo(workspaceType);
+      
+      if (context.mounted) {
+        onWorkspaceChanged?.call();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  color: Theme.of(context).colorScheme.onInverseSurface,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text('已切换到${workspaceType.displayName}'),
+              ],
+            ),
+            backgroundColor: Theme.of(context).colorScheme.inverseSurface,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  Icons.error,
+                  color: Theme.of(context).colorScheme.onError,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: Text('切换失败: $error')),
+              ],
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+  
+  IconData _getIconData(String iconPath) {
+    switch (iconPath) {
+      case 'person':
+        return Icons.person;
+      case 'store':
+        return Icons.store;
+      case 'local_hospital':
+        return Icons.local_hospital;
+      default:
+        return Icons.dashboard;
     }
   }
 }
@@ -266,7 +530,18 @@ class WorkspaceSwitcherSheet extends ConsumerWidget {
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('已切换到${workspaceType.displayName}'),
+            content: Row(
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  color: Theme.of(context).colorScheme.onInverseSurface,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text('已切换到${workspaceType.displayName}'),
+              ],
+            ),
+            backgroundColor: Theme.of(context).colorScheme.inverseSurface,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -275,8 +550,19 @@ class WorkspaceSwitcherSheet extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('切换失败: $error'),
-            backgroundColor: Colors.red,
+            content: Row(
+              children: [
+                Icon(
+                  Icons.error,
+                  color: Theme.of(context).colorScheme.onError,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: Text('切换失败: $error')),
+              ],
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 3),
           ),
         );
       }

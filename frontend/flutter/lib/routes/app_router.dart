@@ -31,6 +31,15 @@ import '../features/user/presentation/pages/change_password_page.dart';
 import '../features/nutrition/presentation/pages/nutrition_profile_list_page.dart';
 import '../features/nutrition/presentation/pages/nutrition_profile_detail_page.dart';
 import '../features/nutrition/presentation/pages/nutrition_profile_management_page.dart';
+import '../features/nutrition/presentation/pages/nutrition_needs_analysis_page.dart';
+import '../features/nutrition/presentation/pages/nutrition_element_selection_page.dart';
+import '../features/nutrition/presentation/pages/ingredient_selection_page.dart';
+import '../features/merchant/presentation/pages/merchant_inventory_dashboard_page.dart';
+import '../features/merchant/presentation/pages/ingredient_inventory_page.dart';
+import '../features/cart/presentation/pages/nutrition_cart_page.dart';
+import '../features/cart/presentation/pages/shopping_cart_page.dart';
+import '../features/cart/presentation/pages/checkout_page.dart';
+import '../features/cart/presentation/pages/order_success_page.dart';
 import '../features/user/presentation/pages/profile_edit_page.dart';
 // TODO: 导入其他页面
 
@@ -80,6 +89,15 @@ class AppRouter {
       case RouteNames.cart:
         return _buildRoute(const CartPage(), settings);
 
+      case '/shopping-cart':
+        return _buildRoute(const ShoppingCartPage(), settings);
+
+      case '/checkout':
+        return _buildRoute(const CheckoutPage(), settings);
+
+      case '/order-success':
+        return _buildRoute(const OrderSuccessPage(), settings);
+
       // 营养档案相关
       case RouteNames.nutritionProfileList:
         return _buildRoute(const NutritionProfileListPage(), settings);
@@ -107,6 +125,105 @@ class AppRouter {
         
       case RouteNames.aiResult:
         return _buildRoute(const PlaceholderPage(title: '推荐结果'), settings);
+
+      // 营养订餐相关路由
+      case '/nutrition/ordering/needs-analysis':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          NutritionNeedsAnalysisPage(
+            profileId: args?['profileId'],
+          ),
+          settings,
+        );
+
+      case '/nutrition/ordering/element-selection':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          NutritionElementSelectionPage(
+            profileId: args?['profileId'] ?? '',
+          ),
+          settings,
+        );
+
+      case '/nutrition/ordering/ingredient-selection':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          IngredientSelectionPage(
+            profileId: args?['profileId'] ?? '',
+            customTargets: args?['customTargets'],
+          ),
+          settings,
+        );
+
+      case '/nutrition/ordering/cart':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          NutritionCartPage(
+            userId: args?['userId'] ?? 'current_user',
+          ),
+          settings,
+        );
+
+      // 商家库存管理路由
+      case '/merchant/inventory/dashboard':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          MerchantInventoryDashboardPage(
+            merchantId: args?['merchantId'] ?? '',
+          ),
+          settings,
+        );
+
+      case '/merchant/inventory/ingredients':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          IngredientInventoryPage(
+            merchantId: args?['merchantId'] ?? '',
+          ),
+          settings,
+        );
+
+      case '/merchant/inventory/dishes':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          const PlaceholderPage(title: '营养菜品管理'),
+          settings,
+        );
+
+      case '/merchant/inventory/alerts':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          const PlaceholderPage(title: '库存预警'),
+          settings,
+        );
+
+      case '/merchant/inventory/restock-suggestions':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          const PlaceholderPage(title: '补货建议'),
+          settings,
+        );
+
+      case '/merchant/inventory/nutrition-analysis':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          const PlaceholderPage(title: '营养分析'),
+          settings,
+        );
+
+      case '/merchant/inventory/ingredient-details':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          const PlaceholderPage(title: '食材详情'),
+          settings,
+        );
+
+      case '/merchant/inventory/add-ingredient':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          const PlaceholderPage(title: '添加食材'),
+          settings,
+        );
 
       // 设置相关页面
       case RouteNames.settings:

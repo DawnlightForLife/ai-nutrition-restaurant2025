@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createOrder, getOrderList, getOrderById, updateOrder, deleteOrder } = require('../../controllers/order/orderController');
+const { createOrder, getOrderList, getOrderById, updateOrder, cancelOrder } = require('../../controllers/order/orderController');
 
 /**
  * 订单管理路由
@@ -20,7 +20,7 @@ router.get('/:id', getOrderById);
 // [PUT] 更新订单
 router.put('/:id', updateOrder);
 
-// [DELETE] 删除订单
-router.delete('/:id', deleteOrder);
+// [DELETE] 取消订单
+router.delete('/:id', cancelOrder);
 
 module.exports = router;

@@ -5,7 +5,10 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../merchant/presentation/pages/merchant_application_improved_page.dart';
 import '../../../merchant/presentation/pages/merchant_application_status_page.dart';
 import '../../../merchant/presentation/pages/merchant_application_edit_page.dart';
+import '../../../merchant/presentation/pages/dashboard_page.dart';
+import '../../../merchant/presentation/pages/merchant_inventory_dashboard_page.dart';
 import '../../../merchant/presentation/providers/merchant_application_provider.dart';
+import '../../../order/presentation/pages/order_list_page.dart';
 import '../../../system/presentation/providers/system_config_provider.dart';
 import '../../../system/domain/entities/system_config.dart';
 import '../../../certification/presentation/pages/contact_certification_page.dart';
@@ -82,29 +85,6 @@ class _UserProfilePlaceholderState extends ConsumerState<UserProfilePlaceholder>
           // 用户信息卡片
           _buildUserProfileCard(context, authState, theme),
           
-          // 工作台指示器
-          Consumer(
-            builder: (context, ref, child) {
-              final hasMultipleWorkspaces = ref.watch(hasMultipleWorkspacesProvider);
-              if (!hasMultipleWorkspaces) {
-                return const SizedBox.shrink();
-              }
-              
-              return Container(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    const Icon(Icons.dashboard, size: 16),
-                    const SizedBox(width: 8),
-                    const Text('当前工作台：'),
-                    const SizedBox(width: 8),
-                    const WorkspaceIndicator(),
-                  ],
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 16),
           
           // 核心功能分组
           _buildFunctionSection(context, '我的健康', [
@@ -270,11 +250,13 @@ class _UserProfilePlaceholderState extends ConsumerState<UserProfilePlaceholder>
                                   color: Colors.grey[600],
                                 ),
                                 const SizedBox(width: 4),
-                                Text(
-                                  '点击编辑个人信息',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
+                                Flexible(
+                                  child: Text(
+                                    '点击编辑个人信息',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
                                   ),
                                 ),
                               ],
@@ -283,16 +265,24 @@ class _UserProfilePlaceholderState extends ConsumerState<UserProfilePlaceholder>
                         ),
                       ),
                       
-                      // 工作台切换器
+                      // 身份切换按钮（紧凑型）
                       Consumer(
                         builder: (context, ref, child) {
                           final hasMultipleWorkspaces = ref.watch(hasMultipleWorkspacesProvider);
                           if (!hasMultipleWorkspaces) {
                             return const SizedBox.shrink();
                           }
-                          return const WorkspaceSwitcher();
+                          return Container(
+                            margin: const EdgeInsets.only(left: 8),
+                            child: const WorkspaceSwitcher(
+                              showCompact: true,
+                              showAsBottomSheet: true,
+                            ),
+                          );
                         },
                       ),
+                      
+                      const SizedBox(width: 8),
                       
                       // 箭头指示器
                       Icon(
@@ -427,14 +417,35 @@ class _UserProfilePlaceholderState extends ConsumerState<UserProfilePlaceholder>
     final nutritionistPermissions = ref.watch(currentUserHasNutritionistPermissionProvider);
     final items = <_MenuItemData>[];
     
+    // 权限状态检查完成
+    
     // 如果配置还在加载中，返回空列表
     if (certConfig.isLoading) {
       return items;
     }
     
-    // 根据当前工作台显示不同的功能
+    // 工作台入口（有权限的用户永久显示）
+    if (userPermissions) {
+      items.add(_MenuItemData(
+        icon: Icons.store,
+        title: '商家管理系统',
+        subtitle: '店铺管理、菜品管理、订单管理',
+        onTap: () => _handleMerchantWorkspace(context),
+      ));
+    }
+    
+    if (nutritionistPermissions) {
+      items.add(_MenuItemData(
+        icon: Icons.medical_services,
+        title: '营养师工作台',
+        subtitle: '营养咨询、方案定制、客户管理',
+        onTap: () => _handleNutritionistWorkspace(context),
+      ));
+    }
+    
+    // 认证入口（只在用户工作台且无权限时显示）
     if (currentWorkspace == WorkspaceType.user) {
-      // 营养师认证
+      // 营养师认证（仅当没有权限且系统配置启用时显示）
       if (certConfig.nutritionistEnabled && !nutritionistPermissions) {
         items.add(_MenuItemData(
           icon: Icons.medical_services_outlined,
@@ -446,7 +457,7 @@ class _UserProfilePlaceholderState extends ConsumerState<UserProfilePlaceholder>
         ));
       }
       
-      // 商家认证
+      // 商家认证（仅当没有权限且系统配置启用时显示）
       if (certConfig.merchantEnabled && !userPermissions) {
         final merchantStatus = _getMerchantStatusInfo(merchantAppState, certConfig.merchantMode);
         if (merchantStatus != null) {
@@ -759,22 +770,28 @@ class _UserProfilePlaceholderState extends ConsumerState<UserProfilePlaceholder>
   
   /// 处理商家管理
   void _handleMerchantManagement(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('商家管理功能开发中...')),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const MerchantDashboardPage(),
+      ),
     );
   }
   
   /// 处理菜品管理
   void _handleDishManagement(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('菜品管理功能开发中...')),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const MerchantInventoryDashboardPage(merchantId: 'current_merchant'),
+      ),
     );
   }
   
   /// 处理订单管理
   void _handleOrderManagement(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('订单管理功能开发中...')),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const UorderListPage(),
+      ),
     );
   }
   
@@ -796,6 +813,34 @@ class _UserProfilePlaceholderState extends ConsumerState<UserProfilePlaceholder>
   void _handleClientManagement(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('客户管理功能开发中...')),
+    );
+  }
+  
+  /// 处理商家工作台切换
+  void _handleMerchantWorkspace(BuildContext context) {
+    // 切换到商家工作台
+    ref.read(workspaceProvider.notifier).switchWorkspace(WorkspaceType.merchant);
+    
+    // 显示提示
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('已切换到商家工作台'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+  
+  /// 处理营养师工作台切换
+  void _handleNutritionistWorkspace(BuildContext context) {
+    // 切换到营养师工作台
+    ref.read(workspaceProvider.notifier).switchWorkspace(WorkspaceType.nutritionist);
+    
+    // 显示提示
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('已切换到营养师工作台'),
+        duration: Duration(seconds: 2),
+      ),
     );
   }
   

@@ -14,10 +14,10 @@ class AppConstants {
         return 'http://10.0.2.2:8080/api';
       } else if (Platform.isIOS) {
         // iOS 模拟器可以使用 localhost
-        return 'http://localhost:3000/api';
+        return 'http://localhost:8080/api';
       } else {
         // macOS 或其他平台
-        return 'http://localhost:3000/api';
+        return 'http://localhost:8080/api';
       }
     }
   }
@@ -27,9 +27,9 @@ class AppConstants {
     if (Platform.isAndroid) {
       return 'http://10.0.2.2:8080';
     } else if (Platform.isIOS) {
-      return 'http://localhost:3000';
+      return 'http://localhost:8080';
     } else {
-      return 'http://localhost:3000';
+      return 'http://localhost:8080';
     }
   }
   

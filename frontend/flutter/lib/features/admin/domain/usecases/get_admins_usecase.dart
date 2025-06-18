@@ -1,6 +1,4 @@
-import 'package:dartz/dartz.dart';
 import '../../../../core/base/use_case.dart';
-import 'package:ai_nutrition_restaurant/core/failures/failures.dart';
 import '../entities/admin.dart';
 import '../repositories/admin_repository.dart';
 
@@ -11,7 +9,7 @@ class GetUadminsUseCase implements UseCase<List<Uadmin>, NoParams> {
   GetUadminsUseCase(this.repository);
 
   @override
-  Future<Either<Failure, List<Uadmin>>> call(NoParams params) async {
+  Future<List<Uadmin>> call(NoParams params) async {
     return await repository.getUadmins();
   }
 }

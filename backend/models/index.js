@@ -42,6 +42,11 @@ const NutritionistCertification = require('../models/nutrition/nutritionistCerti
 const UserPermission = require('../models/user/userPermissionModel');
 const PermissionHistory = require('../models/admin/permissionHistoryModel');
 
+// 营养元素系统v2 - 新增模型
+const { NutritionElement } = require('../models/nutrition/nutritionElementModel');
+const { IngredientNutrition } = require('../models/nutrition/ingredientNutritionModel');
+const { CookingMethod } = require('../models/nutrition/cookingMethodModel');
+
 const models = {
   core: {
     User,
@@ -61,7 +66,11 @@ const models = {
     Nutritionist,
     AiRecommendation,
     UserFavorite,
-    NutritionistCertification
+    NutritionistCertification,
+    // 营养元素系统v2
+    NutritionElement,
+    IngredientNutrition,
+    CookingMethod
   },
   merchant: {
     Merchant,
@@ -252,7 +261,11 @@ const createIndexes = async () => {
       FileUpload.createIndexes(),
       Session.createIndexes(),
       UserPermission.createIndexes(),
-      PermissionHistory.createIndexes()
+      PermissionHistory.createIndexes(),
+      // 营养元素系统v2索引
+      NutritionElement.createIndexes(),
+      IngredientNutrition.createIndexes(),
+      CookingMethod.createIndexes()
     ]);
     console.log('所有数据库索引创建完成');
   } catch (error) {

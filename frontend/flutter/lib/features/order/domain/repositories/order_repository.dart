@@ -1,12 +1,10 @@
-import 'package:dartz/dartz.dart';
-import 'package:ai_nutrition_restaurant/core/failures/failures.dart';
 import '../entities/order.dart';
 
 /// Uorder 仓储接口
 abstract class UorderRepository {
-  Future<Either<Failure, List<Uorder>>> getUorders();
-  Future<Either<Failure, Uorder>> getUorder(String id);
-  Future<Either<Failure, Uorder>> createUorder(Uorder order);
-  Future<Either<Failure, Uorder>> updateUorder(Uorder order);
-  Future<Either<Failure, Unit>> deleteUorder(String id);
+  Future<List<Uorder>> getUorders();
+  Future<Uorder?> getUorder(String id);
+  Future<Uorder> createUorder(Uorder order);
+  Future<Uorder> updateUorder(Uorder order);
+  Future<void> deleteUorder(String id);
 }

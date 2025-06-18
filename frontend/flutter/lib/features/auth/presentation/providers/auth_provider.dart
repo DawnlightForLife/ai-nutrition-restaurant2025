@@ -4,6 +4,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../data/services/auth_service.dart';
 import '../../data/models/auth_state.dart';
 import '../../../main/presentation/providers/navigation_provider.dart';
+import '../../../permission/presentation/providers/user_permission_provider.dart';
+import '../../../workspace/presentation/providers/workspace_provider.dart';
 
 /// 安全存储Provider
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
@@ -141,6 +143,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       // 登录成功后重置导航状态到首页
       _resetNavigationToHome();
       
+      // 刷新用户权限和工作台状态
+      _refreshUserDependencies();
+      
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -176,6 +181,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       
       // 登录成功后重置导航状态到首页
       _resetNavigationToHome();
+      
+      // 刷新用户权限和工作台状态
+      _refreshUserDependencies();
       
       return true;
     } catch (e) {
@@ -235,6 +243,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         user: userInfo,
       );
       
+      // 刷新用户权限和工作台状态
+      _refreshUserDependencies();
+      
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -270,6 +281,25 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       _ref.read(navigationProvider.notifier).toHome();
     } catch (e) {
       print('重置导航状态失败: $e');
+    }
+  }
+  
+  /// 刷新用户相关依赖状态
+  void _refreshUserDependencies() {
+    try {
+      // 刷新用户权限状态
+      _ref.invalidate(userPermissionsProvider);
+      _ref.invalidate(hasMerchantPermissionProvider);
+      _ref.invalidate(hasNutritionistPermissionProvider);
+      _ref.invalidate(currentUserHasMerchantPermissionProvider);
+      _ref.invalidate(currentUserHasNutritionistPermissionProvider);
+      
+      // 刷新工作台状态
+      _ref.read(workspaceProvider.notifier).refreshWorkspaces();
+      
+      print('✅ 已刷新用户权限和工作台状态');
+    } catch (e) {
+      print('刷新用户依赖状态失败: $e');
     }
   }
 }

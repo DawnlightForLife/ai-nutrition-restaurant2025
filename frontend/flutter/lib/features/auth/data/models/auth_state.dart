@@ -41,6 +41,7 @@ class UserInfo {
   final String? role;
   final bool needCompleteProfile;
   final DateTime createdAt;
+  final List<String>? permissions; // 用户权限列表
   
   const UserInfo({
     required this.id,
@@ -51,6 +52,7 @@ class UserInfo {
     this.role,
     this.needCompleteProfile = false,
     required this.createdAt,
+    this.permissions,
   });
   
   factory UserInfo.fromJson(Map<String, dynamic> json) {
@@ -65,6 +67,9 @@ class UserInfo {
       createdAt: json['createdAt'] != null 
         ? DateTime.parse(json['createdAt']) 
         : DateTime.now(),
+      permissions: json['permissions'] != null 
+        ? List<String>.from(json['permissions'])
+        : null,
     );
   }
   
@@ -78,6 +83,7 @@ class UserInfo {
       'role': role,
       'isProfileCompleted': !needCompleteProfile,
       'createdAt': createdAt.toIso8601String(),
+      'permissions': permissions,
     };
   }
   

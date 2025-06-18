@@ -31,7 +31,7 @@ const userPermissionSchema = new mongoose.Schema({
   // 授权信息
   grantedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Admin'
+    ref: 'User'
   },
   
   grantedAt: {
@@ -66,7 +66,7 @@ const userPermissionSchema = new mongoose.Schema({
     // 审核人
     reviewedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Admin'
+      ref: 'User'
     }
   },
   

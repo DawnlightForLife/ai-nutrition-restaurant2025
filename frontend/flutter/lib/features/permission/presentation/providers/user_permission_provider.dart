@@ -5,9 +5,14 @@ import '../../data/services/user_permission_service.dart';
 // ========== 用户权限状态管理 ==========
 
 /// 当前用户权限状态
-final userPermissionsProvider = FutureProvider<List<UserPermissionModel>>((ref) async {
+final userPermissionsProvider = FutureProvider.autoDispose<List<UserPermissionModel>>((ref) async {
   final service = ref.read(userPermissionServiceProvider);
   return await service.getUserPermissions();
+});
+
+/// 刷新用户权限状态
+final refreshUserPermissionsProvider = Provider<void Function()>((ref) {
+  return () => ref.invalidate(userPermissionsProvider);
 });
 
 /// 商家权限检查

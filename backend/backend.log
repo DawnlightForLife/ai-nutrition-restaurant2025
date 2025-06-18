@@ -1,0 +1,164 @@
+
+> smart-nutrition-restaurant-backend@1.0.0 start
+> node server.js
+
+等待数据库连接完成...
+Mongoose默认连接已打开
+数据库连接已就绪
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 User 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 模型 User 注册成功
+2025-06-18 16:49:47 [[32MINFO[39M]: 模型 User 是构造函数，可以使用new User()
+User模型类型: function
+User模型已成功导出为构造函数
+User模型被其他模块引用，确保导出正确类型
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 UserRole 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 Admin 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 Nutritionist 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 Merchant 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 模型 Merchant 注册成功
+2025-06-18 16:49:47 [[32MINFO[39M]: 模型 Merchant 是构造函数，可以使用new Merchant()
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 Dish 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 Order 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 AiRecommendation 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 Subscription 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 AuditLog 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 使用内存缓存模式，未配置Redis
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 DataAccessControl 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 ForumPost 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 ForumComment 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 ForumTag 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 Consultation 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 MerchantStats 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 模型 MerchantStats 注册成功
+2025-06-18 16:49:47 [[32MINFO[39M]: 模型 MerchantStats 是构造函数，可以使用new MerchantStats()
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 StoreDish 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 Store 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 UserFavorite 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 DbMetrics 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 模型 DbMetrics 注册成功
+2025-06-18 16:49:47 [[32MINFO[39M]: 模型 DbMetrics 是构造函数，可以使用new DbMetrics()
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 Notification 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 OAuthAccount 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 UsageLog 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 UserNotificationStatus 的类型: function
+2025-06-18 16:49:47 [[32MINFO[39M]: 创建模型 ExportTask 的类型: function
+2025-06-18 16:49:48 [[32MINFO[39M]: 创建模型 FileUpload 的类型: function
+2025-06-18 16:49:48 [[32MINFO[39M]: 创建模型 Session 的类型: function
+2025-06-18 16:49:48 [[32MINFO[39M]: 创建模型 UserPermission 的类型: function
+2025-06-18 16:49:48 [[32MINFO[39M]: 创建模型 PermissionHistory 的类型: function
+2025-06-18 16:49:48 [[32MINFO[39M]: 模型工厂已启用缓存
+(node:84890) [MONGOOSE] Warning: `collection` is a reserved schema pathname and may break some functionality. You are allowed to use it, but use at your own risk. To disable this warning pass `suppressReservedKeysWarning` as a schema option.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:84890) [MONGOOSE] Warning: `collection` is a reserved schema pathname and may break some functionality. You are allowed to use it, but use at your own risk. To disable this warning pass `suppressReservedKeysWarning` as a schema option.
+2025-06-18 16:49:48 [[32MINFO[39M]: 创建模型 SystemConfig 的类型: function
+2025-06-18 16:49:48 [[32MINFO[39M]: 告警系统监控已启动
+2025-06-18 16:49:48 [[32MINFO[39M]: 实时告警系统已初始化
+🔒 权限缓存服务已初始化
+🔥 开始预热权限缓存...
+🔒 角色权限已缓存: customer, 权限数量: 7
+🔒 角色权限已缓存: store_manager, 权限数量: 17
+🔒 角色权限已缓存: store_staff, 权限数量: 9
+🔒 角色权限已缓存: nutritionist, 权限数量: 10
+🔥 权限缓存预热完成，已缓存 4 个角色
+2025-06-18 16:49:48 [[32MINFO[39M]: 创建模型 DietaryPreference 的类型: function
+2025-06-18 16:49:48 [[32MINFO[39M]: 模型 DietaryPreference 注册成功
+2025-06-18 16:49:48 [[32MINFO[39M]: 模型 DietaryPreference 是构造函数，可以使用new DietaryPreference()
+2025-06-18 16:49:48 [[32MINFO[39M]: 创建模型 NutritionPlan 的类型: function
+2025-06-18 16:49:48 [[32MINFO[39M]: 连接池自动扩缩功能已启用，检查间隔： {"0":"秒"}
+2025-06-18 16:49:48 [[32MINFO[39M]: 异步连接池管理器已创建
+2025-06-18 16:49:48 [[32MINFO[39M]: 读取一致性服务已初始化，默认级别： {"0":"S","1":"E","2":"S","3":"S","4":"I","5":"O","6":"N"}
+2025-06-18 16:49:48 [[32MINFO[39M]: 分布式事务服务已初始化，但未启用
+2025-06-18 16:49:48 [[32MINFO[39M]: 请求重试服务已初始化
+Hook registered for event: nutritionist.certification.submitted
+Hook registered for event: nutritionist.certification.reviewed
+Hook registered for event: nutritionist.certification.expired
+2025-06-18 16:49:48 [[32MINFO[39M]: Handlebars模板引擎加载成功
+2025-06-18 16:49:48 [[32MINFO[39M]: SchemaJsonConverter服务已初始化 {"service":"SchemaJsonConverter"}
+2025-06-18 16:49:48 [[32MINFO[39M]: 动态模型加载服务已创建 {"service":"DynamicModelLoader","enableSandbox":true,"enableGrayRelease":false,"grayReleasePercentage":10,"nodeId":"node-9608","nodeGroup":"default"}
+2025-06-18 16:49:48 [[32MINFO[39M]: 正在初始化动态模型加载服务... {"service":"DynamicModelLoader"}
+2025-06-18 16:49:48 [[32MINFO[39M]: 已初始化 47 个现有模型 {"service":"DynamicModelLoader"}
+2025-06-18 16:49:48 [[32MINFO[39M]: 已设置模型文件监视器，监视目录: ./models {"service":"DynamicModelLoader"}
+2025-06-18 16:49:48 [[32MINFO[39M]: 动态模型加载服务初始化完成 {"service":"DynamicModelLoader"}
+缓存服务已初始化
+分片服务已初始化
+2025-06-18 16:49:48 [[32MINFO[39M]: 动态模型加载服务已成功初始化
+数据分片服务已初始化
+2025-06-18 16:49:48 [[32MINFO[39M]: 使用单一数据库连接
+数据库连接池已初始化
+2025-06-18 16:49:48 [[32MINFO[39M]: 初始化数据库优化管理器...
+2025-06-18 16:49:48 [[32MINFO[39M]: 缓存服务已初始化
+2025-06-18 16:49:48 [[32MINFO[39M]: 数据库优化管理器初始化完成
+2025-06-18 16:49:48 [[32MINFO[39M]: 开始数据库优化服务健康检查...
+2025-06-18 16:49:48 [[32MINFO[39M]: 数据库优化服务健康检查完成
+数据库优化服务已初始化
+2025-06-18 16:49:48 [[32MINFO[39M]: 创建断路器: db-operations
+🔄 正在初始化定时任务...
+📝 已注册定时任务: cleanupExpiredData, 执行计划: 0 3 * * *
+📝 已注册定时任务: updateCache, 执行计划: 0 * * * *
+📝 已注册定时任务: dbStats, 执行计划: 0 2 * * *
+▶️ 已启动定时任务: cleanupExpiredData
+▶️ 已启动定时任务: updateCache
+▶️ 已启动定时任务: dbStats
+✅ 已初始化 3 个定时任务
+定时任务系统已初始化
+所有服务初始化完成
+服务器在端口 8080 上运行 (监听所有接口)
+2025-06-18 16:49:48 [[32MINFO[39M]: Redis连接成功
+2025-06-18 16:50:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+获取订单列表失败: TypeError: Cannot read properties of undefined (reading 'role')
+    at exports.getOrderList (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/controllers/order/orderController.js:165:18)
+    at Layer.handle [as handle_request] (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/express/lib/router/index.js:346:12)
+    at next (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/express/lib/router/index.js:175:3)
+    at router (/Volumes/workSpace/smart_nutrition_restaurant/ai-nutrition-restaurant2025/backend/node_modules/express/lib/router/index.js:47:12)
+2025-06-18 16:51:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 16:52:48 [[31MERROR[39M]: [告警] CPU使用率严重超标: 98.0% {"metric":"cpu","value":0.9800246779271495,"threshold":0.9}
+2025-06-18 16:52:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 16:53:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 16:54:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 16:54:48 [[32MINFO[39M]: 开始数据库优化服务健康检查...
+2025-06-18 16:54:48 [[32MINFO[39M]: 数据库优化服务健康检查完成
+2025-06-18 16:55:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 16:56:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 16:57:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 16:58:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 16:59:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 16:59:48 [[32MINFO[39M]: 开始数据库优化服务健康检查...
+2025-06-18 16:59:48 [[32MINFO[39M]: 数据库优化服务健康检查完成
+⏰ [2025-06-18T09:00:00.134Z] 执行定时任务: updateCache
+♻️ [2025-06-18T09:00:00.135Z] 开始更新缓存数据...
+✅ [2025-06-18T09:00:00.135Z] 缓存数据更新完成
+✅ [2025-06-18T09:00:00.135Z] 定时任务完成: updateCache, 耗时: 1ms
+2025-06-18 17:00:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 17:01:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 17:02:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 17:03:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 17:04:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 17:04:48 [[32MINFO[39M]: 开始数据库优化服务健康检查...
+2025-06-18 17:04:48 [[32MINFO[39M]: 数据库优化服务健康检查完成
+2025-06-18 17:05:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 17:06:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 17:07:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 17:08:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 17:09:48 [[33MWARN[39M]: [告警] CPU使用率过高: 81.3% {"metric":"cpu","value":0.8133490628871944,"threshold":0.7}
+2025-06-18 17:09:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 17:09:48 [[32MINFO[39M]: 开始数据库优化服务健康检查...
+2025-06-18 17:09:48 [[32MINFO[39M]: 数据库优化服务健康检查完成
+2025-06-18 17:10:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 17:11:48 [[31MERROR[39M]: [告警] CPU使用率严重超标: 95.4% {"metric":"cpu","value":0.9536460814589891,"threshold":0.9}
+2025-06-18 17:11:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 17:12:48 [[33MWARN[39M]: [告警] CPU使用率过高: 74.0% {"metric":"cpu","value":0.7403474554507066,"threshold":0.7}
+2025-06-18 17:12:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+2025-06-18 17:13:48 [[31MERROR[39M]: [告警] CPU使用率严重超标: 92.7% {"metric":"cpu","value":0.927239617705027,"threshold":0.9}
+2025-06-18 17:13:48 [[32MINFO[39M]: 连接池利用率低 (0.00), 缩容到 10
+接收到SIGTERM信号，准备关闭服务...
+正在关闭服务器...
+2025-06-18 17:14:14 [[33MWARN[39M]: 数据库single连接断开
+数据库连接已关闭
+Mongoose连接已关闭
+2025-06-18 17:14:14 [[32MINFO[39M]: 所有数据库连接已关闭

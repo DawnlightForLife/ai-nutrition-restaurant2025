@@ -10,39 +10,52 @@ exports.getAuthorizedUsers = async (req, res) => {
   try {
     const { permissions, page = 1, limit = 20 } = req.query;
     
-    const query = {};
+    const permissionQuery = { status: 'approved' };
     
-    // 如果指定了权限类型，筛选相应用户
+    // 如果指定了权限类型，筛选相应权限
     if (permissions) {
       const permissionArray = permissions.split(',');
-      query.$or = [
-        { role: { $in: permissionArray } },
-        { 'permissions.permissionType': { $in: permissionArray } }
-      ];
-    } else {
-      // 获取所有有权限的用户（不是普通用户）
-      query.$or = [
-        { role: { $in: ['merchant', 'nutritionist', 'admin', 'super_admin'] } },
-        { 'permissions.0': { $exists: true } }
-      ];
+      permissionQuery.permissionType = { $in: permissionArray };
     }
 
     const skip = (page - 1) * limit;
     
-    const users = await User.find(query)
-      .select('nickname phone realName role permissions createdAt lastLogin')
-      .sort({ createdAt: -1 })
+    // 从UserPermission表查询已授权的用户
+    const userPermissions = await UserPermission.find(permissionQuery)
+      .populate('userId', 'nickname phone realName role createdAt lastLogin')
+      .sort({ grantedAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
       .lean();
 
-    const total = await User.countDocuments(query);
+    const total = await UserPermission.countDocuments(permissionQuery);
 
-    // 处理用户权限数据
-    const processedUsers = users.map(user => ({
-      ...user,
-      permissions: _extractUserPermissions(user)
-    }));
+    // 处理用户数据，按用户分组权限
+    const userMap = new Map();
+    
+    userPermissions.forEach(permission => {
+      if (!permission.userId) return; // 跳过用户不存在的权限记录
+      
+      const userId = permission.userId._id || permission.userId.id;
+      if (!userMap.has(userId)) {
+        userMap.set(userId, {
+          ...permission.userId,
+          id: userId,
+          permissions: [],
+          permissionDetails: []
+        });
+      }
+      
+      const user = userMap.get(userId);
+      user.permissions.push(permission.permissionType);
+      user.permissionDetails.push({
+        type: permission.permissionType,
+        grantedAt: permission.grantedAt,
+        grantedBy: permission.grantedBy
+      });
+    });
+
+    const processedUsers = Array.from(userMap.values());
 
     return responseHelper.success(res, {
       users: processedUsers,
@@ -50,13 +63,66 @@ exports.getAuthorizedUsers = async (req, res) => {
         total,
         page: parseInt(page),
         limit: parseInt(limit),
-        hasMore: skip + users.length < total
+        hasMore: skip + userPermissions.length < total
       }
     }, '获取已授权用户成功');
     
   } catch (error) {
     console.error('[UserPermissionController] 获取已授权用户失败:', error);
     return responseHelper.error(res, '获取已授权用户失败');
+  }
+};
+
+/**
+ * 获取所有用户列表（用于授权选择）
+ */
+exports.getAllUsers = async (req, res) => {
+  try {
+    console.log('[UserPermissionController] 开始获取用户列表');
+    const { page = 1, limit = 50 } = req.query;
+    
+    // 检查模型是否正确加载
+    if (!User) {
+      console.error('[UserPermissionController] User 模型未正确加载');
+      return responseHelper.error(res, 'User 模型未正确加载');
+    }
+    
+    // 简化查询，不排除任何角色
+    const query = {};
+    
+    // 计算分页
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    console.log('[UserPermissionController] 执行查询，page:', page, 'limit:', limit, 'skip:', skip);
+    
+    const users = await User.find(query)
+      .select('nickname phone realName role createdAt')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    const total = await User.countDocuments(query);
+    
+    console.log(`[UserPermissionController] 找到 ${users.length} 个用户，总共 ${total} 个`);
+    
+    // 简化处理，暂时不提取复杂的权限
+    const processedUsers = users.map(user => ({
+      ...user,
+      permissions: [] // 暂时简化
+    }));
+
+    return responseHelper.success(res, {
+      users: processedUsers,
+      total: total,
+      page: parseInt(page),
+      limit: parseInt(limit)
+    }, '获取用户列表成功');
+    
+  } catch (error) {
+    console.error('[UserPermissionController] 获取用户列表失败，详细错误:', error.message);
+    console.error('[UserPermissionController] 错误堆栈:', error.stack);
+    return responseHelper.error(res, '获取用户列表失败: ' + error.message);
   }
 };
 
@@ -80,13 +146,21 @@ exports.searchUsers = async (req, res) => {
         { realName: searchRegex }
       ]
     })
-    .select('nickname phone realName role permissions createdAt')
+    .select('nickname phone realName role createdAt')
     .limit(parseInt(limit))
     .lean();
 
-    const processedUsers = users.map(user => ({
-      ...user,
-      permissions: _extractUserPermissions(user)
+    // 为每个用户获取权限信息
+    const processedUsers = await Promise.all(users.map(async (user) => {
+      const userPermissions = await UserPermission.find({
+        userId: user._id,
+        status: 'approved'
+      }).select('permissionType').lean();
+      
+      return {
+        ...user,
+        permissions: userPermissions.map(p => p.permissionType)
+      };
     }));
 
     return responseHelper.success(res, processedUsers, '搜索用户成功');
@@ -102,24 +176,82 @@ exports.searchUsers = async (req, res) => {
  */
 exports.grantPermission = async (req, res) => {
   try {
+    console.log('[UserPermissionController] 开始授权流程');
     const { userId } = req.params;
     const { permission, reason } = req.body;
     
+    console.log('[UserPermissionController] 授权参数:', { userId, permission, reason });
+    
     if (!permission || !['merchant', 'nutritionist'].includes(permission)) {
-      return responseHelper.badRequest(res, '权限类型无效');
+      console.log('[UserPermissionController] 权限类型无效:', permission);
+      return responseHelper.error(res, '权限类型无效', 400);
+    }
+    
+    // 检查模型是否正确加载
+    if (!User || !UserPermission) {
+      console.error('[UserPermissionController] 模型未正确加载 - User:', !!User, 'UserPermission:', !!UserPermission);
+      return responseHelper.error(res, '模型未正确加载');
     }
 
+    console.log('[UserPermissionController] 查找用户:', userId);
     const user = await User.findById(userId);
     if (!user) {
+      console.log('[UserPermissionController] 用户不存在:', userId);
       return responseHelper.notFound(res, '用户不存在');
     }
+    
+    console.log('[UserPermissionController] 找到用户:', user.nickname);
 
-    // 检查用户是否已有该权限
-    const hasPermission = _checkUserPermission(user, permission);
-    if (hasPermission) {
-      return responseHelper.badRequest(res, '用户已拥有该权限');
+    // 检查用户是否已有该权限（任何状态）
+    console.log('[UserPermissionController] 检查已有权限');
+    const existingPermission = await UserPermission.findOne({
+      userId,
+      permissionType: permission
+    });
+    
+    if (existingPermission) {
+      console.log('[UserPermissionController] 用户已有该权限记录，状态:', existingPermission.status);
+      
+      if (existingPermission.status === 'approved') {
+        return responseHelper.error(res, '用户已拥有该权限', 400);
+      } else if (existingPermission.status === 'pending') {
+        // 如果是待审核状态，直接更新为已批准
+        console.log('[UserPermissionController] 更新待审核权限为已批准');
+        existingPermission.status = 'approved';
+        existingPermission.grantedBy = req.user.id;
+        existingPermission.grantedAt = new Date();
+        existingPermission.applicationData.reason = reason || `管理员直接授权${permission === 'merchant' ? '加盟商' : '营养师'}权限`;
+        
+        await existingPermission.save();
+        
+        // 记录权限变更历史
+        await _recordPermissionHistory({
+          userId,
+          permissionType: permission,
+          action: 'approve',
+          operatorId: req.user.id,
+          reason: reason || '管理员直接批准'
+        });
+        
+        return responseHelper.success(res, {
+          userId,
+          permission,
+          grantedAt: new Date()
+        }, '权限授予成功');
+      } else {
+        // 如果是被拒绝或撤销的状态，创建新的记录
+        console.log('[UserPermissionController] 删除旧权限记录，创建新记录');
+        await UserPermission.deleteOne({ _id: existingPermission._id });
+      }
     }
 
+    // 检查当前用户信息
+    if (!req.user || !req.user.id) {
+      console.error('[UserPermissionController] 当前用户信息不完整:', req.user);
+      return responseHelper.error(res, '当前用户信息不完整');
+    }
+
+    console.log('[UserPermissionController] 创建权限记录');
     // 创建权限记录
     const userPermission = new UserPermission({
       userId,
@@ -132,6 +264,7 @@ exports.grantPermission = async (req, res) => {
       }
     });
 
+    console.log('[UserPermissionController] 保存权限记录');
     await userPermission.save();
 
     // 更新用户角色（如果需要）
@@ -156,8 +289,9 @@ exports.grantPermission = async (req, res) => {
     }, '权限授予成功');
     
   } catch (error) {
-    console.error('[UserPermissionController] 授权失败:', error);
-    return responseHelper.error(res, '授权失败');
+    console.error('[UserPermissionController] 授权失败，详细错误:', error.message);
+    console.error('[UserPermissionController] 错误堆栈:', error.stack);
+    return responseHelper.error(res, '授权失败: ' + error.message);
   }
 };
 
@@ -170,18 +304,23 @@ exports.revokePermission = async (req, res) => {
     const { reason } = req.body;
     
     if (!['merchant', 'nutritionist'].includes(permissionType)) {
-      return responseHelper.badRequest(res, '权限类型无效');
+      return responseHelper.error(res, '权限类型无效', 400);
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      return responseHelper.notFound(res, '用户不存在');
+      return responseHelper.error(res, '用户不存在', 404);
     }
 
     // 检查用户是否有该权限
-    const hasPermission = _checkUserPermission(user, permissionType);
-    if (!hasPermission) {
-      return responseHelper.badRequest(res, '用户没有该权限');
+    const existingPermission = await UserPermission.findOne({
+      userId,
+      permissionType,
+      status: 'approved'
+    });
+    
+    if (!existingPermission) {
+      return responseHelper.error(res, '用户没有该权限', 400);
     }
 
     // 撤销权限记录
@@ -201,21 +340,8 @@ exports.revokePermission = async (req, res) => {
       }
     );
 
-    // 更新用户角色
-    const remainingPermissions = await UserPermission.find({
-      userId,
-      status: 'approved',
-      permissionType: { $ne: permissionType }
-    });
-
-    if (remainingPermissions.length === 0) {
-      user.role = 'user';
-    } else {
-      // 设置为剩余权限中的第一个
-      user.role = remainingPermissions[0].permissionType;
-    }
-    
-    await user.save();
+    // 注意：用户角色(role)不需要修改，它应该保持原有角色
+    // 权限通过UserPermission表独立管理
 
     // 记录权限变更历史
     await _recordPermissionHistory({
@@ -234,7 +360,9 @@ exports.revokePermission = async (req, res) => {
     
   } catch (error) {
     console.error('[UserPermissionController] 撤销权限失败:', error);
-    return responseHelper.error(res, '撤销权限失败');
+    console.error('[UserPermissionController] 错误详情:', error.message);
+    console.error('[UserPermissionController] 错误堆栈:', error.stack);
+    return responseHelper.error(res, '撤销权限失败: ' + error.message);
   }
 };
 
@@ -314,36 +442,6 @@ exports.getUserPermissionHistory = async (req, res) => {
 
 // ============ 私有辅助函数 ============
 
-/**
- * 提取用户权限列表
- */
-function _extractUserPermissions(user) {
-  const permissions = [];
-  
-  // 从role字段提取
-  if (user.role && ['merchant', 'nutritionist'].includes(user.role)) {
-    permissions.push(user.role);
-  }
-  
-  // 从permissions数组提取
-  if (user.permissions && Array.isArray(user.permissions)) {
-    user.permissions.forEach(permission => {
-      if (permission.permissionType && !permissions.includes(permission.permissionType)) {
-        permissions.push(permission.permissionType);
-      }
-    });
-  }
-  
-  return permissions;
-}
-
-/**
- * 检查用户是否有特定权限
- */
-function _checkUserPermission(user, permissionType) {
-  const permissions = _extractUserPermissions(user);
-  return permissions.includes(permissionType);
-}
 
 /**
  * 记录权限变更历史

@@ -65,6 +65,13 @@ NutritionProfileModel _$NutritionProfileModelFromJson(
       updatedAt: json['updated_at'] == null
           ? null
           : DateTime.parse(json['updated_at'] as String),
+      nutritionProgress: json['nutrition_progress'] as Map<String, dynamic>?,
+      totalEnergyPoints: (json['total_energy_points'] as num?)?.toInt() ?? 0,
+      currentStreak: (json['current_streak'] as num?)?.toInt() ?? 0,
+      bestStreak: (json['best_streak'] as num?)?.toInt() ?? 0,
+      lastActiveDate: json['last_active_date'] == null
+          ? null
+          : DateTime.parse(json['last_active_date'] as String),
     );
 
 Map<String, dynamic> _$NutritionProfileModelToJson(
@@ -112,6 +119,13 @@ Map<String, dynamic> _$NutritionProfileModelToJson(
         'created_at': value,
       if (instance.updatedAt?.toIso8601String() case final value?)
         'updated_at': value,
+      if (instance.nutritionProgress case final value?)
+        'nutrition_progress': value,
+      'total_energy_points': instance.totalEnergyPoints,
+      'current_streak': instance.currentStreak,
+      'best_streak': instance.bestStreak,
+      if (instance.lastActiveDate?.toIso8601String() case final value?)
+        'last_active_date': value,
     };
 
 DietaryPreferencesModel _$DietaryPreferencesModelFromJson(
