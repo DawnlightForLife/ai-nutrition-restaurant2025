@@ -55,6 +55,11 @@ router.use('/dishes', require('./merchant/dishRoutes'));
 router.use('/merchant-stats', require('./merchant/merchantStatsRoutes'));
 router.use('/promotions', require('./merchant/promotionRoutes'));
 
+// =================== 增强商家管理功能 ===================
+router.use('/merchant/dishes-enhanced', require('./merchant/dishRoutesEnhanced'));
+router.use('/merchant/inventory', require('./merchant/inventoryRoutes'));
+router.use('/merchant/orders', require('./merchant/orderProcessingRoutes'));
+
 // =================== Restaurant 模块 ===================
 router.use('/', require('./restaurant/restaurantRoutes'));
 
@@ -103,6 +108,7 @@ if (process.env.NODE_ENV === 'development') {
   router.use('/dev/schema-explorer', require('./dev/schemaExplorerRoutes'));
   router.use('/dev/schema-visualization', require('./dev/schemaVisualizationRoutes'));
   router.use('/dev/model-hot-update', require('./dev/modelHotUpdateRoutes'));
+  router.use('/dev/auth', require('./dev/devAuthRoutes'));
 }
 
 module.exports = router;

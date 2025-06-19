@@ -87,6 +87,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ),
         ),
       ),
+      // 开发环境快速登录入口
+      floatingActionButton: _buildDevLoginButton(),
+    );
+  }
+
+  Widget? _buildDevLoginButton() {
+    // 仅在开发环境显示
+    if (const bool.fromEnvironment('dart.vm.product', defaultValue: false)) {
+      return null; // 生产环境不显示
+    }
+    
+    return FloatingActionButton.extended(
+      onPressed: () {
+        Navigator.of(context).pushNamed('/dev-login');
+      },
+      backgroundColor: Colors.orange,
+      icon: const Icon(Icons.developer_mode, color: Colors.white),
+      label: const Text('DEV', style: TextStyle(color: Colors.white)),
     );
   }
 

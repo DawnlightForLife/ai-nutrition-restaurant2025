@@ -1,9 +1,11 @@
-﻿const express = require('express');
+const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./docs/swagger');
+const http = require('http');
+const { Server } = require('socket.io');
 require('dotenv').config();
 
 // 确保默认连接已加载
@@ -11,6 +13,14 @@ require('./services/database/database');
 
 // 创建Express应用
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
 let databaseReady = false;
 
 // 中间件
@@ -243,10 +253,19 @@ const startServer = async () => {
     
     console.log('所有服务初始化完成');
     
+    // 初始化WebSocket服务
+    const inventoryWebSocketService = require('./services/websocket/inventoryWebSocketService');
+    inventoryWebSocketService.initialize(io);
+    
+    const orderTrackingWebSocketService = require('./services/websocket/orderTrackingWebSocketService');
+    orderTrackingWebSocketService.initialize(io);
+    
+    console.log('WebSocket服务已初始化');
+    
     // 启动服务器
     const PORT = process.env.PORT || 3000;
     // 监听所有网络接口，以便 Android 模拟器可以访问
-    app.listen(PORT, '0.0.0.0', () => {
+    server.listen(PORT, '0.0.0.0', () => {
       console.log(`服务器在端口 ${PORT} 上运行 (监听所有接口)`);
       databaseReady = true;
     });

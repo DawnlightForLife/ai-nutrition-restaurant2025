@@ -41,6 +41,9 @@ import '../features/cart/presentation/pages/shopping_cart_page.dart';
 import '../features/cart/presentation/pages/checkout_page.dart';
 import '../features/cart/presentation/pages/order_success_page.dart';
 import '../features/user/presentation/pages/profile_edit_page.dart';
+import '../features/merchant/presentation/pages/dish_management_page_v2.dart';
+import '../features/merchant/presentation/pages/dish_form_page.dart';
+import '../features/dev/dev_login_page.dart';
 // TODO: 导入其他页面
 
 /// 应用路由配置
@@ -65,6 +68,9 @@ class AppRouter {
 
       case RouteNames.login:
         return _buildRoute(const LoginPage(), settings);
+
+      case '/dev-login':
+        return _buildRoute(const DevLoginPage(), settings);
 
       case RouteNames.verification:
         final args = settings.arguments as Map<String, dynamic>?;
@@ -186,7 +192,28 @@ class AppRouter {
       case '/merchant/inventory/dishes':
         final args = settings.arguments as Map<String, dynamic>?;
         return _buildRoute(
-          const PlaceholderPage(title: '营养菜品管理'),
+          DishManagementPageV2(
+            merchantId: args?['merchantId'] ?? '',
+          ),
+          settings,
+        );
+        
+      case '/merchant/dishes/create':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          DishFormPage(
+            merchantId: args?['merchantId'] ?? '',
+          ),
+          settings,
+        );
+        
+      case '/merchant/dishes/edit':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          DishFormPage(
+            merchantId: args?['merchantId'] ?? '',
+            dishId: args?['dishId'],
+          ),
           settings,
         );
 

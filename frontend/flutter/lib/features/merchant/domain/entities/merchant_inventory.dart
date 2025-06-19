@@ -63,6 +63,7 @@ class IngredientInventoryItem with _$IngredientInventoryItem {
     required double maxCapacity,
     @Default(0.0) double reservedStock,
     @Default(0.0) double availableStock,
+    @Default(0.0) double alertThreshold, // 预警阈值
     
     // 定价信息
     required double costPerUnit,
@@ -75,12 +76,15 @@ class IngredientInventoryItem with _$IngredientInventoryItem {
     // 采购信息
     String? supplierId,
     String? supplierName,
+    String? supplier, // 供应商名称（兼容性）
     DateTime? lastRestockDate,
     DateTime? expiryDate,
+    int? shelfLife, // 保质期（天数）
     @Default('fresh') String qualityStatus, // fresh, good, fair, expired
     
     // 菜单可用性
     @Default(true) bool isAvailableForOrdering,
+    @Default(true) bool isActive, // 是否启用
     @Default([]) List<String> restrictedCookingMethods,
     @Default([]) List<String> allergenWarnings,
     
@@ -208,12 +212,23 @@ class InventoryTransaction with _$InventoryTransaction {
     required double stockBefore,
     required double stockAfter,
     
+    // 扩展信息
+    String? ingredientName, // 食材名称
+    String? operatorName, // 操作员名称
+    String? batchNumber, // 批次号
+    
     // 附加信息
     Map<String, dynamic>? metadata,
   }) = _InventoryTransaction;
 
   factory InventoryTransaction.fromJson(Map<String, dynamic> json) =>
       _$InventoryTransactionFromJson(json);
+}
+
+/// InventoryTransaction扩展方法
+extension InventoryTransactionX on InventoryTransaction {
+  /// 计算总成本
+  double? get totalCost => costPerUnit * quantity;
 }
 
 /// 库存预警

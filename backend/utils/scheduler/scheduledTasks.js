@@ -34,6 +34,16 @@ const ScheduledTasks = {
     // cron表达式说明：'0 2 * * *' 表示每天02:00执行
     this.registerTask('dbStats', '0 2 * * *', this.collectDatabaseStats);
     
+    // 自动补货检查任务 - 每6小时执行一次
+    // cron表达式说明：'0 */6 * * *' 表示每6小时执行一次
+    const autoReorderJob = require('../../jobs/autoReorderJob');
+    this.registerTask('autoReorder', '0 */6 * * *', autoReorderJob.execute.bind(autoReorderJob));
+    
+    // 过期预警检查任务 - 每天早上8点和晚上8点执行
+    // cron表达式说明：'0 8,20 * * *' 表示每天8:00和20:00执行
+    const expiryAlertJob = require('../../jobs/expiryAlertJob');
+    this.registerTask('expiryAlert', '0 8,20 * * *', expiryAlertJob.execute.bind(expiryAlertJob));
+    
     // 启动所有注册的任务
     this.startAllTasks();
     

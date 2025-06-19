@@ -757,7 +757,9 @@ mixin _$IngredientInventoryItem {
   double get minThreshold => throw _privateConstructorUsedError;
   double get maxCapacity => throw _privateConstructorUsedError;
   double get reservedStock => throw _privateConstructorUsedError;
-  double get availableStock => throw _privateConstructorUsedError; // 定价信息
+  double get availableStock => throw _privateConstructorUsedError;
+  double get alertThreshold => throw _privateConstructorUsedError; // 预警阈值
+// 定价信息
   double get costPerUnit => throw _privateConstructorUsedError;
   double get sellingPricePerUnit => throw _privateConstructorUsedError;
   double get profitMargin =>
@@ -766,12 +768,15 @@ mixin _$IngredientInventoryItem {
       throw _privateConstructorUsedError; // 采购信息
   String? get supplierId => throw _privateConstructorUsedError;
   String? get supplierName => throw _privateConstructorUsedError;
+  String? get supplier => throw _privateConstructorUsedError; // 供应商名称（兼容性）
   DateTime? get lastRestockDate => throw _privateConstructorUsedError;
   DateTime? get expiryDate => throw _privateConstructorUsedError;
+  int? get shelfLife => throw _privateConstructorUsedError; // 保质期（天数）
   String get qualityStatus =>
       throw _privateConstructorUsedError; // fresh, good, fair, expired
 // 菜单可用性
   bool get isAvailableForOrdering => throw _privateConstructorUsedError;
+  bool get isActive => throw _privateConstructorUsedError; // 是否启用
   List<String> get restrictedCookingMethods =>
       throw _privateConstructorUsedError;
   List<String> get allergenWarnings => throw _privateConstructorUsedError;
@@ -823,16 +828,20 @@ abstract class $IngredientInventoryItemCopyWith<$Res> {
       double maxCapacity,
       double reservedStock,
       double availableStock,
+      double alertThreshold,
       double costPerUnit,
       double sellingPricePerUnit,
       double profitMargin,
       Map<String, double> nutritionPer100g,
       String? supplierId,
       String? supplierName,
+      String? supplier,
       DateTime? lastRestockDate,
       DateTime? expiryDate,
+      int? shelfLife,
       String qualityStatus,
       bool isAvailableForOrdering,
+      bool isActive,
       List<String> restrictedCookingMethods,
       List<String> allergenWarnings,
       DateTime createdAt,
@@ -866,16 +875,20 @@ class _$IngredientInventoryItemCopyWithImpl<$Res,
     Object? maxCapacity = null,
     Object? reservedStock = null,
     Object? availableStock = null,
+    Object? alertThreshold = null,
     Object? costPerUnit = null,
     Object? sellingPricePerUnit = null,
     Object? profitMargin = null,
     Object? nutritionPer100g = null,
     Object? supplierId = freezed,
     Object? supplierName = freezed,
+    Object? supplier = freezed,
     Object? lastRestockDate = freezed,
     Object? expiryDate = freezed,
+    Object? shelfLife = freezed,
     Object? qualityStatus = null,
     Object? isAvailableForOrdering = null,
+    Object? isActive = null,
     Object? restrictedCookingMethods = null,
     Object? allergenWarnings = null,
     Object? createdAt = null,
@@ -926,6 +939,10 @@ class _$IngredientInventoryItemCopyWithImpl<$Res,
           ? _value.availableStock
           : availableStock // ignore: cast_nullable_to_non_nullable
               as double,
+      alertThreshold: null == alertThreshold
+          ? _value.alertThreshold
+          : alertThreshold // ignore: cast_nullable_to_non_nullable
+              as double,
       costPerUnit: null == costPerUnit
           ? _value.costPerUnit
           : costPerUnit // ignore: cast_nullable_to_non_nullable
@@ -950,6 +967,10 @@ class _$IngredientInventoryItemCopyWithImpl<$Res,
           ? _value.supplierName
           : supplierName // ignore: cast_nullable_to_non_nullable
               as String?,
+      supplier: freezed == supplier
+          ? _value.supplier
+          : supplier // ignore: cast_nullable_to_non_nullable
+              as String?,
       lastRestockDate: freezed == lastRestockDate
           ? _value.lastRestockDate
           : lastRestockDate // ignore: cast_nullable_to_non_nullable
@@ -958,6 +979,10 @@ class _$IngredientInventoryItemCopyWithImpl<$Res,
           ? _value.expiryDate
           : expiryDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      shelfLife: freezed == shelfLife
+          ? _value.shelfLife
+          : shelfLife // ignore: cast_nullable_to_non_nullable
+              as int?,
       qualityStatus: null == qualityStatus
           ? _value.qualityStatus
           : qualityStatus // ignore: cast_nullable_to_non_nullable
@@ -965,6 +990,10 @@ class _$IngredientInventoryItemCopyWithImpl<$Res,
       isAvailableForOrdering: null == isAvailableForOrdering
           ? _value.isAvailableForOrdering
           : isAvailableForOrdering // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isActive: null == isActive
+          ? _value.isActive
+          : isActive // ignore: cast_nullable_to_non_nullable
               as bool,
       restrictedCookingMethods: null == restrictedCookingMethods
           ? _value.restrictedCookingMethods
@@ -1007,16 +1036,20 @@ abstract class _$$IngredientInventoryItemImplCopyWith<$Res>
       double maxCapacity,
       double reservedStock,
       double availableStock,
+      double alertThreshold,
       double costPerUnit,
       double sellingPricePerUnit,
       double profitMargin,
       Map<String, double> nutritionPer100g,
       String? supplierId,
       String? supplierName,
+      String? supplier,
       DateTime? lastRestockDate,
       DateTime? expiryDate,
+      int? shelfLife,
       String qualityStatus,
       bool isAvailableForOrdering,
+      bool isActive,
       List<String> restrictedCookingMethods,
       List<String> allergenWarnings,
       DateTime createdAt,
@@ -1049,16 +1082,20 @@ class __$$IngredientInventoryItemImplCopyWithImpl<$Res>
     Object? maxCapacity = null,
     Object? reservedStock = null,
     Object? availableStock = null,
+    Object? alertThreshold = null,
     Object? costPerUnit = null,
     Object? sellingPricePerUnit = null,
     Object? profitMargin = null,
     Object? nutritionPer100g = null,
     Object? supplierId = freezed,
     Object? supplierName = freezed,
+    Object? supplier = freezed,
     Object? lastRestockDate = freezed,
     Object? expiryDate = freezed,
+    Object? shelfLife = freezed,
     Object? qualityStatus = null,
     Object? isAvailableForOrdering = null,
+    Object? isActive = null,
     Object? restrictedCookingMethods = null,
     Object? allergenWarnings = null,
     Object? createdAt = null,
@@ -1109,6 +1146,10 @@ class __$$IngredientInventoryItemImplCopyWithImpl<$Res>
           ? _value.availableStock
           : availableStock // ignore: cast_nullable_to_non_nullable
               as double,
+      alertThreshold: null == alertThreshold
+          ? _value.alertThreshold
+          : alertThreshold // ignore: cast_nullable_to_non_nullable
+              as double,
       costPerUnit: null == costPerUnit
           ? _value.costPerUnit
           : costPerUnit // ignore: cast_nullable_to_non_nullable
@@ -1133,6 +1174,10 @@ class __$$IngredientInventoryItemImplCopyWithImpl<$Res>
           ? _value.supplierName
           : supplierName // ignore: cast_nullable_to_non_nullable
               as String?,
+      supplier: freezed == supplier
+          ? _value.supplier
+          : supplier // ignore: cast_nullable_to_non_nullable
+              as String?,
       lastRestockDate: freezed == lastRestockDate
           ? _value.lastRestockDate
           : lastRestockDate // ignore: cast_nullable_to_non_nullable
@@ -1141,6 +1186,10 @@ class __$$IngredientInventoryItemImplCopyWithImpl<$Res>
           ? _value.expiryDate
           : expiryDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      shelfLife: freezed == shelfLife
+          ? _value.shelfLife
+          : shelfLife // ignore: cast_nullable_to_non_nullable
+              as int?,
       qualityStatus: null == qualityStatus
           ? _value.qualityStatus
           : qualityStatus // ignore: cast_nullable_to_non_nullable
@@ -1148,6 +1197,10 @@ class __$$IngredientInventoryItemImplCopyWithImpl<$Res>
       isAvailableForOrdering: null == isAvailableForOrdering
           ? _value.isAvailableForOrdering
           : isAvailableForOrdering // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isActive: null == isActive
+          ? _value.isActive
+          : isActive // ignore: cast_nullable_to_non_nullable
               as bool,
       restrictedCookingMethods: null == restrictedCookingMethods
           ? _value._restrictedCookingMethods
@@ -1184,16 +1237,20 @@ class _$IngredientInventoryItemImpl implements _IngredientInventoryItem {
       required this.maxCapacity,
       this.reservedStock = 0.0,
       this.availableStock = 0.0,
+      this.alertThreshold = 0.0,
       required this.costPerUnit,
       required this.sellingPricePerUnit,
       this.profitMargin = 1.0,
       required final Map<String, double> nutritionPer100g,
       this.supplierId,
       this.supplierName,
+      this.supplier,
       this.lastRestockDate,
       this.expiryDate,
+      this.shelfLife,
       this.qualityStatus = 'fresh',
       this.isAvailableForOrdering = true,
+      this.isActive = true,
       final List<String> restrictedCookingMethods = const [],
       final List<String> allergenWarnings = const [],
       required this.createdAt,
@@ -1230,6 +1287,10 @@ class _$IngredientInventoryItemImpl implements _IngredientInventoryItem {
   @override
   @JsonKey()
   final double availableStock;
+  @override
+  @JsonKey()
+  final double alertThreshold;
+// 预警阈值
 // 定价信息
   @override
   final double costPerUnit;
@@ -1254,9 +1315,15 @@ class _$IngredientInventoryItemImpl implements _IngredientInventoryItem {
   @override
   final String? supplierName;
   @override
+  final String? supplier;
+// 供应商名称（兼容性）
+  @override
   final DateTime? lastRestockDate;
   @override
   final DateTime? expiryDate;
+  @override
+  final int? shelfLife;
+// 保质期（天数）
   @override
   @JsonKey()
   final String qualityStatus;
@@ -1265,7 +1332,12 @@ class _$IngredientInventoryItemImpl implements _IngredientInventoryItem {
   @override
   @JsonKey()
   final bool isAvailableForOrdering;
+  @override
+  @JsonKey()
+  final bool isActive;
+// 是否启用
   final List<String> _restrictedCookingMethods;
+// 是否启用
   @override
   @JsonKey()
   List<String> get restrictedCookingMethods {
@@ -1292,7 +1364,7 @@ class _$IngredientInventoryItemImpl implements _IngredientInventoryItem {
 
   @override
   String toString() {
-    return 'IngredientInventoryItem(id: $id, ingredientId: $ingredientId, name: $name, chineseName: $chineseName, category: $category, unit: $unit, currentStock: $currentStock, minThreshold: $minThreshold, maxCapacity: $maxCapacity, reservedStock: $reservedStock, availableStock: $availableStock, costPerUnit: $costPerUnit, sellingPricePerUnit: $sellingPricePerUnit, profitMargin: $profitMargin, nutritionPer100g: $nutritionPer100g, supplierId: $supplierId, supplierName: $supplierName, lastRestockDate: $lastRestockDate, expiryDate: $expiryDate, qualityStatus: $qualityStatus, isAvailableForOrdering: $isAvailableForOrdering, restrictedCookingMethods: $restrictedCookingMethods, allergenWarnings: $allergenWarnings, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'IngredientInventoryItem(id: $id, ingredientId: $ingredientId, name: $name, chineseName: $chineseName, category: $category, unit: $unit, currentStock: $currentStock, minThreshold: $minThreshold, maxCapacity: $maxCapacity, reservedStock: $reservedStock, availableStock: $availableStock, alertThreshold: $alertThreshold, costPerUnit: $costPerUnit, sellingPricePerUnit: $sellingPricePerUnit, profitMargin: $profitMargin, nutritionPer100g: $nutritionPer100g, supplierId: $supplierId, supplierName: $supplierName, supplier: $supplier, lastRestockDate: $lastRestockDate, expiryDate: $expiryDate, shelfLife: $shelfLife, qualityStatus: $qualityStatus, isAvailableForOrdering: $isAvailableForOrdering, isActive: $isActive, restrictedCookingMethods: $restrictedCookingMethods, allergenWarnings: $allergenWarnings, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -1319,6 +1391,8 @@ class _$IngredientInventoryItemImpl implements _IngredientInventoryItem {
                 other.reservedStock == reservedStock) &&
             (identical(other.availableStock, availableStock) ||
                 other.availableStock == availableStock) &&
+            (identical(other.alertThreshold, alertThreshold) ||
+                other.alertThreshold == alertThreshold) &&
             (identical(other.costPerUnit, costPerUnit) ||
                 other.costPerUnit == costPerUnit) &&
             (identical(other.sellingPricePerUnit, sellingPricePerUnit) ||
@@ -1331,14 +1405,20 @@ class _$IngredientInventoryItemImpl implements _IngredientInventoryItem {
                 other.supplierId == supplierId) &&
             (identical(other.supplierName, supplierName) ||
                 other.supplierName == supplierName) &&
+            (identical(other.supplier, supplier) ||
+                other.supplier == supplier) &&
             (identical(other.lastRestockDate, lastRestockDate) ||
                 other.lastRestockDate == lastRestockDate) &&
             (identical(other.expiryDate, expiryDate) ||
                 other.expiryDate == expiryDate) &&
+            (identical(other.shelfLife, shelfLife) ||
+                other.shelfLife == shelfLife) &&
             (identical(other.qualityStatus, qualityStatus) ||
                 other.qualityStatus == qualityStatus) &&
             (identical(other.isAvailableForOrdering, isAvailableForOrdering) ||
                 other.isAvailableForOrdering == isAvailableForOrdering) &&
+            (identical(other.isActive, isActive) ||
+                other.isActive == isActive) &&
             const DeepCollectionEquality().equals(
                 other._restrictedCookingMethods, _restrictedCookingMethods) &&
             const DeepCollectionEquality()
@@ -1364,16 +1444,20 @@ class _$IngredientInventoryItemImpl implements _IngredientInventoryItem {
         maxCapacity,
         reservedStock,
         availableStock,
+        alertThreshold,
         costPerUnit,
         sellingPricePerUnit,
         profitMargin,
         const DeepCollectionEquality().hash(_nutritionPer100g),
         supplierId,
         supplierName,
+        supplier,
         lastRestockDate,
         expiryDate,
+        shelfLife,
         qualityStatus,
         isAvailableForOrdering,
+        isActive,
         const DeepCollectionEquality().hash(_restrictedCookingMethods),
         const DeepCollectionEquality().hash(_allergenWarnings),
         createdAt,
@@ -1438,16 +1522,20 @@ abstract class _IngredientInventoryItem implements IngredientInventoryItem {
       required final double maxCapacity,
       final double reservedStock,
       final double availableStock,
+      final double alertThreshold,
       required final double costPerUnit,
       required final double sellingPricePerUnit,
       final double profitMargin,
       required final Map<String, double> nutritionPer100g,
       final String? supplierId,
       final String? supplierName,
+      final String? supplier,
       final DateTime? lastRestockDate,
       final DateTime? expiryDate,
+      final int? shelfLife,
       final String qualityStatus,
       final bool isAvailableForOrdering,
+      final bool isActive,
       final List<String> restrictedCookingMethods,
       final List<String> allergenWarnings,
       required final DateTime createdAt,
@@ -1477,7 +1565,10 @@ abstract class _IngredientInventoryItem implements IngredientInventoryItem {
   @override
   double get reservedStock;
   @override
-  double get availableStock; // 定价信息
+  double get availableStock;
+  @override
+  double get alertThreshold; // 预警阈值
+// 定价信息
   @override
   double get costPerUnit;
   @override
@@ -1491,14 +1582,20 @@ abstract class _IngredientInventoryItem implements IngredientInventoryItem {
   @override
   String? get supplierName;
   @override
+  String? get supplier; // 供应商名称（兼容性）
+  @override
   DateTime? get lastRestockDate;
   @override
   DateTime? get expiryDate;
+  @override
+  int? get shelfLife; // 保质期（天数）
   @override
   String get qualityStatus; // fresh, good, fair, expired
 // 菜单可用性
   @override
   bool get isAvailableForOrdering;
+  @override
+  bool get isActive; // 是否启用
   @override
   List<String> get restrictedCookingMethods;
   @override
@@ -3216,7 +3313,11 @@ mixin _$InventoryTransaction {
   String get operatorId => throw _privateConstructorUsedError;
   DateTime get timestamp => throw _privateConstructorUsedError; // 库存快照
   double get stockBefore => throw _privateConstructorUsedError;
-  double get stockAfter => throw _privateConstructorUsedError; // 附加信息
+  double get stockAfter => throw _privateConstructorUsedError; // 扩展信息
+  String? get ingredientName => throw _privateConstructorUsedError; // 食材名称
+  String? get operatorName => throw _privateConstructorUsedError; // 操作员名称
+  String? get batchNumber => throw _privateConstructorUsedError; // 批次号
+// 附加信息
   Map<String, dynamic>? get metadata => throw _privateConstructorUsedError;
 
   @optionalTypeArgs
@@ -3266,6 +3367,9 @@ abstract class $InventoryTransactionCopyWith<$Res> {
       DateTime timestamp,
       double stockBefore,
       double stockAfter,
+      String? ingredientName,
+      String? operatorName,
+      String? batchNumber,
       Map<String, dynamic>? metadata});
 }
 
@@ -3298,6 +3402,9 @@ class _$InventoryTransactionCopyWithImpl<$Res,
     Object? timestamp = null,
     Object? stockBefore = null,
     Object? stockAfter = null,
+    Object? ingredientName = freezed,
+    Object? operatorName = freezed,
+    Object? batchNumber = freezed,
     Object? metadata = freezed,
   }) {
     return _then(_value.copyWith(
@@ -3353,6 +3460,18 @@ class _$InventoryTransactionCopyWithImpl<$Res,
           ? _value.stockAfter
           : stockAfter // ignore: cast_nullable_to_non_nullable
               as double,
+      ingredientName: freezed == ingredientName
+          ? _value.ingredientName
+          : ingredientName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      operatorName: freezed == operatorName
+          ? _value.operatorName
+          : operatorName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      batchNumber: freezed == batchNumber
+          ? _value.batchNumber
+          : batchNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
       metadata: freezed == metadata
           ? _value.metadata
           : metadata // ignore: cast_nullable_to_non_nullable
@@ -3383,6 +3502,9 @@ abstract class _$$InventoryTransactionImplCopyWith<$Res>
       DateTime timestamp,
       double stockBefore,
       double stockAfter,
+      String? ingredientName,
+      String? operatorName,
+      String? batchNumber,
       Map<String, dynamic>? metadata});
 }
 
@@ -3412,6 +3534,9 @@ class __$$InventoryTransactionImplCopyWithImpl<$Res>
     Object? timestamp = null,
     Object? stockBefore = null,
     Object? stockAfter = null,
+    Object? ingredientName = freezed,
+    Object? operatorName = freezed,
+    Object? batchNumber = freezed,
     Object? metadata = freezed,
   }) {
     return _then(_$InventoryTransactionImpl(
@@ -3467,6 +3592,18 @@ class __$$InventoryTransactionImplCopyWithImpl<$Res>
           ? _value.stockAfter
           : stockAfter // ignore: cast_nullable_to_non_nullable
               as double,
+      ingredientName: freezed == ingredientName
+          ? _value.ingredientName
+          : ingredientName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      operatorName: freezed == operatorName
+          ? _value.operatorName
+          : operatorName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      batchNumber: freezed == batchNumber
+          ? _value.batchNumber
+          : batchNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
       metadata: freezed == metadata
           ? _value._metadata
           : metadata // ignore: cast_nullable_to_non_nullable
@@ -3492,6 +3629,9 @@ class _$InventoryTransactionImpl implements _InventoryTransaction {
       required this.timestamp,
       required this.stockBefore,
       required this.stockAfter,
+      this.ingredientName,
+      this.operatorName,
+      this.batchNumber,
       final Map<String, dynamic>? metadata})
       : _metadata = metadata;
 
@@ -3526,8 +3666,19 @@ class _$InventoryTransactionImpl implements _InventoryTransaction {
   final double stockBefore;
   @override
   final double stockAfter;
+// 扩展信息
+  @override
+  final String? ingredientName;
+// 食材名称
+  @override
+  final String? operatorName;
+// 操作员名称
+  @override
+  final String? batchNumber;
+// 批次号
 // 附加信息
   final Map<String, dynamic>? _metadata;
+// 批次号
 // 附加信息
   @override
   Map<String, dynamic>? get metadata {
@@ -3540,7 +3691,7 @@ class _$InventoryTransactionImpl implements _InventoryTransaction {
 
   @override
   String toString() {
-    return 'InventoryTransaction(id: $id, ingredientId: $ingredientId, type: $type, quantity: $quantity, unit: $unit, reason: $reason, orderId: $orderId, supplierId: $supplierId, costPerUnit: $costPerUnit, operatorId: $operatorId, timestamp: $timestamp, stockBefore: $stockBefore, stockAfter: $stockAfter, metadata: $metadata)';
+    return 'InventoryTransaction(id: $id, ingredientId: $ingredientId, type: $type, quantity: $quantity, unit: $unit, reason: $reason, orderId: $orderId, supplierId: $supplierId, costPerUnit: $costPerUnit, operatorId: $operatorId, timestamp: $timestamp, stockBefore: $stockBefore, stockAfter: $stockAfter, ingredientName: $ingredientName, operatorName: $operatorName, batchNumber: $batchNumber, metadata: $metadata)';
   }
 
   @override
@@ -3569,6 +3720,12 @@ class _$InventoryTransactionImpl implements _InventoryTransaction {
                 other.stockBefore == stockBefore) &&
             (identical(other.stockAfter, stockAfter) ||
                 other.stockAfter == stockAfter) &&
+            (identical(other.ingredientName, ingredientName) ||
+                other.ingredientName == ingredientName) &&
+            (identical(other.operatorName, operatorName) ||
+                other.operatorName == operatorName) &&
+            (identical(other.batchNumber, batchNumber) ||
+                other.batchNumber == batchNumber) &&
             const DeepCollectionEquality().equals(other._metadata, _metadata));
   }
 
@@ -3589,6 +3746,9 @@ class _$InventoryTransactionImpl implements _InventoryTransaction {
       timestamp,
       stockBefore,
       stockAfter,
+      ingredientName,
+      operatorName,
+      batchNumber,
       const DeepCollectionEquality().hash(_metadata));
 
   /// Create a copy of InventoryTransaction
@@ -3652,6 +3812,9 @@ abstract class _InventoryTransaction implements InventoryTransaction {
       required final DateTime timestamp,
       required final double stockBefore,
       required final double stockAfter,
+      final String? ingredientName,
+      final String? operatorName,
+      final String? batchNumber,
       final Map<String, dynamic>? metadata}) = _$InventoryTransactionImpl;
 
   factory _InventoryTransaction.fromJson(Map<String, dynamic> json) =
@@ -3682,7 +3845,14 @@ abstract class _InventoryTransaction implements InventoryTransaction {
   @override
   double get stockBefore;
   @override
-  double get stockAfter; // 附加信息
+  double get stockAfter; // 扩展信息
+  @override
+  String? get ingredientName; // 食材名称
+  @override
+  String? get operatorName; // 操作员名称
+  @override
+  String? get batchNumber; // 批次号
+// 附加信息
   @override
   Map<String, dynamic>? get metadata;
 

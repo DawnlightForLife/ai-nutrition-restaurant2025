@@ -83,7 +83,7 @@ dependencies:
   json_annotation: ^4.9.0
   
   # 函数式编程 - 简化
-  # dartz: ^0.10.1  # 移除，对单人开发过于复杂
+  dartz: ^0.10.1
   equatable: ^2.0.5
   
   # 依赖注入 - 已移除get_it和injectable，统一使用riverpod

@@ -96,6 +96,7 @@ _$IngredientInventoryItemImpl _$$IngredientInventoryItemImplFromJson(
       maxCapacity: (json['max_capacity'] as num).toDouble(),
       reservedStock: (json['reserved_stock'] as num?)?.toDouble() ?? 0.0,
       availableStock: (json['available_stock'] as num?)?.toDouble() ?? 0.0,
+      alertThreshold: (json['alert_threshold'] as num?)?.toDouble() ?? 0.0,
       costPerUnit: (json['cost_per_unit'] as num).toDouble(),
       sellingPricePerUnit: (json['selling_price_per_unit'] as num).toDouble(),
       profitMargin: (json['profit_margin'] as num?)?.toDouble() ?? 1.0,
@@ -104,15 +105,18 @@ _$IngredientInventoryItemImpl _$$IngredientInventoryItemImplFromJson(
       ),
       supplierId: json['supplier_id'] as String?,
       supplierName: json['supplier_name'] as String?,
+      supplier: json['supplier'] as String?,
       lastRestockDate: json['last_restock_date'] == null
           ? null
           : DateTime.parse(json['last_restock_date'] as String),
       expiryDate: json['expiry_date'] == null
           ? null
           : DateTime.parse(json['expiry_date'] as String),
+      shelfLife: (json['shelf_life'] as num?)?.toInt(),
       qualityStatus: json['quality_status'] as String? ?? 'fresh',
       isAvailableForOrdering:
           json['is_available_for_ordering'] as bool? ?? true,
+      isActive: json['is_active'] as bool? ?? true,
       restrictedCookingMethods:
           (json['restricted_cooking_methods'] as List<dynamic>?)
                   ?.map((e) => e as String)
@@ -142,18 +146,22 @@ Map<String, dynamic> _$$IngredientInventoryItemImplToJson(
       'max_capacity': instance.maxCapacity,
       'reserved_stock': instance.reservedStock,
       'available_stock': instance.availableStock,
+      'alert_threshold': instance.alertThreshold,
       'cost_per_unit': instance.costPerUnit,
       'selling_price_per_unit': instance.sellingPricePerUnit,
       'profit_margin': instance.profitMargin,
       'nutrition_per100g': instance.nutritionPer100g,
       if (instance.supplierId case final value?) 'supplier_id': value,
       if (instance.supplierName case final value?) 'supplier_name': value,
+      if (instance.supplier case final value?) 'supplier': value,
       if (instance.lastRestockDate?.toIso8601String() case final value?)
         'last_restock_date': value,
       if (instance.expiryDate?.toIso8601String() case final value?)
         'expiry_date': value,
+      if (instance.shelfLife case final value?) 'shelf_life': value,
       'quality_status': instance.qualityStatus,
       'is_available_for_ordering': instance.isAvailableForOrdering,
+      'is_active': instance.isActive,
       'restricted_cooking_methods': instance.restrictedCookingMethods,
       'allergen_warnings': instance.allergenWarnings,
       'created_at': instance.createdAt.toIso8601String(),
@@ -346,6 +354,9 @@ _$InventoryTransactionImpl _$$InventoryTransactionImplFromJson(
       timestamp: DateTime.parse(json['timestamp'] as String),
       stockBefore: (json['stock_before'] as num).toDouble(),
       stockAfter: (json['stock_after'] as num).toDouble(),
+      ingredientName: json['ingredient_name'] as String?,
+      operatorName: json['operator_name'] as String?,
+      batchNumber: json['batch_number'] as String?,
       metadata: json['metadata'] as Map<String, dynamic>?,
     );
 
@@ -365,6 +376,9 @@ Map<String, dynamic> _$$InventoryTransactionImplToJson(
       'timestamp': instance.timestamp.toIso8601String(),
       'stock_before': instance.stockBefore,
       'stock_after': instance.stockAfter,
+      if (instance.ingredientName case final value?) 'ingredient_name': value,
+      if (instance.operatorName case final value?) 'operator_name': value,
+      if (instance.batchNumber case final value?) 'batch_number': value,
       if (instance.metadata case final value?) 'metadata': value,
     };
 

@@ -213,7 +213,10 @@ exports.grantPermission = async (req, res) => {
       console.log('[UserPermissionController] 用户已有该权限记录，状态:', existingPermission.status);
       
       if (existingPermission.status === 'approved') {
-        return responseHelper.error(res, '用户已拥有该权限', 400);
+        return responseHelper.success(res, '用户已拥有该权限', {
+          alreadyGranted: true,
+          permission: existingPermission
+        });
       } else if (existingPermission.status === 'pending') {
         // 如果是待审核状态，直接更新为已批准
         console.log('[UserPermissionController] 更新待审核权限为已批准');

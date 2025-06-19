@@ -11,6 +11,8 @@ import '../providers/merchant_inventory_provider.dart';
 import '../widgets/ingredient_inventory_item_widget.dart';
 import '../widgets/ingredient_filter_widget.dart';
 import '../widgets/batch_operation_bar.dart';
+import '../widgets/batch_update_dialog.dart';
+import '../../services/inventory_export_service.dart';
 
 class IngredientInventoryPage extends ConsumerStatefulWidget {
   final String merchantId;
@@ -294,28 +296,232 @@ class _IngredientInventoryPageState
   }
 
   void _showBatchUpdateDialog(BuildContext context) {
-    // TODO: 实现批量更新对话框
-    context.showInfoSnackBar('批量更新功能开发中...');
-  }
-
-  void _confirmBatchDelete(BuildContext context) {
-    final selectedCount = ref.read(merchantInventoryProvider(widget.merchantId))
-        .selectedIngredientIds.length;
+    final inventoryState = ref.read(merchantInventoryProvider(widget.merchantId));
     
-    context.showConfirmDialog(
-      title: '确认删除',
-      message: '确定要删除选中的 $selectedCount 个食材吗？',
-    ).then((confirmed) {
-      if (confirmed) {
-        // TODO: 实现批量删除
-        context.showInfoSnackBar('批量删除功能开发中...');
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => BatchUpdateDialog(
+        merchantId: widget.merchantId,
+        selectedIngredientIds: inventoryState.selectedIngredientIds.toList(),
+        allIngredients: inventoryState.ingredients,
+      ),
+    ).then((result) {
+      if (result == true) {
+        setState(() => _isSelectionMode = false);
       }
     });
   }
 
-  void _exportSelectedIngredients() {
-    // TODO: 实现导出功能
-    context.showInfoSnackBar('导出功能开发中...');
+  void _confirmBatchDelete(BuildContext context) {
+    final inventoryState = ref.read(merchantInventoryProvider(widget.merchantId));
+    final inventoryNotifier = ref.read(merchantInventoryProvider(widget.merchantId).notifier);
+    final selectedCount = inventoryState.selectedIngredientIds.length;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认删除'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('确定要删除选中的 $selectedCount 个食材吗？'),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.warning, color: Colors.red),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      '此操作不可撤销，删除后数据将无法恢复',
+                      style: TextStyle(color: Colors.red, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _performBatchDelete();
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('确认删除'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _performBatchDelete() {
+    final inventoryState = ref.read(merchantInventoryProvider(widget.merchantId));
+    final inventoryNotifier = ref.read(merchantInventoryProvider(widget.merchantId).notifier);
+    
+    // 执行批量删除
+    for (final id in inventoryState.selectedIngredientIds) {
+      inventoryNotifier.removeIngredientInventory(id);
+    }
+    
+    // 清除选择
+    inventoryNotifier.clearSelection();
+    
+    // 退出选择模式
+    setState(() => _isSelectionMode = false);
+    
+    // 显示成功消息
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('已成功删除 ${inventoryState.selectedIngredientIds.length} 个食材'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _exportSelectedIngredients() async {
+    final inventoryState = ref.read(merchantInventoryProvider(widget.merchantId));
+    
+    // 获取选中的食材
+    final selectedIngredients = inventoryState.ingredients
+        .where((item) => inventoryState.selectedIngredientIds.contains(item.id))
+        .toList();
+    
+    if (selectedIngredients.isEmpty) {
+      context.showErrorSnackBar('请选择要导出的食材');
+      return;
+    }
+    
+    // 显示导出选项对话框
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('导出数据'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('已选择 ${selectedIngredients.length} 个食材'),
+            const SizedBox(height: 16),
+            const Text('请选择导出格式：'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              
+              try {
+                // 显示加载指示器
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+                
+                // 执行导出
+                await InventoryExportService.exportIngredientsToCsv(
+                  ingredients: selectedIngredients,
+                );
+                
+                // 关闭加载指示器
+                if (mounted) Navigator.of(context).pop();
+                
+                // 清除选择
+                ref.read(merchantInventoryProvider(widget.merchantId).notifier)
+                    .clearSelection();
+                
+                // 退出选择模式
+                setState(() => _isSelectionMode = false);
+                
+                // 显示成功消息
+                if (mounted) {
+                  context.showSuccessSnackBar('导出成功');
+                }
+                
+              } catch (e) {
+                // 关闭加载指示器
+                if (mounted) Navigator.of(context).pop();
+                
+                // 显示错误消息
+                if (mounted) {
+                  context.showErrorSnackBar('导出失败: $e');
+                }
+              }
+            },
+            child: const Text('导出CSV'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              
+              try {
+                // 显示加载指示器
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+                
+                // 执行导出报表
+                await InventoryExportService.generateInventoryReport(
+                  ingredients: selectedIngredients,
+                  merchantName: '商家名称', // TODO: 从商家信息获取
+                );
+                
+                // 关闭加载指示器
+                if (mounted) Navigator.of(context).pop();
+                
+                // 清除选择
+                ref.read(merchantInventoryProvider(widget.merchantId).notifier)
+                    .clearSelection();
+                
+                // 退出选择模式
+                setState(() => _isSelectionMode = false);
+                
+                // 显示成功消息
+                if (mounted) {
+                  context.showSuccessSnackBar('报表生成成功');
+                }
+                
+              } catch (e) {
+                // 关闭加载指示器
+                if (mounted) Navigator.of(context).pop();
+                
+                // 显示错误消息
+                if (mounted) {
+                  context.showErrorSnackBar('报表生成失败: $e');
+                }
+              }
+            },
+            child: const Text('生成报表'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _navigateToAddIngredient(BuildContext context) {

@@ -146,6 +146,26 @@ class MerchantInventoryNotifier extends StateNotifier<MerchantInventoryState> {
     }
   }
 
+  // 移除食材库存
+  Future<void> removeIngredientInventory(String ingredientId) async {
+    try {
+      state = state.copyWith(isUpdating: true, error: null);
+      await _repository.removeIngredientFromInventory(merchantId, ingredientId);
+      
+      // 从本地状态移除
+      final updatedIngredients = state.ingredients
+          .where((ingredient) => ingredient.id != ingredientId)
+          .toList();
+      
+      state = state.copyWith(
+        ingredients: updatedIngredients,
+        isUpdating: false,
+      );
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), isUpdating: false);
+    }
+  }
+
   // 记录库存操作
   Future<void> recordInventoryTransaction(InventoryTransaction transaction) async {
     try {
