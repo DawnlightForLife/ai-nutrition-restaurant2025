@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'consultation_provider.dart';
+part of 'nutritionist_detail_provider.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -15,12 +15,12 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
-mixin _$UconsultationState {
+mixin _$NutritionistDetailState {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Uconsultation> consultations) loaded,
+    required TResult Function(Nutritionist nutritionist) loaded,
     required TResult Function(String message) error,
   }) =>
       throw _privateConstructorUsedError;
@@ -28,7 +28,7 @@ mixin _$UconsultationState {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Uconsultation> consultations)? loaded,
+    TResult? Function(Nutritionist nutritionist)? loaded,
     TResult? Function(String message)? error,
   }) =>
       throw _privateConstructorUsedError;
@@ -36,7 +36,7 @@ mixin _$UconsultationState {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Uconsultation> consultations)? loaded,
+    TResult Function(Nutritionist nutritionist)? loaded,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) =>
@@ -69,23 +69,24 @@ mixin _$UconsultationState {
 }
 
 /// @nodoc
-abstract class $UconsultationStateCopyWith<$Res> {
-  factory $UconsultationStateCopyWith(
-          UconsultationState value, $Res Function(UconsultationState) then) =
-      _$UconsultationStateCopyWithImpl<$Res, UconsultationState>;
+abstract class $NutritionistDetailStateCopyWith<$Res> {
+  factory $NutritionistDetailStateCopyWith(NutritionistDetailState value,
+          $Res Function(NutritionistDetailState) then) =
+      _$NutritionistDetailStateCopyWithImpl<$Res, NutritionistDetailState>;
 }
 
 /// @nodoc
-class _$UconsultationStateCopyWithImpl<$Res, $Val extends UconsultationState>
-    implements $UconsultationStateCopyWith<$Res> {
-  _$UconsultationStateCopyWithImpl(this._value, this._then);
+class _$NutritionistDetailStateCopyWithImpl<$Res,
+        $Val extends NutritionistDetailState>
+    implements $NutritionistDetailStateCopyWith<$Res> {
+  _$NutritionistDetailStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of UconsultationState
+  /// Create a copy of NutritionistDetailState
   /// with the given fields replaced by the non-null parameter values.
 }
 
@@ -98,13 +99,13 @@ abstract class _$$InitialImplCopyWith<$Res> {
 
 /// @nodoc
 class __$$InitialImplCopyWithImpl<$Res>
-    extends _$UconsultationStateCopyWithImpl<$Res, _$InitialImpl>
+    extends _$NutritionistDetailStateCopyWithImpl<$Res, _$InitialImpl>
     implements _$$InitialImplCopyWith<$Res> {
   __$$InitialImplCopyWithImpl(
       _$InitialImpl _value, $Res Function(_$InitialImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of UconsultationState
+  /// Create a copy of NutritionistDetailState
   /// with the given fields replaced by the non-null parameter values.
 }
 
@@ -115,7 +116,7 @@ class _$InitialImpl implements _Initial {
 
   @override
   String toString() {
-    return 'UconsultationState.initial()';
+    return 'NutritionistDetailState.initial()';
   }
 
   @override
@@ -132,7 +133,7 @@ class _$InitialImpl implements _Initial {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Uconsultation> consultations) loaded,
+    required TResult Function(Nutritionist nutritionist) loaded,
     required TResult Function(String message) error,
   }) {
     return initial();
@@ -143,7 +144,7 @@ class _$InitialImpl implements _Initial {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Uconsultation> consultations)? loaded,
+    TResult? Function(Nutritionist nutritionist)? loaded,
     TResult? Function(String message)? error,
   }) {
     return initial?.call();
@@ -154,7 +155,7 @@ class _$InitialImpl implements _Initial {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Uconsultation> consultations)? loaded,
+    TResult Function(Nutritionist nutritionist)? loaded,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -202,7 +203,7 @@ class _$InitialImpl implements _Initial {
   }
 }
 
-abstract class _Initial implements UconsultationState {
+abstract class _Initial implements NutritionistDetailState {
   const factory _Initial() = _$InitialImpl;
 }
 
@@ -215,13 +216,13 @@ abstract class _$$LoadingImplCopyWith<$Res> {
 
 /// @nodoc
 class __$$LoadingImplCopyWithImpl<$Res>
-    extends _$UconsultationStateCopyWithImpl<$Res, _$LoadingImpl>
+    extends _$NutritionistDetailStateCopyWithImpl<$Res, _$LoadingImpl>
     implements _$$LoadingImplCopyWith<$Res> {
   __$$LoadingImplCopyWithImpl(
       _$LoadingImpl _value, $Res Function(_$LoadingImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of UconsultationState
+  /// Create a copy of NutritionistDetailState
   /// with the given fields replaced by the non-null parameter values.
 }
 
@@ -232,7 +233,7 @@ class _$LoadingImpl implements _Loading {
 
   @override
   String toString() {
-    return 'UconsultationState.loading()';
+    return 'NutritionistDetailState.loading()';
   }
 
   @override
@@ -249,7 +250,7 @@ class _$LoadingImpl implements _Loading {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Uconsultation> consultations) loaded,
+    required TResult Function(Nutritionist nutritionist) loaded,
     required TResult Function(String message) error,
   }) {
     return loading();
@@ -260,7 +261,7 @@ class _$LoadingImpl implements _Loading {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Uconsultation> consultations)? loaded,
+    TResult? Function(Nutritionist nutritionist)? loaded,
     TResult? Function(String message)? error,
   }) {
     return loading?.call();
@@ -271,7 +272,7 @@ class _$LoadingImpl implements _Loading {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Uconsultation> consultations)? loaded,
+    TResult Function(Nutritionist nutritionist)? loaded,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -319,7 +320,7 @@ class _$LoadingImpl implements _Loading {
   }
 }
 
-abstract class _Loading implements UconsultationState {
+abstract class _Loading implements NutritionistDetailState {
   const factory _Loading() = _$LoadingImpl;
 }
 
@@ -329,29 +330,29 @@ abstract class _$$LoadedImplCopyWith<$Res> {
           _$LoadedImpl value, $Res Function(_$LoadedImpl) then) =
       __$$LoadedImplCopyWithImpl<$Res>;
   @useResult
-  $Res call({List<Uconsultation> consultations});
+  $Res call({Nutritionist nutritionist});
 }
 
 /// @nodoc
 class __$$LoadedImplCopyWithImpl<$Res>
-    extends _$UconsultationStateCopyWithImpl<$Res, _$LoadedImpl>
+    extends _$NutritionistDetailStateCopyWithImpl<$Res, _$LoadedImpl>
     implements _$$LoadedImplCopyWith<$Res> {
   __$$LoadedImplCopyWithImpl(
       _$LoadedImpl _value, $Res Function(_$LoadedImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of UconsultationState
+  /// Create a copy of NutritionistDetailState
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? consultations = null,
+    Object? nutritionist = null,
   }) {
     return _then(_$LoadedImpl(
-      null == consultations
-          ? _value._consultations
-          : consultations // ignore: cast_nullable_to_non_nullable
-              as List<Uconsultation>,
+      null == nutritionist
+          ? _value.nutritionist
+          : nutritionist // ignore: cast_nullable_to_non_nullable
+              as Nutritionist,
     ));
   }
 }
@@ -359,20 +360,14 @@ class __$$LoadedImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$LoadedImpl implements _Loaded {
-  const _$LoadedImpl(final List<Uconsultation> consultations)
-      : _consultations = consultations;
+  const _$LoadedImpl(this.nutritionist);
 
-  final List<Uconsultation> _consultations;
   @override
-  List<Uconsultation> get consultations {
-    if (_consultations is EqualUnmodifiableListView) return _consultations;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_consultations);
-  }
+  final Nutritionist nutritionist;
 
   @override
   String toString() {
-    return 'UconsultationState.loaded(consultations: $consultations)';
+    return 'NutritionistDetailState.loaded(nutritionist: $nutritionist)';
   }
 
   @override
@@ -380,15 +375,14 @@ class _$LoadedImpl implements _Loaded {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$LoadedImpl &&
-            const DeepCollectionEquality()
-                .equals(other._consultations, _consultations));
+            (identical(other.nutritionist, nutritionist) ||
+                other.nutritionist == nutritionist));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, const DeepCollectionEquality().hash(_consultations));
+  int get hashCode => Object.hash(runtimeType, nutritionist);
 
-  /// Create a copy of UconsultationState
+  /// Create a copy of NutritionistDetailState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
@@ -401,10 +395,10 @@ class _$LoadedImpl implements _Loaded {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Uconsultation> consultations) loaded,
+    required TResult Function(Nutritionist nutritionist) loaded,
     required TResult Function(String message) error,
   }) {
-    return loaded(consultations);
+    return loaded(nutritionist);
   }
 
   @override
@@ -412,10 +406,10 @@ class _$LoadedImpl implements _Loaded {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Uconsultation> consultations)? loaded,
+    TResult? Function(Nutritionist nutritionist)? loaded,
     TResult? Function(String message)? error,
   }) {
-    return loaded?.call(consultations);
+    return loaded?.call(nutritionist);
   }
 
   @override
@@ -423,12 +417,12 @@ class _$LoadedImpl implements _Loaded {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Uconsultation> consultations)? loaded,
+    TResult Function(Nutritionist nutritionist)? loaded,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
     if (loaded != null) {
-      return loaded(consultations);
+      return loaded(nutritionist);
     }
     return orElse();
   }
@@ -471,12 +465,12 @@ class _$LoadedImpl implements _Loaded {
   }
 }
 
-abstract class _Loaded implements UconsultationState {
-  const factory _Loaded(final List<Uconsultation> consultations) = _$LoadedImpl;
+abstract class _Loaded implements NutritionistDetailState {
+  const factory _Loaded(final Nutritionist nutritionist) = _$LoadedImpl;
 
-  List<Uconsultation> get consultations;
+  Nutritionist get nutritionist;
 
-  /// Create a copy of UconsultationState
+  /// Create a copy of NutritionistDetailState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$LoadedImplCopyWith<_$LoadedImpl> get copyWith =>
@@ -494,13 +488,13 @@ abstract class _$$ErrorImplCopyWith<$Res> {
 
 /// @nodoc
 class __$$ErrorImplCopyWithImpl<$Res>
-    extends _$UconsultationStateCopyWithImpl<$Res, _$ErrorImpl>
+    extends _$NutritionistDetailStateCopyWithImpl<$Res, _$ErrorImpl>
     implements _$$ErrorImplCopyWith<$Res> {
   __$$ErrorImplCopyWithImpl(
       _$ErrorImpl _value, $Res Function(_$ErrorImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of UconsultationState
+  /// Create a copy of NutritionistDetailState
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -526,7 +520,7 @@ class _$ErrorImpl implements _Error {
 
   @override
   String toString() {
-    return 'UconsultationState.error(message: $message)';
+    return 'NutritionistDetailState.error(message: $message)';
   }
 
   @override
@@ -540,7 +534,7 @@ class _$ErrorImpl implements _Error {
   @override
   int get hashCode => Object.hash(runtimeType, message);
 
-  /// Create a copy of UconsultationState
+  /// Create a copy of NutritionistDetailState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
@@ -553,7 +547,7 @@ class _$ErrorImpl implements _Error {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Uconsultation> consultations) loaded,
+    required TResult Function(Nutritionist nutritionist) loaded,
     required TResult Function(String message) error,
   }) {
     return error(message);
@@ -564,7 +558,7 @@ class _$ErrorImpl implements _Error {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Uconsultation> consultations)? loaded,
+    TResult? Function(Nutritionist nutritionist)? loaded,
     TResult? Function(String message)? error,
   }) {
     return error?.call(message);
@@ -575,7 +569,7 @@ class _$ErrorImpl implements _Error {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Uconsultation> consultations)? loaded,
+    TResult Function(Nutritionist nutritionist)? loaded,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -623,12 +617,12 @@ class _$ErrorImpl implements _Error {
   }
 }
 
-abstract class _Error implements UconsultationState {
+abstract class _Error implements NutritionistDetailState {
   const factory _Error(final String message) = _$ErrorImpl;
 
   String get message;
 
-  /// Create a copy of UconsultationState
+  /// Create a copy of NutritionistDetailState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ErrorImplCopyWith<_$ErrorImpl> get copyWith =>

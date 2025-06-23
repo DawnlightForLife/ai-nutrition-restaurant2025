@@ -63,6 +63,10 @@ class RouteNames {
   static const String clientList = '/nutritionist/clients';
   static const String clientDetail = '/nutritionist/client';
   
+  // 营养师列表（用户端）
+  static const String nutritionistList = '/nutritionists';
+  static const String nutritionistDetail = '/nutritionist/detail';
+  
   // 营养师认证
   static const String nutritionistCertification = '/nutritionist/certification';
   static const String nutritionistCertificationStatus = '/nutritionist/certification/status';

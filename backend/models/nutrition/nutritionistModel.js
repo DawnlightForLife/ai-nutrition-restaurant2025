@@ -279,7 +279,54 @@ const nutritionistSchema = new mongoose.Schema({
       default: true,
       description: '是否当前任职'
     }
-  }]
+  }],
+  // 在线状态信息
+  onlineStatus: {
+    isOnline: {
+      type: Boolean,
+      default: false,
+      description: '是否在线'
+    },
+    isAvailable: {
+      type: Boolean,
+      default: false,
+      description: '是否可接受咨询'
+    },
+    lastActiveAt: {
+      type: Date,
+      default: Date.now,
+      description: '最后活跃时间'
+    },
+    statusMessage: {
+      type: String,
+      maxlength: 100,
+      description: '状态消息'
+    },
+    availableConsultationTypes: [{
+      type: {
+        type: String,
+        enum: ['text', 'voice', 'video', 'offline'],
+        description: '咨询类型'
+      },
+      available: {
+        type: Boolean,
+        default: true,
+        description: '是否可用'
+      }
+    }],
+    responseTime: {
+      average: {
+        type: Number,
+        default: 0,
+        description: '平均响应时间（分钟）'
+      },
+      lastUpdated: {
+        type: Date,
+        default: Date.now,
+        description: '响应时间最后更新时间'
+      }
+    }
+  }
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -297,6 +344,9 @@ nutritionistSchema.index({ 'ratings.averageRating': -1 });
 nutritionistSchema.index({ status: 1 });
 nutritionistSchema.index({ 'verification.verificationStatus': 1 });
 nutritionistSchema.index({ 'serviceInfo.inPersonLocations.city': 1 });
+nutritionistSchema.index({ 'onlineStatus.isOnline': 1 });
+nutritionistSchema.index({ 'onlineStatus.isAvailable': 1 });
+nutritionistSchema.index({ 'onlineStatus.lastActiveAt': -1 });
 
 // 虚拟字段
 nutritionistSchema.virtual('isLicenseValid').get(function() {
@@ -327,8 +377,38 @@ nutritionistSchema.methods.getPublicProfile = function() {
     serviceTags: this.serviceInfo.serviceTags || [],
     averageRating: this.ratings.averageRating,
     totalReviews: this.ratings.totalReviews,
-    certifications: this.qualifications.certificationImages || []
+    certifications: this.qualifications.certificationImages || [],
+    // 添加在线状态信息
+    isOnline: this.onlineStatus.isOnline,
+    isAvailable: this.onlineStatus.isAvailable,
+    lastActiveAt: this.onlineStatus.lastActiveAt,
+    statusMessage: this.onlineStatus.statusMessage,
+    availableConsultationTypes: this.onlineStatus.availableConsultationTypes,
+    responseTime: this.onlineStatus.responseTime.average
   };
+};
+
+// 更新在线状态
+nutritionistSchema.methods.updateOnlineStatus = function(status) {
+  this.onlineStatus.isOnline = status.isOnline !== undefined ? status.isOnline : this.onlineStatus.isOnline;
+  this.onlineStatus.isAvailable = status.isAvailable !== undefined ? status.isAvailable : this.onlineStatus.isAvailable;
+  this.onlineStatus.lastActiveAt = new Date();
+  if (status.statusMessage !== undefined) {
+    this.onlineStatus.statusMessage = status.statusMessage;
+  }
+  if (status.availableConsultationTypes) {
+    this.onlineStatus.availableConsultationTypes = status.availableConsultationTypes;
+  }
+  return this.save();
+};
+
+// 检查是否可以接受特定类型的咨询
+nutritionistSchema.methods.canAcceptConsultationType = function(type) {
+  if (!this.onlineStatus.isOnline || !this.onlineStatus.isAvailable) {
+    return false;
+  }
+  const consultationType = this.onlineStatus.availableConsultationTypes.find(ct => ct.type === type);
+  return consultationType ? consultationType.available : false;
 };
 
 nutritionistSchema.methods.isQualifiedFor = function(specialization) {
@@ -347,6 +427,42 @@ nutritionistSchema.statics.findTopRated = function(limit = 10) {
   return this.find({ status: 'active' })
     .sort({ 'ratings.averageRating': -1 })
     .limit(limit);
+};
+
+// 查找在线营养师
+nutritionistSchema.statics.findOnlineNutritionists = function(options = {}) {
+  const query = {
+    status: 'active',
+    'verification.verificationStatus': 'approved',
+    'onlineStatus.isOnline': true,
+    'onlineStatus.isAvailable': true
+  };
+  
+  if (options.specialization) {
+    query['professionalInfo.specializations'] = options.specialization;
+  }
+  
+  if (options.consultationType) {
+    query['onlineStatus.availableConsultationTypes'] = {
+      $elemMatch: {
+        type: options.consultationType,
+        available: true
+      }
+    };
+  }
+  
+  return this.find(query)
+    .sort({ 'onlineStatus.lastActiveAt': -1, 'ratings.averageRating': -1 })
+    .limit(options.limit || 20);
+};
+
+// 更新营养师活跃时间
+nutritionistSchema.statics.updateLastActive = function(nutritionistId) {
+  return this.findByIdAndUpdate(
+    nutritionistId, 
+    { 'onlineStatus.lastActiveAt': new Date() },
+    { new: true }
+  );
 };
 
 // 中间件

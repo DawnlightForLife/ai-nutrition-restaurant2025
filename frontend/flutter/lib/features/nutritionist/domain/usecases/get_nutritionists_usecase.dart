@@ -5,7 +5,7 @@ import '../entities/nutritionist.dart';
 import '../repositories/nutritionist_repository.dart';
 
 /// 获取Unutritionist列表用例
-class GetUnutritionistsUseCase implements UseCase<List<Unutritionist>, NoParams> {
+class GetUnutritionistsUseCase implements UseCase<Either<Failure, List<Unutritionist>>, NoParams> {
   final UnutritionistRepository repository;
 
   GetUnutritionistsUseCase(this.repository);

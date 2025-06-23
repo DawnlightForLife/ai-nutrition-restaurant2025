@@ -56,7 +56,8 @@ class OrderRepositoryImpl implements OrderRepository {
         queryParameters: queryParams
       );
       
-      final List<dynamic> ordersJson = response.data['data'] ?? [];
+      final responseData = response.data['data'] ?? {};
+      final List<dynamic> ordersJson = responseData['orders'] ?? [];
       final orders = ordersJson.map((json) => OrderModel.fromJson(json).toEntity()).toList();
       
       return Right(orders);

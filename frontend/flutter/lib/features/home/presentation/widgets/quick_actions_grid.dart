@@ -124,8 +124,16 @@ class QuickActionsGrid extends StatelessWidget {
       case '/nutrition/profiles':
         AppNavigator.toNutritionProfiles(context);
         break;
+      case '/nutritionists':
+        // 导航到营养师列表页面
+        Navigator.pushNamed(context, '/nutritionists');
+        break;
       case '/stores/nearby':
         _navigateToNearbyStores(context, action);
+        break;
+      case '/cart':
+        // 导航到购物车
+        Navigator.pushNamed(context, '/shopping-cart');
         break;
       default:
         // 显示开发中提示

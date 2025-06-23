@@ -19,7 +19,25 @@ enum SpecializationArea {
   elderlyNutrition('elderly_nutrition', '老年营养'),
   
   /// 体重管理
-  weightManagement('weight_management', '体重管理');
+  weightManagement('weight_management', '体重管理'),
+  
+  /// 儿童营养
+  childNutrition('child_nutrition', '儿童营养'),
+  
+  /// 糖尿病饮食
+  diabeticDiet('diabetic_diet', '糖尿病饮食'),
+  
+  /// 基础营养
+  basicNutrition('basic_nutrition', '基础营养'),
+  
+  /// 中医营养
+  traditionalChineseMedicine('traditional_chinese_medicine', '中医营养'),
+  
+  /// 孕期营养
+  pregnancyNutrition('pregnancy_nutrition', '孕期营养'),
+  
+  /// 慢性病营养
+  chronicDiseaseNutrition('chronic_disease_nutrition', '慢性病营养');
 
   final String value;
   final String label;
@@ -51,6 +69,18 @@ enum SpecializationArea {
         return 'elderly';
       case SpecializationArea.weightManagement:
         return 'monitor_weight';
+      case SpecializationArea.childNutrition:
+        return 'child_friendly';
+      case SpecializationArea.diabeticDiet:
+        return 'diabetes';
+      case SpecializationArea.basicNutrition:
+        return 'school';
+      case SpecializationArea.traditionalChineseMedicine:
+        return 'spa';
+      case SpecializationArea.pregnancyNutrition:
+        return 'pregnant_woman';
+      case SpecializationArea.chronicDiseaseNutrition:
+        return 'healing';
     }
   }
 
@@ -71,6 +101,32 @@ enum SpecializationArea {
         return '老年人营养评估与干预';
       case SpecializationArea.weightManagement:
         return '肥胖与体重控制营养方案';
+      case SpecializationArea.childNutrition:
+        return '儿童生长发育营养支持';
+      case SpecializationArea.diabeticDiet:
+        return '糖尿病饮食管理与控制';
+      case SpecializationArea.basicNutrition:
+        return '基础营养知识与健康饮食';
+      case SpecializationArea.traditionalChineseMedicine:
+        return '中医食疗与营养调理';
+      case SpecializationArea.pregnancyNutrition:
+        return '孕期营养与胎儿发育';
+      case SpecializationArea.chronicDiseaseNutrition:
+        return '慢性疾病营养干预';
     }
   }
+
+  /// 显示名称别名（兼容性）
+  String get displayName => label;
+}
+
+/// 添加更多专业领域选项
+extension SpecializationAreaExtension on SpecializationArea {
+  static const List<SpecializationArea> commonAreas = [
+    SpecializationArea.clinicalNutrition,
+    SpecializationArea.sportsNutrition,
+    SpecializationArea.weightManagement,
+    SpecializationArea.maternalChild,
+    SpecializationArea.elderlyNutrition,
+  ];
 }

@@ -260,6 +260,12 @@ const startServer = async () => {
     const orderTrackingWebSocketService = require('./services/websocket/orderTrackingWebSocketService');
     orderTrackingWebSocketService.initialize(io);
     
+    const consultationChatWebSocketService = require('./services/websocket/consultationChatWebSocketService');
+    consultationChatWebSocketService.initialize(io);
+    
+    const nutritionistStatusWebSocketService = require('./services/websocket/nutritionistStatusWebSocketService');
+    nutritionistStatusWebSocketService.initialize(io);
+    
     console.log('WebSocket服务已初始化');
     
     // 启动服务器

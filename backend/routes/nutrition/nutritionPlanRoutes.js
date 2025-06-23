@@ -6,9 +6,16 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../../controllers/nutrition/nutritionPlanController');
+const { authenticateUser } = require('../../middleware/auth/authMiddleware');
 
-/** TODO: 添加具体的路由逻辑 */
+// 需要认证的路由
+router.use(authenticateUser);
+
+// 营养计划管理
 router.get('/', controller.getNutritionPlanList); // 获取营养计划列表
 router.post('/', controller.createNutritionPlan); // 创建营养计划
+router.get('/:id', controller.getNutritionPlanDetail); // 获取营养计划详情
+router.put('/:id', controller.updateNutritionPlan); // 更新营养计划
+router.delete('/:id', controller.deleteNutritionPlan); // 删除营养计划
 
 module.exports = router;

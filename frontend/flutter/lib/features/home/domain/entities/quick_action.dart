@@ -59,6 +59,16 @@ class DefaultQuickActions {
       order: 3,
     ),
     QuickAction(
+      id: 'nutritionist',
+      title: '找营养师',
+      subtitle: '专业营养咨询',
+      icon: Icons.medical_services,
+      color: Colors.teal,
+      route: '/nutritionists',
+      isEnabled: true,
+      order: 4,
+    ),
+    QuickAction(
       id: 'nearby_stores',
       title: '附近门店',
       subtitle: '找到最近门店',
@@ -66,7 +76,7 @@ class DefaultQuickActions {
       color: Colors.purple,
       route: '/stores/nearby',
       isEnabled: true,
-      order: 4,
+      order: 5,
     ),
     QuickAction(
       id: 'shopping_cart',
@@ -76,7 +86,7 @@ class DefaultQuickActions {
       color: Colors.redAccent,
       route: '/cart',
       isEnabled: true,
-      order: 5,
+      order: 6,
     ),
   ];
 }

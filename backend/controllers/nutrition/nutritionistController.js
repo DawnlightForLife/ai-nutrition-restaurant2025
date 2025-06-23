@@ -258,3 +258,140 @@ exports.verifyNutritionist = catchAsync(async (req, res) => {
     data: result.data
   });
 });
+
+/**
+ * 更新营养师在线状态
+ * @async
+ * @param {Object} req - Express请求对象
+ * @param {Object} res - Express响应对象
+ * @returns {Object} 包含更新结果的JSON响应
+ */
+exports.updateOnlineStatus = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { isOnline, isAvailable, statusMessage, availableConsultationTypes } = req.body;
+  
+  // 获取营养师信息并验证权限
+  const nutritionist = await nutritionistService.getNutritionistById(id);
+  
+  if (!nutritionist.success) {
+    return res.status(404).json({
+      success: false,
+      message: nutritionist.message
+    });
+  }
+  
+  // 验证用户权限（只有营养师本人可以更新状态）
+  if (nutritionist.data.userId.toString() !== req.user.id) {
+    return res.status(403).json({
+      success: false,
+      message: '无权更新此营养师的在线状态'
+    });
+  }
+  
+  const statusData = {
+    isOnline,
+    isAvailable,
+    statusMessage,
+    availableConsultationTypes
+  };
+  
+  const result = await nutritionistService.updateOnlineStatus(id, statusData);
+  
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      message: result.message
+    });
+  }
+  
+  res.status(200).json({
+    success: true,
+    message: '在线状态更新成功',
+    data: result.data
+  });
+});
+
+/**
+ * 获取在线营养师列表
+ * @async
+ * @param {Object} req - Express请求对象
+ * @param {Object} res - Express响应对象
+ * @returns {Object} 包含在线营养师列表的JSON响应
+ */
+exports.getOnlineNutritionists = catchAsync(async (req, res) => {
+  const { 
+    specialization, 
+    consultationType,
+    limit = 20
+  } = req.query;
+  
+  const options = {
+    specialization,
+    consultationType,
+    limit: parseInt(limit)
+  };
+  
+  const result = await nutritionistService.getOnlineNutritionists(options);
+  
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      message: result.message
+    });
+  }
+  
+  res.status(200).json({
+    success: true,
+    message: '获取在线营养师列表成功',
+    data: result.data
+  });
+});
+
+/**
+ * 设置营养师可用时间段
+ * @async
+ * @param {Object} req - Express请求对象
+ * @param {Object} res - Express响应对象
+ * @returns {Object} 包含设置结果的JSON响应
+ */
+exports.updateAvailabilitySchedule = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { availableTimeSlots } = req.body;
+  
+  // 获取营养师信息并验证权限
+  const nutritionist = await nutritionistService.getNutritionistById(id);
+  
+  if (!nutritionist.success) {
+    return res.status(404).json({
+      success: false,
+      message: nutritionist.message
+    });
+  }
+  
+  // 验证用户权限
+  if (nutritionist.data.userId.toString() !== req.user.id) {
+    return res.status(403).json({
+      success: false,
+      message: '无权更新此营养师的时间安排'
+    });
+  }
+  
+  const updateData = {
+    'serviceInfo.availableTimeSlots': availableTimeSlots
+  };
+  
+  const result = await nutritionistService.updateNutritionist(id, updateData);
+  
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      message: result.message
+    });
+  }
+  
+  res.status(200).json({
+    success: true,
+    message: '可用时间段更新成功',
+    data: result.data
+  });
+});

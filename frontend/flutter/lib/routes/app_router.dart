@@ -21,6 +21,7 @@ import '../features/admin/presentation/pages/permission_management_page.dart';
 import '../features/admin/presentation/pages/system_config_page.dart';
 import '../features/admin/presentation/pages/merchant_stats_page.dart';
 import '../features/admin/presentation/pages/nutritionist_stats_page.dart';
+import '../features/admin/presentation/pages/certification_review_page.dart';
 import '../features/merchant/presentation/pages/merchant_application_improved_page.dart';
 import '../features/merchant/presentation/pages/merchant_application_status_page.dart';
 import '../features/nutritionist/presentation/pages/nutritionist_certification_application_page.dart';
@@ -44,6 +45,17 @@ import '../features/user/presentation/pages/profile_edit_page.dart';
 import '../features/merchant/presentation/pages/dish_management_page_v2.dart';
 import '../features/merchant/presentation/pages/dish_form_page.dart';
 import '../features/dev/dev_login_page.dart';
+import '../features/consultation/presentation/pages/consultation_list_page.dart';
+import '../features/consultation/presentation/pages/nutrition_plan_list_page.dart';
+import '../features/consultation/presentation/pages/client_management_page.dart' as consultation;
+import '../features/consultation/presentation/pages/consultation_market_page.dart';
+import '../features/nutritionist/presentation/pages/nutritionist_main_page.dart';
+import '../features/nutritionist/presentation/pages/nutritionist_profile_page.dart';
+import '../features/nutritionist/presentation/pages/ai_assistant_page.dart';
+import '../features/nutritionist/presentation/pages/nutritionist_list_page.dart';
+import '../features/nutritionist/presentation/pages/nutritionist_detail_page.dart';
+import '../features/nutritionist/presentation/pages/client_management_page.dart' as nutritionist;
+import '../features/nutritionist/presentation/pages/statistics_page.dart';
 // TODO: 导入其他页面
 
 /// 应用路由配置
@@ -302,6 +314,16 @@ class AppRouter {
         
       case '/admin/nutritionist-stats':
         return _buildRoute(const NutritionistStatsPage(), settings);
+        
+      case '/admin/certification-review':
+        return _buildRoute(const CertificationReviewPage(), settings);
+        
+      case '/admin/certification-review/:id':
+        // TODO: Create certification detail page
+        return _buildRoute(
+          const PlaceholderPage(title: '认证申请详情'),
+          settings,
+        );
 
       // 商家申请相关路由
       case RouteNames.merchantApplication:
@@ -337,6 +359,85 @@ class AppRouter {
             applicationId: args?['applicationId'],
             initialData: args?['initialData'],
           ),
+          settings,
+        );
+
+      // 用户端营养师路由
+      case RouteNames.nutritionistList:
+        return _buildRoute(const NutritionistListPage(), settings);
+        
+      case RouteNames.nutritionistDetail:
+        final nutritionistId = settings.arguments as String;
+        return _buildRoute(
+          NutritionistDetailPage(nutritionistId: nutritionistId),
+          settings,
+        );
+
+      // 营养师工作台路由
+      case '/nutritionist/main':
+      case '/nutritionist/dashboard':
+        return _buildRoute(const NutritionistMainPage(), settings);
+        
+      case '/nutritionist/profile':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          NutritionistProfilePage(
+            nutritionistId: args?['nutritionistId'] ?? 'current_user',
+          ),
+          settings,
+        );
+        
+      case '/nutritionist/ai-assistant':
+        return _buildRoute(const AiAssistantPage(), settings);
+        
+      case '/consultations':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          ConsultationListPage(
+            nutritionistId: args?['nutritionistId'],
+          ),
+          settings,
+        );
+        
+      case '/consultations/create':
+        return _buildRoute(
+          const PlaceholderPage(title: '创建咨询'),
+          settings,
+        );
+        
+      case '/consultations/market':
+        return _buildRoute(const ConsultationMarketPage(), settings);
+        
+      case '/nutrition-plans':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          NutritionPlanListPage(
+            nutritionistId: args?['nutritionistId'],
+          ),
+          settings,
+        );
+        
+      case '/clients':
+        return _buildRoute(
+          const consultation.ClientManagementPage(),
+          settings,
+        );
+        
+      case '/nutritionist/clients':
+        return _buildRoute(
+          const nutritionist.ClientManagementPage(),
+          settings,
+        );
+        
+      case '/nutritionist/statistics':
+        return _buildRoute(
+          const NutritionistStatisticsPage(),
+          settings,
+        );
+        
+      case '/notifications':
+        return _buildRoute(
+          const PlaceholderPage(title: '通知中心'),
           settings,
         );
 

@@ -81,6 +81,9 @@ class ApiEndpoints {
   static const String adminMerchants = '$admin/merchants';
   static const String adminOrders = '$admin/orders';
   static const String adminReports = '$admin/reports';
+  static const String adminNutritionistManagement = '$admin/nutritionist-management';
+  static const String adminNutritionistStats = '$admin/nutritionist-stats';
+  static const String adminCertificationReview = '$admin/nutritionist-certification-review';
   
   // 系统配置相关
   static const String systemConfigPublic = '$systemConfig/public';

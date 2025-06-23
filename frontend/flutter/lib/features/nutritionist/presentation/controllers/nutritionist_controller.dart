@@ -31,11 +31,11 @@ class NutritionistState with _$NutritionistState {
 
   /// 获取在线营养师
   List<Unutritionist> get onlineNutritionists =>
-      nutritionists.where((n) => n.isOnline ?? false).toList();
+      nutritionists.where((n) => n.isOnline).toList();
 
   /// 获取认证营养师
   List<Unutritionist> get verifiedNutritionists =>
-      nutritionists.where((n) => n.isVerified ?? false).toList();
+      nutritionists.where((n) => n.isVerified).toList();
 }
 
 /// Nutritionist 控制器
@@ -75,7 +75,7 @@ class NutritionistController extends _$NutritionistController {
   Map<String, List<Unutritionist>> _groupBySpecialty(List<Unutritionist> nutritionists) {
     final grouped = <String, List<Unutritionist>>{};
     for (final nutritionist in nutritionists) {
-      for (final specialty in nutritionist.specialties ?? []) {
+      for (final specialty in nutritionist.specialties) {
         grouped.putIfAbsent(specialty, () => []).add(nutritionist);
       }
     }
@@ -103,7 +103,7 @@ class NutritionistController extends _$NutritionistController {
     return nutritionists.where((nutritionist) {
       final nameMatch = nutritionist.name.toLowerCase().contains(query.toLowerCase());
       final bioMatch = nutritionist.bio?.toLowerCase().contains(query.toLowerCase()) ?? false;
-      final specialtyMatch = nutritionist.specialties?.any(
+      final specialtyMatch = nutritionist.specialties.any(
             (s) => s.toLowerCase().contains(query.toLowerCase()),
           ) ??
           false;
@@ -126,7 +126,7 @@ class NutritionistController extends _$NutritionistController {
   List<Unutritionist> filterByPriceRange(double minPrice, double maxPrice) {
     final nutritionists = state.valueOrNull?.nutritionists ?? [];
     return nutritionists.where((n) {
-      final price = n.consultationPrice ?? 0;
+      final price = n.consultationFee;
       return price >= minPrice && price <= maxPrice;
     }).toList();
   }
@@ -135,8 +135,8 @@ class NutritionistController extends _$NutritionistController {
   List<Unutritionist> getRecommended({int limit = 5}) {
     final nutritionists = List<Unutritionist>.from(state.valueOrNull?.nutritionists ?? []);
     nutritionists.sort((a, b) {
-      final scoreA = (a.rating ?? 0) * (a.consultationCount ?? 0);
-      final scoreB = (b.rating ?? 0) * (b.consultationCount ?? 0);
+      final scoreA = a.rating * a.reviewCount;
+      final scoreB = b.rating * b.reviewCount;
       return scoreB.compareTo(scoreA);
     });
     return nutritionists.take(limit).toList();

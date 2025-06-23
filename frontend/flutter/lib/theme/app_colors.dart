@@ -48,6 +48,8 @@ abstract class AppColors {
   // ========== 兼容性别名 ==========
   static const Color backgroundGray = Color(0xFFEEEEEE);
   static const Color divider = Color(0xFFE0E0E0);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color border = Color(0xFFE0E0E0);
   
   // ========== 新增颜色定义 ==========
   static const Color primaryOrange = Color(0xFFFF6B35);

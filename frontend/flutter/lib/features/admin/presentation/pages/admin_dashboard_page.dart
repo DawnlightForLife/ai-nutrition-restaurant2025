@@ -234,6 +234,13 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
             'onTap': () => Navigator.of(context).pushNamed('/admin/nutritionist-stats'),
           },
           {
+            'icon': Icons.verified_user,
+            'title': '认证审核',
+            'subtitle': '营养师认证申请审核管理',
+            'color': Colors.deepPurple,
+            'onTap': () => Navigator.of(context).pushNamed('/admin/certification-review'),
+          },
+          {
             'icon': Icons.restaurant,
             'title': '菜品管理',
             'subtitle': '菜品信息管理与营养审核',

@@ -14,10 +14,6 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-OrderModel _$OrderModelFromJson(Map<String, dynamic> json) {
-  return _OrderModel.fromJson(json);
-}
-
 /// @nodoc
 mixin _$OrderModel {
   @JsonKey(name: '_id')
@@ -62,9 +58,6 @@ mixin _$OrderModel {
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
-
-  /// Serializes this OrderModel to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of OrderModel
   /// with the given fields replaced by the non-null parameter values.
@@ -422,7 +415,7 @@ class __$$OrderModelImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$OrderModelImpl implements _OrderModel {
   const _$OrderModelImpl(
       {@JsonKey(name: '_id') required this.id,
@@ -450,9 +443,6 @@ class _$OrderModelImpl implements _OrderModel {
       required this.createdAt,
       this.updatedAt})
       : _items = items;
-
-  factory _$OrderModelImpl.fromJson(Map<String, dynamic> json) =>
-      _$$OrderModelImplFromJson(json);
 
   @override
   @JsonKey(name: '_id')
@@ -571,7 +561,6 @@ class _$OrderModelImpl implements _OrderModel {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hashAll([
         runtimeType,
@@ -636,13 +625,6 @@ class _$OrderModelImpl implements _OrderModel {
     }
     return orElse();
   }
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$OrderModelImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class _OrderModel implements OrderModel {
@@ -671,9 +653,6 @@ abstract class _OrderModel implements OrderModel {
       final DateTime? actualDeliveryTime,
       required final DateTime createdAt,
       final DateTime? updatedAt}) = _$OrderModelImpl;
-
-  factory _OrderModel.fromJson(Map<String, dynamic> json) =
-      _$OrderModelImpl.fromJson;
 
   @override
   @JsonKey(name: '_id')
@@ -1563,462 +1542,6 @@ abstract class _BatchOrderStatusUpdateRequest
   String get newStatus;
   @override
   String? get notes;
-
-  /// Create a copy of BatchOrderStatusUpdateRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$BatchOrderStatusUpdateRequestImplCopyWith<
-          _$BatchOrderStatusUpdateRequestImpl>
-      get copyWith => throw _privateConstructorUsedError;
-}
-
-OrderStatusUpdateRequest _$OrderStatusUpdateRequestFromJson(
-    Map<String, dynamic> json) {
-  return _OrderStatusUpdateRequest.fromJson(json);
-}
-
-/// @nodoc
-mixin _$OrderStatusUpdateRequest {
-  String get newStatus => throw _privateConstructorUsedError;
-  String? get cancelReason => throw _privateConstructorUsedError;
-
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>(
-    TResult Function(_OrderStatusUpdateRequest value) $default,
-  ) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>(
-    TResult? Function(_OrderStatusUpdateRequest value)? $default,
-  ) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>(
-    TResult Function(_OrderStatusUpdateRequest value)? $default, {
-    required TResult orElse(),
-  }) =>
-      throw _privateConstructorUsedError;
-
-  /// Serializes this OrderStatusUpdateRequest to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of OrderStatusUpdateRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $OrderStatusUpdateRequestCopyWith<OrderStatusUpdateRequest> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $OrderStatusUpdateRequestCopyWith<$Res> {
-  factory $OrderStatusUpdateRequestCopyWith(OrderStatusUpdateRequest value,
-          $Res Function(OrderStatusUpdateRequest) then) =
-      _$OrderStatusUpdateRequestCopyWithImpl<$Res, OrderStatusUpdateRequest>;
-  @useResult
-  $Res call({String newStatus, String? cancelReason});
-}
-
-/// @nodoc
-class _$OrderStatusUpdateRequestCopyWithImpl<$Res,
-        $Val extends OrderStatusUpdateRequest>
-    implements $OrderStatusUpdateRequestCopyWith<$Res> {
-  _$OrderStatusUpdateRequestCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of OrderStatusUpdateRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? newStatus = null,
-    Object? cancelReason = freezed,
-  }) {
-    return _then(_value.copyWith(
-      newStatus: null == newStatus
-          ? _value.newStatus
-          : newStatus // ignore: cast_nullable_to_non_nullable
-              as String,
-      cancelReason: freezed == cancelReason
-          ? _value.cancelReason
-          : cancelReason // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$OrderStatusUpdateRequestImplCopyWith<$Res>
-    implements $OrderStatusUpdateRequestCopyWith<$Res> {
-  factory _$$OrderStatusUpdateRequestImplCopyWith(
-          _$OrderStatusUpdateRequestImpl value,
-          $Res Function(_$OrderStatusUpdateRequestImpl) then) =
-      __$$OrderStatusUpdateRequestImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({String newStatus, String? cancelReason});
-}
-
-/// @nodoc
-class __$$OrderStatusUpdateRequestImplCopyWithImpl<$Res>
-    extends _$OrderStatusUpdateRequestCopyWithImpl<$Res,
-        _$OrderStatusUpdateRequestImpl>
-    implements _$$OrderStatusUpdateRequestImplCopyWith<$Res> {
-  __$$OrderStatusUpdateRequestImplCopyWithImpl(
-      _$OrderStatusUpdateRequestImpl _value,
-      $Res Function(_$OrderStatusUpdateRequestImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of OrderStatusUpdateRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? newStatus = null,
-    Object? cancelReason = freezed,
-  }) {
-    return _then(_$OrderStatusUpdateRequestImpl(
-      newStatus: null == newStatus
-          ? _value.newStatus
-          : newStatus // ignore: cast_nullable_to_non_nullable
-              as String,
-      cancelReason: freezed == cancelReason
-          ? _value.cancelReason
-          : cancelReason // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _$OrderStatusUpdateRequestImpl implements _OrderStatusUpdateRequest {
-  const _$OrderStatusUpdateRequestImpl(
-      {required this.newStatus, this.cancelReason});
-
-  factory _$OrderStatusUpdateRequestImpl.fromJson(Map<String, dynamic> json) =>
-      _$$OrderStatusUpdateRequestImplFromJson(json);
-
-  @override
-  final String newStatus;
-  @override
-  final String? cancelReason;
-
-  @override
-  String toString() {
-    return 'OrderStatusUpdateRequest(newStatus: $newStatus, cancelReason: $cancelReason)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$OrderStatusUpdateRequestImpl &&
-            (identical(other.newStatus, newStatus) ||
-                other.newStatus == newStatus) &&
-            (identical(other.cancelReason, cancelReason) ||
-                other.cancelReason == cancelReason));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, newStatus, cancelReason);
-
-  /// Create a copy of OrderStatusUpdateRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$OrderStatusUpdateRequestImplCopyWith<_$OrderStatusUpdateRequestImpl>
-      get copyWith => __$$OrderStatusUpdateRequestImplCopyWithImpl<
-          _$OrderStatusUpdateRequestImpl>(this, _$identity);
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>(
-    TResult Function(_OrderStatusUpdateRequest value) $default,
-  ) {
-    return $default(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>(
-    TResult? Function(_OrderStatusUpdateRequest value)? $default,
-  ) {
-    return $default?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>(
-    TResult Function(_OrderStatusUpdateRequest value)? $default, {
-    required TResult orElse(),
-  }) {
-    if ($default != null) {
-      return $default(this);
-    }
-    return orElse();
-  }
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$OrderStatusUpdateRequestImplToJson(
-      this,
-    );
-  }
-}
-
-abstract class _OrderStatusUpdateRequest implements OrderStatusUpdateRequest {
-  const factory _OrderStatusUpdateRequest(
-      {required final String newStatus,
-      final String? cancelReason}) = _$OrderStatusUpdateRequestImpl;
-
-  factory _OrderStatusUpdateRequest.fromJson(Map<String, dynamic> json) =
-      _$OrderStatusUpdateRequestImpl.fromJson;
-
-  @override
-  String get newStatus;
-  @override
-  String? get cancelReason;
-
-  /// Create a copy of OrderStatusUpdateRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$OrderStatusUpdateRequestImplCopyWith<_$OrderStatusUpdateRequestImpl>
-      get copyWith => throw _privateConstructorUsedError;
-}
-
-BatchOrderStatusUpdateRequest _$BatchOrderStatusUpdateRequestFromJson(
-    Map<String, dynamic> json) {
-  return _BatchOrderStatusUpdateRequest.fromJson(json);
-}
-
-/// @nodoc
-mixin _$BatchOrderStatusUpdateRequest {
-  List<String> get orderIds => throw _privateConstructorUsedError;
-  String get newStatus => throw _privateConstructorUsedError;
-
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>(
-    TResult Function(_BatchOrderStatusUpdateRequest value) $default,
-  ) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>(
-    TResult? Function(_BatchOrderStatusUpdateRequest value)? $default,
-  ) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>(
-    TResult Function(_BatchOrderStatusUpdateRequest value)? $default, {
-    required TResult orElse(),
-  }) =>
-      throw _privateConstructorUsedError;
-
-  /// Serializes this BatchOrderStatusUpdateRequest to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of BatchOrderStatusUpdateRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $BatchOrderStatusUpdateRequestCopyWith<BatchOrderStatusUpdateRequest>
-      get copyWith => throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $BatchOrderStatusUpdateRequestCopyWith<$Res> {
-  factory $BatchOrderStatusUpdateRequestCopyWith(
-          BatchOrderStatusUpdateRequest value,
-          $Res Function(BatchOrderStatusUpdateRequest) then) =
-      _$BatchOrderStatusUpdateRequestCopyWithImpl<$Res,
-          BatchOrderStatusUpdateRequest>;
-  @useResult
-  $Res call({List<String> orderIds, String newStatus});
-}
-
-/// @nodoc
-class _$BatchOrderStatusUpdateRequestCopyWithImpl<$Res,
-        $Val extends BatchOrderStatusUpdateRequest>
-    implements $BatchOrderStatusUpdateRequestCopyWith<$Res> {
-  _$BatchOrderStatusUpdateRequestCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of BatchOrderStatusUpdateRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? orderIds = null,
-    Object? newStatus = null,
-  }) {
-    return _then(_value.copyWith(
-      orderIds: null == orderIds
-          ? _value.orderIds
-          : orderIds // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      newStatus: null == newStatus
-          ? _value.newStatus
-          : newStatus // ignore: cast_nullable_to_non_nullable
-              as String,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$BatchOrderStatusUpdateRequestImplCopyWith<$Res>
-    implements $BatchOrderStatusUpdateRequestCopyWith<$Res> {
-  factory _$$BatchOrderStatusUpdateRequestImplCopyWith(
-          _$BatchOrderStatusUpdateRequestImpl value,
-          $Res Function(_$BatchOrderStatusUpdateRequestImpl) then) =
-      __$$BatchOrderStatusUpdateRequestImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({List<String> orderIds, String newStatus});
-}
-
-/// @nodoc
-class __$$BatchOrderStatusUpdateRequestImplCopyWithImpl<$Res>
-    extends _$BatchOrderStatusUpdateRequestCopyWithImpl<$Res,
-        _$BatchOrderStatusUpdateRequestImpl>
-    implements _$$BatchOrderStatusUpdateRequestImplCopyWith<$Res> {
-  __$$BatchOrderStatusUpdateRequestImplCopyWithImpl(
-      _$BatchOrderStatusUpdateRequestImpl _value,
-      $Res Function(_$BatchOrderStatusUpdateRequestImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of BatchOrderStatusUpdateRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? orderIds = null,
-    Object? newStatus = null,
-  }) {
-    return _then(_$BatchOrderStatusUpdateRequestImpl(
-      orderIds: null == orderIds
-          ? _value._orderIds
-          : orderIds // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      newStatus: null == newStatus
-          ? _value.newStatus
-          : newStatus // ignore: cast_nullable_to_non_nullable
-              as String,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _$BatchOrderStatusUpdateRequestImpl
-    implements _BatchOrderStatusUpdateRequest {
-  const _$BatchOrderStatusUpdateRequestImpl(
-      {required final List<String> orderIds, required this.newStatus})
-      : _orderIds = orderIds;
-
-  factory _$BatchOrderStatusUpdateRequestImpl.fromJson(
-          Map<String, dynamic> json) =>
-      _$$BatchOrderStatusUpdateRequestImplFromJson(json);
-
-  final List<String> _orderIds;
-  @override
-  List<String> get orderIds {
-    if (_orderIds is EqualUnmodifiableListView) return _orderIds;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_orderIds);
-  }
-
-  @override
-  final String newStatus;
-
-  @override
-  String toString() {
-    return 'BatchOrderStatusUpdateRequest(orderIds: $orderIds, newStatus: $newStatus)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$BatchOrderStatusUpdateRequestImpl &&
-            const DeepCollectionEquality().equals(other._orderIds, _orderIds) &&
-            (identical(other.newStatus, newStatus) ||
-                other.newStatus == newStatus));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(
-      runtimeType, const DeepCollectionEquality().hash(_orderIds), newStatus);
-
-  /// Create a copy of BatchOrderStatusUpdateRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$BatchOrderStatusUpdateRequestImplCopyWith<
-          _$BatchOrderStatusUpdateRequestImpl>
-      get copyWith => __$$BatchOrderStatusUpdateRequestImplCopyWithImpl<
-          _$BatchOrderStatusUpdateRequestImpl>(this, _$identity);
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>(
-    TResult Function(_BatchOrderStatusUpdateRequest value) $default,
-  ) {
-    return $default(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>(
-    TResult? Function(_BatchOrderStatusUpdateRequest value)? $default,
-  ) {
-    return $default?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>(
-    TResult Function(_BatchOrderStatusUpdateRequest value)? $default, {
-    required TResult orElse(),
-  }) {
-    if ($default != null) {
-      return $default(this);
-    }
-    return orElse();
-  }
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$BatchOrderStatusUpdateRequestImplToJson(
-      this,
-    );
-  }
-}
-
-abstract class _BatchOrderStatusUpdateRequest
-    implements BatchOrderStatusUpdateRequest {
-  const factory _BatchOrderStatusUpdateRequest(
-      {required final List<String> orderIds,
-      required final String newStatus}) = _$BatchOrderStatusUpdateRequestImpl;
-
-  factory _BatchOrderStatusUpdateRequest.fromJson(Map<String, dynamic> json) =
-      _$BatchOrderStatusUpdateRequestImpl.fromJson;
-
-  @override
-  List<String> get orderIds;
-  @override
-  String get newStatus;
 
   /// Create a copy of BatchOrderStatusUpdateRequest
   /// with the given fields replaced by the non-null parameter values.

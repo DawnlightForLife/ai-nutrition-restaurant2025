@@ -21,6 +21,8 @@ module.exports = {
   dietaryPreferenceService: require('./nutrition/dietaryPreferenceService'),
   aiRecommendationService: require('./nutrition/aiRecommendationService'),
   nutritionistService: require('./nutrition/nutritionistService'),
+  nutritionistClientService: require('./nutrition/nutritionistClientService'),
+  nutritionistStatsService: require('./nutrition/nutritionistStatsService'),
   userFavoriteService: require('./nutrition/FavoriteService'),
   nutritionPlanService: require('./nutrition/nutritionPlanService'),
   
@@ -40,6 +42,7 @@ module.exports = {
 
   // consult
   consultationService: require('./consult/consultationService'),
+  consultationMarketService: require('./consult/consultationMarketService'),
 
   // notification
   notificationService: require('./notification/notificationService'),

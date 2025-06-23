@@ -62,7 +62,7 @@ const validateUserRegistration = (data) => {
       .messages({
         'string.max': '个人简介不能超过500个字符'
       }),
-    role: Joi.string().valid('user', 'admin').default('user')
+    role: Joi.string().valid('user', 'admin', 'customer', 'nutritionist', 'store_manager', 'store_staff').default('user')
   });
 
   return schema.validate(data, { abortEarly: false });
@@ -99,7 +99,7 @@ const validateUserUpdate = (data) => {
       .messages({
         'string.max': '个人简介不能超过500个字符'
       }),
-    role: Joi.string().valid('user', 'admin')
+    role: Joi.string().valid('user', 'admin', 'customer', 'nutritionist', 'store_manager', 'store_staff')
   });
 
   return schema.validate(data, { abortEarly: false });

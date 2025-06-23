@@ -797,23 +797,17 @@ class _UserProfilePlaceholderState extends ConsumerState<UserProfilePlaceholder>
   
   /// 处理营养咨询
   void _handleNutritionConsultation(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('营养咨询功能开发中...')),
-    );
+    Navigator.of(context).pushNamed('/consultations');
   }
   
   /// 处理营养方案
   void _handleNutritionPlan(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('营养方案功能开发中...')),
-    );
+    Navigator.of(context).pushNamed('/nutrition-plans');
   }
   
   /// 处理客户管理
   void _handleClientManagement(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('客户管理功能开发中...')),
-    );
+    Navigator.of(context).pushNamed('/clients');
   }
   
   /// 处理商家工作台切换
@@ -835,10 +829,13 @@ class _UserProfilePlaceholderState extends ConsumerState<UserProfilePlaceholder>
     // 切换到营养师工作台
     ref.read(workspaceProvider.notifier).switchWorkspace(WorkspaceType.nutritionist);
     
+    // 导航到营养师主页面
+    Navigator.of(context).pushNamed('/nutritionist/main');
+    
     // 显示提示
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('已切换到营养师工作台'),
+        content: Text('已进入营养师工作台'),
         duration: Duration(seconds: 2),
       ),
     );

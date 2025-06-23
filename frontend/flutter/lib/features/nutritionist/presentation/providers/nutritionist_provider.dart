@@ -1,8 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:dartz/dartz.dart';
 import '../../domain/entities/nutritionist.dart';
 import '../../domain/usecases/get_nutritionists_usecase.dart';
+import '../../domain/repositories/nutritionist_repository.dart';
 import '../../../../core/base/use_case.dart';
+import '../../../../core/failures/failures.dart';
+
+// 导出新的营养师列表provider
+export 'nutritionist_list_provider.dart';
+export 'nutritionist_detail_provider.dart';
 
 part 'nutritionist_provider.freezed.dart';
 
@@ -45,7 +52,38 @@ final getUnutritionistsUseCaseProvider = Provider((ref) {
   return GetUnutritionistsUseCase(repository);
 });
 
-/// Repository Provider (需要在DI中配置)
+/// Repository Provider
 final nutritionistRepositoryProvider = Provider<UnutritionistRepository>((ref) {
-  throw UnimplementedError('请在DI配置中实现此Provider');
+  // 这里暂时返回一个模拟实现，实际应该注入真实的实现
+  // TODO: 注入真实的 UnutritionistRepositoryImpl
+  return _MockUnutritionistRepository();
 });
+
+/// 模拟仓储实现（临时使用）
+class _MockUnutritionistRepository implements UnutritionistRepository {
+  @override
+  Future<Either<Failure, List<Unutritionist>>> getUnutritionists() async {
+    // 返回空列表，避免错误
+    return Right([]);
+  }
+
+  @override
+  Future<Either<Failure, Unutritionist>> getUnutritionist(String id) async {
+    return Left(ServerFailure(message: 'Not implemented'));
+  }
+
+  @override
+  Future<Either<Failure, Unutritionist>> createUnutritionist(Unutritionist nutritionist) async {
+    return Left(ServerFailure(message: 'Not implemented'));
+  }
+
+  @override
+  Future<Either<Failure, Unutritionist>> updateUnutritionist(Unutritionist nutritionist) async {
+    return Left(ServerFailure(message: 'Not implemented'));
+  }
+
+  @override
+  Future<Either<Failure, Unit>> deleteUnutritionist(String id) async {
+    return Left(ServerFailure(message: 'Not implemented'));
+  }
+}

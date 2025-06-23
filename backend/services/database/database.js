@@ -91,6 +91,17 @@ class DatabaseManager {
         logger.info('数据库使用单一连接模式');
       }
       
+      // 初始化Redis连接
+      if (config.cache.useRedis) {
+        try {
+          const { initializeRedis } = require('../../config/modules/redis');
+          initializeRedis();
+          logger.info('Redis缓存服务已启动');
+        } catch (redisError) {
+          logger.warn('Redis初始化失败，将使用内存缓存:', redisError.message);
+        }
+      }
+      
       this.setupConnectionEvents();
       this.isConnected = true;
       

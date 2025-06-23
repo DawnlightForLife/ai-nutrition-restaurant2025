@@ -194,7 +194,7 @@ final recommendedNutritionistsProvider =
 typedef RecommendedNutritionistsRef
     = AutoDisposeProviderRef<List<Unutritionist>>;
 String _$nutritionistControllerHash() =>
-    r'8fc5a916a8de62a29066af86e5d0ab80724e5422';
+    r'e6bc656126af8eae410f76b565638470acdbe68c';
 
 /// Nutritionist 控制器
 ///

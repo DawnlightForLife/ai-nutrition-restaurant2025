@@ -33,7 +33,49 @@ class OrderModel with _$OrderModel {
     DateTime? updatedAt,
   }) = _OrderModel;
 
-  factory OrderModel.fromJson(Map<String, dynamic> json) => _$OrderModelFromJson(json);
+  factory OrderModel.fromJson(Map<String, dynamic> json) {
+    // Handle backend response structure differences
+    final transformedJson = Map<String, dynamic>.from(json);
+    
+    // Transform price fields
+    if (json['priceDetails'] != null) {
+      transformedJson['totalAmount'] = json['priceDetails']['total'] ?? 0.0;
+      transformedJson['actualAmount'] = json['priceDetails']['total'] ?? 0.0;
+      transformedJson['discountAmount'] = json['priceDetails']['discount'] ?? 0.0;
+    }
+    
+    // Transform delivery/customer fields
+    if (json['delivery'] != null) {
+      transformedJson['customerName'] = json['delivery']['contactName'] ?? '';
+      transformedJson['customerPhone'] = json['delivery']['contactPhone'] ?? '';
+      transformedJson['deliveryAddress'] = json['delivery']['address'] is Map 
+          ? json['delivery']['address']['fullAddress'] ?? ''
+          : json['delivery']['address'] ?? '';
+    }
+    
+    // Transform payment fields
+    if (json['payment'] != null) {
+      transformedJson['paymentStatus'] = json['payment']['status'] ?? 'pending';
+      transformedJson['paymentMethod'] = json['payment']['method'] ?? '';
+    }
+    
+    // Transform items
+    if (json['items'] != null) {
+      transformedJson['items'] = (json['items'] as List).map((item) => {
+        'dishId': item['dishId'] ?? '',
+        'dishName': item['name'] ?? '',
+        'quantity': item['quantity'] ?? 0,
+        'unitPrice': item['price'] ?? 0.0,
+        'totalPrice': item['itemTotal'] ?? 0.0,
+        'specialRequests': item['specialInstructions'] != null 
+            ? [item['specialInstructions']] 
+            : [],
+        'nutritionInfo': item['nutritionInfo'] ?? {},
+      }).toList();
+    }
+    
+    return _$OrderModelFromJson(transformedJson);
+  }
 }
 
 @freezed
@@ -119,26 +161,4 @@ extension OrderItemModelX on OrderItemModel {
       nutritionInfo: nutritionInfo,
     );
   }
-}
-
-@freezed
-class OrderStatusUpdateRequest with _$OrderStatusUpdateRequest {
-  const factory OrderStatusUpdateRequest({
-    required String newStatus,
-    String? cancelReason,
-  }) = _OrderStatusUpdateRequest;
-
-  factory OrderStatusUpdateRequest.fromJson(Map<String, dynamic> json) =>
-      _$OrderStatusUpdateRequestFromJson(json);
-}
-
-@freezed
-class BatchOrderStatusUpdateRequest with _$BatchOrderStatusUpdateRequest {
-  const factory BatchOrderStatusUpdateRequest({
-    required List<String> orderIds,
-    required String newStatus,
-  }) = _BatchOrderStatusUpdateRequest;
-
-  factory BatchOrderStatusUpdateRequest.fromJson(Map<String, dynamic> json) =>
-      _$BatchOrderStatusUpdateRequestFromJson(json);
 }

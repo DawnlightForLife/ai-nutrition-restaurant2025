@@ -123,6 +123,32 @@ const nutritionistService = {
   },
 
   /**
+   * 根据用户ID获取营养师
+   * 
+   * @param {string} userId - 用户ID
+   * @returns {Promise<Object>} 营养师详情
+   */
+  async getNutritionistByUserId(userId) {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return { success: false, message: '无效的用户ID' };
+      }
+      
+      const nutritionist = await Nutritionist.findOne({ userId })
+        .populate('userId', 'username email profileImage');
+      
+      if (!nutritionist) {
+        return { success: false, message: '找不到指定的营养师' };
+      }
+      
+      return { success: true, data: nutritionist };
+    } catch (error) {
+      logger.error('根据用户ID获取营养师详情失败', { error, userId });
+      return { success: false, message: `获取营养师详情失败: ${error.message}` };
+    }
+  },
+
+  /**
    * 更新营养师
    * 
    * @param {string} id - 营养师ID
@@ -167,6 +193,67 @@ const nutritionistService = {
       return { success: true, data: nutritionist };
     } catch (error) {
       logger.error('更新营养师失败', { error, id, data });
+      return { success: false, message: `更新营养师失败: ${error.message}` };
+    }
+  },
+
+  /**
+   * 根据用户ID更新营养师
+   * 
+   * @param {string} userId - 用户ID
+   * @param {Object} data - 更新数据
+   * @returns {Promise<Object>} 更新后的营养师
+   */
+  async updateNutritionistByUserId(userId, data) {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return { success: false, message: '无效的用户ID' };
+      }
+      
+      const nutritionist = await Nutritionist.findOne({ userId });
+      
+      if (!nutritionist) {
+        return { success: false, message: '找不到指定的营养师' };
+      }
+      
+      // 更新可修改的字段
+      if (data.personalInfo) {
+        Object.assign(nutritionist.personalInfo, data.personalInfo);
+      }
+      
+      if (data.qualifications) {
+        Object.assign(nutritionist.qualifications, data.qualifications);
+      }
+      
+      if (data.professionalInfo) {
+        Object.assign(nutritionist.professionalInfo, data.professionalInfo);
+      }
+      
+      if (data.serviceInfo) {
+        Object.assign(nutritionist.serviceInfo, data.serviceInfo);
+      }
+      
+      if (data.affiliations) {
+        nutritionist.affiliations = data.affiliations;
+      }
+      
+      if (data.onlineStatus) {
+        nutritionist.onlineStatus = data.onlineStatus;
+      }
+      
+      if (data.workingHours) {
+        nutritionist.workingHours = data.workingHours;
+      }
+      
+      if (data.vacations) {
+        nutritionist.vacations = data.vacations;
+      }
+      
+      await nutritionist.save();
+      
+      return { success: true, data: nutritionist };
+    } catch (error) {
+      logger.error('根据用户ID更新营养师失败', { error, userId, data });
       return { success: false, message: `更新营养师失败: ${error.message}` };
     }
   },
@@ -310,6 +397,117 @@ const nutritionistService = {
     } catch (error) {
       logger.error('更新营养师评分失败', { error, id, rating });
       return { success: false, message: `更新营养师评分失败: ${error.message}` };
+    }
+  },
+
+  /**
+   * 更新营养师在线状态
+   * 
+   * @param {string} id - 营养师ID
+   * @param {Object} statusData - 状态数据
+   * @returns {Promise<Object>} 更新后的营养师
+   */
+  async updateOnlineStatus(id, statusData) {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return { success: false, message: '无效的营养师ID' };
+      }
+      
+      const nutritionist = await Nutritionist.findById(id);
+      
+      if (!nutritionist) {
+        return { success: false, message: '找不到指定的营养师' };
+      }
+      
+      // 使用模型实例方法更新在线状态
+      await nutritionist.updateOnlineStatus(statusData);
+      
+      return { success: true, data: nutritionist };
+    } catch (error) {
+      logger.error('更新营养师在线状态失败', { error, id, statusData });
+      return { success: false, message: `更新在线状态失败: ${error.message}` };
+    }
+  },
+
+  /**
+   * 获取在线营养师列表
+   * 
+   * @param {Object} options - 筛选选项
+   * @returns {Promise<Object>} 在线营养师列表
+   */
+  async getOnlineNutritionists(options = {}) {
+    try {
+      const nutritionists = await Nutritionist.findOnlineNutritionists(options);
+      
+      return { 
+        success: true, 
+        data: nutritionists.map(n => n.getPublicProfile()) 
+      };
+    } catch (error) {
+      logger.error('获取在线营养师列表失败', { error, options });
+      return { success: false, message: `获取在线营养师列表失败: ${error.message}` };
+    }
+  },
+
+  /**
+   * 更新营养师活跃时间
+   * 
+   * @param {string} id - 营养师ID
+   * @returns {Promise<Object>} 更新结果
+   */
+  async updateLastActive(id) {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return { success: false, message: '无效的营养师ID' };
+      }
+      
+      const nutritionist = await Nutritionist.updateLastActive(id);
+      
+      if (!nutritionist) {
+        return { success: false, message: '找不到指定的营养师' };
+      }
+      
+      return { success: true, data: nutritionist };
+    } catch (error) {
+      logger.error('更新营养师活跃时间失败', { error, id });
+      return { success: false, message: `更新活跃时间失败: ${error.message}` };
+    }
+  },
+
+  /**
+   * 检查营养师是否可以接受特定类型的咨询
+   * 
+   * @param {string} id - 营养师ID
+   * @param {string} consultationType - 咨询类型
+   * @returns {Promise<Object>} 检查结果
+   */
+  async canAcceptConsultation(id, consultationType) {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return { success: false, message: '无效的营养师ID' };
+      }
+      
+      const nutritionist = await Nutritionist.findById(id);
+      
+      if (!nutritionist) {
+        return { success: false, message: '找不到指定的营养师' };
+      }
+      
+      const canAccept = nutritionist.canAcceptConsultationType(consultationType);
+      
+      return { 
+        success: true, 
+        data: { 
+          canAccept,
+          nutritionistId: id,
+          consultationType,
+          isOnline: nutritionist.onlineStatus.isOnline,
+          isAvailable: nutritionist.onlineStatus.isAvailable
+        }
+      };
+    } catch (error) {
+      logger.error('检查营养师可用性失败', { error, id, consultationType });
+      return { success: false, message: `检查可用性失败: ${error.message}` };
     }
   }
 };

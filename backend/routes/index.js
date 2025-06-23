@@ -42,6 +42,11 @@ router.use('/nutrition/elements', require('./nutrition/nutritionElementRoutes'))
 router.use('/ai-recommendations', require('./nutrition/aiRecommendationRoutes'));
 router.use('/nutritionists', require('./nutrition/nutritionistRoutes'));
 router.use('/nutritionist-certification', require('./nutrition/nutritionistCertificationRoutes'));
+router.use('/nutritionist-clients', require('./nutrition/nutritionistClientRoutes'));
+router.use('/nutritionist-stats', require('./nutrition/nutritionistStatsRoutes'));
+
+// 营养师工作台
+router.use('/nutritionist/workbench', require('./nutritionist/workbenchRoutes'));
 
 // 用户偏好和计划
 router.use('/favorites', require('./nutrition/favoriteRoutes'));
@@ -72,6 +77,7 @@ router.use('/pickup-codes', require('./order/pickupCodeRoutes'));
 
 // =================== Consult 模块 ===================
 router.use('/consultations', require('./consult/consultationRoutes'));
+router.use('/consultations', require('./consult/consultationMarketRoutes'));
 router.use('/chat-messages', require('./consult/chatMessageRoutes'));
 
 // =================== Notification 模块 ===================
@@ -98,6 +104,7 @@ router.use('/sessions', require('./common/sessionRoutes'));
 
 // =================== Admin 模块 ===================
 router.use('/admin/nutritionist-certification-review', require('./admin/nutritionistCertificationReviewRoutes'));
+router.use('/admin/nutritionist-management', require('./admin/nutritionistManagementRoutes'));
 router.use('/admin/user-permissions', require('./admin/userPermissionRoutes'));
 router.use('/admin/merchant-stats', require('./admin/merchantStatsRoutes'));
 router.use('/admin/nutritionist-stats', require('./admin/nutritionistStatsRoutes'));

@@ -32,7 +32,7 @@ const consultationSchema = new mongoose.Schema({
   // 咨询状态
   status: {
     type: String,
-    enum: ['pending', 'scheduled', 'inProgress', 'completed', 'cancelled'],
+    enum: ['pending', 'available', 'assigned', 'scheduled', 'inProgress', 'completed', 'cancelled'],
     default: 'pending',
     description: '咨询状态'
   },
@@ -55,6 +55,58 @@ const consultationSchema = new mongoose.Schema({
   topic: {
     type: String,
     description: '咨询主题'
+  },
+  // 咨询描述
+  description: {
+    type: String,
+    description: '详细咨询描述',
+    sensitivityLevel: 2
+  },
+  // 优先级
+  priority: {
+    type: String,
+    enum: ['low', 'normal', 'high', 'urgent'],
+    default: 'normal',
+    description: '咨询优先级'
+  },
+  // 标签
+  tags: [{
+    type: String,
+    description: '咨询相关标签'
+  }],
+  // 期望时长（分钟）
+  expectedDuration: {
+    type: Number,
+    default: 30,
+    description: '期望咨询时长（分钟）'
+  },
+  // 预算（用于市场筛选）
+  budget: {
+    type: Number,
+    description: '用户预算范围',
+    sensitivityLevel: 2
+  },
+  // 是否对市场开放
+  isMarketOpen: {
+    type: Boolean,
+    default: false,
+    description: '是否对营养师市场开放'
+  },
+  // 市场发布时间
+  marketPublishedAt: {
+    type: Date,
+    description: '发布到市场的时间'
+  },
+  // 分配的营养师（对于市场咨询）
+  assignedNutritionistId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Nutritionist',
+    description: '从市场分配的营养师ID'
+  },
+  // 分配时间
+  assignedAt: {
+    type: Date,
+    description: '营养师接受咨询的时间'
   },
   // 咨询内容记录
   messages: [{
@@ -185,6 +237,12 @@ consultationSchema.index({ 'userRating.rating': -1 });
 consultationSchema.index({ consultationType: 1, status: 1 });
 // 添加用户和营养师复合索引，便于查询特定用户和营养师之间的咨询历史
 consultationSchema.index({ userId: 1, nutritionistId: 1, createdAt: -1 });
+// 添加市场相关索引
+consultationSchema.index({ isMarketOpen: 1, status: 1, marketPublishedAt: -1 });
+consultationSchema.index({ priority: 1, createdAt: -1 });
+consultationSchema.index({ tags: 1 });
+consultationSchema.index({ budget: 1 });
+consultationSchema.index({ assignedNutritionistId: 1, assignedAt: -1 });
 
 // 添加虚拟字段
 consultationSchema.virtual('durationMinutes').get(function() {
@@ -359,6 +417,48 @@ consultationSchema.methods.reschedule = async function(newScheduledTime) {
   });
   
   return await this.save();
+};
+
+// 实例方法：发布到市场
+consultationSchema.methods.publishToMarket = async function() {
+  if (this.status !== 'pending') {
+    throw new Error('只有等待中的咨询才能发布到市场');
+  }
+  
+  this.isMarketOpen = true;
+  this.status = 'available';
+  this.marketPublishedAt = new Date();
+  
+  return await this.save();
+};
+
+// 实例方法：营养师接受咨询
+consultationSchema.methods.acceptByNutritionist = async function(nutritionistId) {
+  if (this.status !== 'available') {
+    throw new Error('只有在市场中可用的咨询才能被接受');
+  }
+  
+  this.assignedNutritionistId = nutritionistId;
+  this.nutritionistId = nutritionistId; // 更新主要营养师ID
+  this.status = 'assigned';
+  this.assignedAt = new Date();
+  this.isMarketOpen = false; // 从市场中移除
+  
+  return await this.save();
+};
+
+// 实例方法：检查是否匹配营养师专业领域
+consultationSchema.methods.matchesNutritionistSpecialty = function(nutritionistSpecializations) {
+  if (!this.tags || this.tags.length === 0) return true; // 无特殊要求
+  
+  const commonTags = this.tags.filter(tag => 
+    nutritionistSpecializations.some(spec => 
+      spec.toLowerCase().includes(tag.toLowerCase()) ||
+      tag.toLowerCase().includes(spec.toLowerCase())
+    )
+  );
+  
+  return commonTags.length > 0;
 };
 
 // 静态方法：获取可用的时间段
@@ -698,6 +798,156 @@ const findMatchingNutritionists = async (nutritionConcerns, specialPreferences) 
   } catch (error) {
     // ... existing code ...
   }
+};
+
+// 静态方法：获取市场中的可用咨询
+consultationSchema.statics.getMarketConsultations = async function(options = {}) {
+  const {
+    nutritionistSpecializations = [],
+    consultationType = null,
+    priority = null,
+    tags = [],
+    minBudget = null,
+    maxBudget = null,
+    limit = 20,
+    skip = 0,
+    sort = { priority: -1, marketPublishedAt: -1 }
+  } = options;
+
+  const query = {
+    isMarketOpen: true,
+    status: 'available'
+  };
+
+  // 咨询类型筛选
+  if (consultationType) {
+    query.consultationType = consultationType;
+  }
+
+  // 优先级筛选
+  if (priority) {
+    query.priority = priority;
+  }
+
+  // 标签筛选
+  if (tags.length > 0) {
+    query.tags = { $in: tags };
+  }
+
+  // 预算筛选
+  if (minBudget !== null || maxBudget !== null) {
+    query.budget = {};
+    if (minBudget !== null) query.budget.$gte = minBudget;
+    if (maxBudget !== null) query.budget.$lte = maxBudget;
+  }
+
+  const consultations = await this.find(query)
+    .sort(sort)
+    .skip(skip)
+    .limit(limit)
+    .populate('userId', 'username nickname avatar gender age')
+    .populate('assignedNutritionistId', 'personalInfo professionalInfo');
+
+  // 如果指定了营养师专业领域，进行匹配度筛选
+  let filteredConsultations = consultations;
+  if (nutritionistSpecializations.length > 0) {
+    filteredConsultations = consultations.filter(consultation => 
+      consultation.matchesNutritionistSpecialty(nutritionistSpecializations)
+    );
+  }
+
+  const total = await this.countDocuments(query);
+
+  return {
+    consultations: filteredConsultations,
+    pagination: {
+      total,
+      limit,
+      skip,
+      hasMore: total > skip + limit
+    }
+  };
+};
+
+// 静态方法：获取营养师接受的咨询列表
+consultationSchema.statics.getNutritionistAcceptedConsultations = async function(nutritionistId, options = {}) {
+  const {
+    status = null,
+    limit = 10,
+    skip = 0,
+    sort = { assignedAt: -1 }
+  } = options;
+
+  const query = {
+    assignedNutritionistId: nutritionistId
+  };
+
+  if (status) {
+    query.status = status;
+  }
+
+  const consultations = await this.find(query)
+    .sort(sort)
+    .skip(skip)
+    .limit(limit)
+    .populate('userId', 'username nickname avatar gender age')
+    .populate('nutritionistId', 'personalInfo professionalInfo');
+
+  const total = await this.countDocuments(query);
+
+  return {
+    consultations,
+    pagination: {
+      total,
+      limit,
+      skip,
+      hasMore: total > skip + limit
+    }
+  };
+};
+
+// 静态方法：统计市场咨询数据
+consultationSchema.statics.getMarketStats = async function() {
+  const stats = await this.aggregate([
+    {
+      $match: {
+        isMarketOpen: true,
+        status: 'available'
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        totalAvailable: { $sum: 1 },
+        urgentCount: {
+          $sum: { $cond: [{ $eq: ['$priority', 'urgent'] }, 1, 0] }
+        },
+        highPriorityCount: {
+          $sum: { $cond: [{ $eq: ['$priority', 'high'] }, 1, 0] }
+        },
+        averageBudget: { $avg: '$budget' },
+        consultationTypes: { $push: '$consultationType' }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        totalAvailable: 1,
+        urgentCount: 1,
+        highPriorityCount: 1,
+        averageBudget: { $round: ['$averageBudget', 2] },
+        consultationTypes: 1
+      }
+    }
+  ]);
+
+  return stats[0] || {
+    totalAvailable: 0,
+    urgentCount: 0,
+    highPriorityCount: 0,
+    averageBudget: 0,
+    consultationTypes: []
+  };
 };
 
 module.exports = Consultation; 

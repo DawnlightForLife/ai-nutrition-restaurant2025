@@ -103,4 +103,22 @@ class AppTextStyles {
     fontSize: 24,
     fontWeight: FontWeight.w400,
   );
+  
+  static TextStyle get caption => const TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 0.4,
+  );
+
+  static TextStyle get titleMedium => const TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.15,
+  );
+
+  static TextStyle get titleSmall => const TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.1,
+  );
 }

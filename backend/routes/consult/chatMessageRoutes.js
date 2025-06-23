@@ -6,9 +6,15 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../../controllers/consult/chatMessageController');
+const { authenticateUser } = require('../../middleware/auth/authMiddleware');
 
-/** TODO: 添加中间件处理 */
+// 需要认证的路由
+router.use(authenticateUser);
+
+// 聊天消息管理
 router.get('/:consultationId', controller.getChatMessageList); // 获取聊天消息列表
-router.post('/', controller.sendChatMessage); // 发送聊天消息
+router.post('/:consultationId', controller.sendChatMessage); // 发送聊天消息
+router.put('/:consultationId/read', controller.markMessagesAsRead); // 标记已读
+router.delete('/:consultationId/messages/:messageId', controller.deleteMessage); // 删除消息
 
 module.exports = router;
