@@ -35,7 +35,7 @@ class DashboardStatsNotifier extends StateNotifier<AsyncValue<Map<String, dynami
         
         // 尝试获取用户统计
         try {
-          final userResponse = await apiClient.get('/api/admin/stats/users');
+          final userResponse = await apiClient.get('/admin/stats/users');
           if (userResponse.data != null && userResponse.data['data'] != null) {
             final userData = userResponse.data['data'] as Map<String, dynamic>;
             stats['totalUsers'] = userData['totalUsers'] ?? stats['totalUsers'];
@@ -47,7 +47,7 @@ class DashboardStatsNotifier extends StateNotifier<AsyncValue<Map<String, dynami
         
         // 尝试获取加盟商统计
         try {
-          final merchantResponse = await apiClient.get('/api/admin/merchant-stats/overview');
+          final merchantResponse = await apiClient.get('/admin/merchant-stats/overview');
           if (merchantResponse.data != null && merchantResponse.data['data'] != null) {
             final merchantData = merchantResponse.data['data'] as Map<String, dynamic>;
             stats['activeMerchants'] = merchantData['activeStores'] ?? stats['activeMerchants'];
@@ -59,7 +59,7 @@ class DashboardStatsNotifier extends StateNotifier<AsyncValue<Map<String, dynami
         
         // 尝试获取营养师统计
         try {
-          final nutritionistResponse = await apiClient.get('/api/admin/nutritionist-stats/overview');
+          final nutritionistResponse = await apiClient.get('/admin/nutritionist-stats/overview');
           if (nutritionistResponse.data != null && nutritionistResponse.data['data'] != null) {
             final nutritionistData = nutritionistResponse.data['data'] as Map<String, dynamic>;
             stats['certifiedNutritionists'] = nutritionistData['certifiedNutritionists'] ?? stats['certifiedNutritionists'];
@@ -71,7 +71,7 @@ class DashboardStatsNotifier extends StateNotifier<AsyncValue<Map<String, dynami
         
         // 尝试获取AI推荐统计
         try {
-          final recommendationResponse = await apiClient.get('/api/admin/nutritionist-stats/recommendation-stats');
+          final recommendationResponse = await apiClient.get('/admin/nutritionist-stats/recommendation-stats');
           if (recommendationResponse.data != null && recommendationResponse.data['data'] != null) {
             final recommendationData = recommendationResponse.data['data'] as Map<String, dynamic>;
             final totalRecommendations = recommendationData['totalRecommendations'] ?? 0;

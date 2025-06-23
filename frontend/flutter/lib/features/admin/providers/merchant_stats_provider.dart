@@ -76,7 +76,7 @@ class MerchantStatsNotifier extends StateNotifier<AsyncValue<Map<String, dynamic
         
         // 尝试获取概况数据
         try {
-          final overviewResponse = await apiClient.get('/api/admin/merchant-stats/overview');
+          final overviewResponse = await apiClient.get('/admin/merchant-stats/overview');
           if (overviewResponse.data != null && overviewResponse.data['data'] != null) {
             final overviewData = overviewResponse.data['data'] as Map<String, dynamic>;
             stats['overview'] = <String, dynamic>{

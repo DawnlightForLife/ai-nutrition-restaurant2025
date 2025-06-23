@@ -579,38 +579,45 @@ class _NutritionistStatsPageState extends ConsumerState<NutritionistStatsPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '营养师排行榜',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+            Expanded(
+              flex: 2,
+              child: Text(
+                '营养师排行榜',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             // 排行榜类型选择
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(
-                  value: 'consultation',
-                  label: Text('咨询量'),
-                  icon: Icon(Icons.chat),
-                ),
-                ButtonSegment(
-                  value: 'rating',
-                  label: Text('评分'),
-                  icon: Icon(Icons.star),
-                ),
-                ButtonSegment(
-                  value: 'income',
-                  label: Text('收入'),
-                  icon: Icon(Icons.attach_money),
-                ),
-              ],
-              selected: {_rankingType},
-              onSelectionChanged: (Set<String> newSelection) {
-                setState(() {
-                  _rankingType = newSelection.first;
-                });
-                ref.read(nutritionistStatsProvider.notifier).loadRanking(_rankingType);
-              },
+            Flexible(
+              flex: 3,
+              child: SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(
+                    value: 'consultation',
+                    label: Text('咨询量'),
+                    icon: Icon(Icons.chat),
+                  ),
+                  ButtonSegment(
+                    value: 'rating',
+                    label: Text('评分'),
+                    icon: Icon(Icons.star),
+                  ),
+                  ButtonSegment(
+                    value: 'income',
+                    label: Text('收入'),
+                    icon: Icon(Icons.attach_money),
+                  ),
+                ],
+                selected: {_rankingType},
+                onSelectionChanged: (Set<String> newSelection) {
+                  setState(() {
+                    _rankingType = newSelection.first;
+                  });
+                  ref.read(nutritionistStatsProvider.notifier).loadRanking(_rankingType);
+                },
+              ),
             ),
           ],
         ),
@@ -654,7 +661,9 @@ class _NutritionistStatsPageState extends ConsumerState<NutritionistStatsPage> {
         return Row(
           children: [
             Icon(Icons.star, size: 16, color: Colors.amber),
-            Text(' ${nutritionist['avgRating']} (${nutritionist['ratingCount']}人评价)'),
+            Expanded(
+              child: Text(' ${nutritionist['avgRating']} (${nutritionist['ratingCount']}人评价)'),
+            ),
           ],
         );
       case 'income':

@@ -17,7 +17,7 @@ class WorkbenchService {
   /// 获取工作台统计数据
   Future<DashboardStats> getDashboardStats() async {
     try {
-      final response = await _dio.get('/api/nutritionist/workbench/dashboard/stats');
+      final response = await _dio.get('/nutritionist/workbench/dashboard/stats');
       return DashboardStats.fromJson(response.data['data']);
     } catch (e) {
       throw Exception('获取统计数据失败: $e');
@@ -27,7 +27,7 @@ class WorkbenchService {
   /// 获取待办任务
   Future<List<WorkbenchTask>> getTasks() async {
     try {
-      final response = await _dio.get('/api/nutritionist/workbench/dashboard/tasks');
+      final response = await _dio.get('/nutritionist/workbench/dashboard/tasks');
       return (response.data['data'] as List)
           .map((json) => WorkbenchTask.fromJson(json))
           .toList();
@@ -44,7 +44,7 @@ class WorkbenchService {
   }) async {
     try {
       final response = await _dio.get(
-        '/api/nutritionist/workbench/consultations',
+        '/nutritionist/workbench/consultations',
         queryParameters: {
           if (status != null) 'status': status,
           'page': page,
@@ -62,7 +62,7 @@ class WorkbenchService {
   /// 接受咨询
   Future<void> acceptConsultation(String consultationId) async {
     try {
-      await _dio.put('/api/nutritionist/workbench/consultations/$consultationId/accept');
+      await _dio.put('/nutritionist/workbench/consultations/$consultationId/accept');
     } catch (e) {
       throw Exception('接受咨询失败: $e');
     }
@@ -72,7 +72,7 @@ class WorkbenchService {
   Future<void> rejectConsultation(String consultationId, String? reason) async {
     try {
       await _dio.put(
-        '/api/nutritionist/workbench/consultations/$consultationId/reject',
+        '/nutritionist/workbench/consultations/$consultationId/reject',
         data: {
           if (reason != null) 'reason': reason,
         },
@@ -86,7 +86,7 @@ class WorkbenchService {
   Future<void> completeConsultation(String consultationId, String? summary) async {
     try {
       await _dio.put(
-        '/api/nutritionist/workbench/consultations/$consultationId/complete',
+        '/nutritionist/workbench/consultations/$consultationId/complete',
         data: {
           if (summary != null) 'summary': summary,
         },
@@ -103,7 +103,7 @@ class WorkbenchService {
   }) async {
     try {
       final response = await _dio.get(
-        '/api/nutritionist/workbench/schedule',
+        '/nutritionist/workbench/schedule',
         queryParameters: {
           if (startDate != null) 'startDate': startDate.toIso8601String(),
           if (endDate != null) 'endDate': endDate.toIso8601String(),
@@ -122,7 +122,7 @@ class WorkbenchService {
   }) async {
     try {
       await _dio.put(
-        '/api/nutritionist/workbench/schedule',
+        '/nutritionist/workbench/schedule',
         data: {
           if (workingHours != null) 'workingHours': workingHours,
           if (vacations != null) 'vacations': vacations,
@@ -142,7 +142,7 @@ class WorkbenchService {
   }) async {
     try {
       final response = await _dio.get(
-        '/api/nutritionist/workbench/income/details',
+        '/nutritionist/workbench/income/details',
         queryParameters: {
           if (startDate != null) 'startDate': startDate.toIso8601String(),
           if (endDate != null) 'endDate': endDate.toIso8601String(),
@@ -164,7 +164,7 @@ class WorkbenchService {
   }) async {
     try {
       final response = await _dio.post(
-        '/api/nutritionist/workbench/clients/batch-message',
+        '/nutritionist/workbench/clients/batch-message',
         data: {
           'clientIds': clientIds,
           'message': message,
@@ -180,7 +180,7 @@ class WorkbenchService {
   /// 获取快捷操作
   Future<List<QuickAction>> getQuickActions() async {
     try {
-      final response = await _dio.get('/api/nutritionist/workbench/quick-actions');
+      final response = await _dio.get('/nutritionist/workbench/quick-actions');
       return (response.data['data'] as List)
           .map((json) => QuickAction.fromJson(json))
           .toList();
@@ -192,7 +192,7 @@ class WorkbenchService {
   /// 切换在线状态
   Future<OnlineStatusResult> toggleOnlineStatus() async {
     try {
-      final response = await _dio.post('/api/nutritionist/workbench/toggle-online-status');
+      final response = await _dio.post('/nutritionist/workbench/toggle-online-status');
       return OnlineStatusResult.fromJson(response.data['data']);
     } catch (e) {
       throw Exception('切换在线状态失败: $e');
@@ -203,7 +203,7 @@ class WorkbenchService {
   Future<OnlineStatusResult> updateAvailability({required bool isAvailable}) async {
     try {
       final response = await _dio.put(
-        '/api/nutritionist/workbench/availability',
+        '/nutritionist/workbench/availability',
         data: {'isAvailable': isAvailable},
       );
       return OnlineStatusResult.fromJson(response.data['data']);

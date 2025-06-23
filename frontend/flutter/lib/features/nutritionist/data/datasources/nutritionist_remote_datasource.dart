@@ -44,7 +44,7 @@ class NutritionistRemoteDataSourceImpl implements NutritionistRemoteDataSource {
     if (sortOrder != null) queryParams['sortOrder'] = sortOrder;
 
     final response = await dio.get(
-      '/api/nutritionists',
+      '/nutritionists',
       queryParameters: queryParams,
     );
 
@@ -53,14 +53,14 @@ class NutritionistRemoteDataSourceImpl implements NutritionistRemoteDataSource {
 
   @override
   Future<NutritionistResponse> getNutritionistById(String id) async {
-    final response = await dio.get('/api/nutritionists/$id');
+    final response = await dio.get('/nutritionists/$id');
     return NutritionistResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override
   Future<NutritionistResponse> createNutritionist(Map<String, dynamic> nutritionist) async {
     final response = await dio.post(
-      '/api/nutritionists',
+      '/nutritionists',
       data: nutritionist,
     );
     return NutritionistResponse.fromJson(response.data as Map<String, dynamic>);
@@ -69,7 +69,7 @@ class NutritionistRemoteDataSourceImpl implements NutritionistRemoteDataSource {
   @override
   Future<NutritionistResponse> updateNutritionist(String id, Map<String, dynamic> nutritionist) async {
     final response = await dio.put(
-      '/api/nutritionists/$id',
+      '/nutritionists/$id',
       data: nutritionist,
     );
     return NutritionistResponse.fromJson(response.data as Map<String, dynamic>);
@@ -77,7 +77,7 @@ class NutritionistRemoteDataSourceImpl implements NutritionistRemoteDataSource {
 
   @override
   Future<void> deleteNutritionist(String id) async {
-    await dio.delete('/api/nutritionists/$id');
+    await dio.delete('/nutritionists/$id');
   }
 }
 

@@ -33,7 +33,7 @@ Future<void> _initializeApp(String flavor) async {
       case 'dev':
         FlavorConfig(
           flavor: Flavor.development,
-          apiBaseUrl: 'http://localhost:8080/api',  // Environment 类会自动处理 Android 的情况
+          apiBaseUrl: 'http://localhost:3000/api',  // Environment 类会自动处理 Android 的情况
           appTitle: '营养立方 (开发版)',
         );
         

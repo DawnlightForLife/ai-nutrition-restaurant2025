@@ -17,17 +17,17 @@ class AppConstants {
   static String _getDefaultApiBaseUrl() {
     if (kIsWeb) {
       // Web平台使用localhost
-      return 'http://localhost:8080';
+      return 'http://localhost:3000/api';
     } else {
       if (Platform.isAndroid) {
-        // Android 模拟器使用 10.0.2.2 访问主机，端口改为8080
-        return 'http://10.0.2.2:8080';
+        // Android 模拟器使用 10.0.2.2 访问主机，端口改为3000
+        return 'http://10.0.2.2:3000/api';
       } else if (Platform.isIOS) {
         // iOS 模拟器可以使用 localhost
-        return 'http://localhost:8080';
+        return 'http://localhost:3000/api';
       } else {
         // macOS 或其他平台
-        return 'http://localhost:8080';
+        return 'http://localhost:3000/api';
       }
     }
   }
@@ -35,14 +35,14 @@ class AppConstants {
   static String get serverBaseUrl {
     // 不包含 /api 前缀的基础URL
     if (kIsWeb) {
-      return 'http://localhost:8080';
+      return 'http://localhost:3000';
     } else {
       if (Platform.isAndroid) {
-        return 'http://10.0.2.2:8080';
+        return 'http://10.0.2.2:3000';
       } else if (Platform.isIOS) {
-        return 'http://localhost:8080';
+        return 'http://localhost:3000';
       } else {
-        return 'http://localhost:8080';
+        return 'http://localhost:3000';
       }
     }
   }

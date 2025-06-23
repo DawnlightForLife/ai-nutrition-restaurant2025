@@ -24,7 +24,7 @@ class ClientService {
   }) async {
     try {
       final response = await _dio.get(
-        '/api/nutritionist-clients',
+        '/nutritionist-clients',
         queryParameters: {
           if (search != null) 'search': search,
           if (tag != null) 'tag': tag,
@@ -45,7 +45,7 @@ class ClientService {
   /// 获取客户详情
   Future<ClientDetail> getClientDetail(String clientId) async {
     try {
-      final response = await _dio.get('/api/nutritionist-clients/$clientId');
+      final response = await _dio.get('/nutritionist-clients/$clientId');
       return ClientDetail.fromJson(response.data['data']);
     } catch (e) {
       throw Exception('获取客户详情失败: $e');
@@ -63,7 +63,7 @@ class ClientService {
   }) async {
     try {
       final response = await _dio.post(
-        '/api/nutritionist-clients',
+        '/nutritionist-clients',
         data: {
           'nickname': nickname,
           if (age != null) 'age': age,
@@ -93,7 +93,7 @@ class ClientService {
   }) async {
     try {
       final response = await _dio.put(
-        '/api/nutritionist-clients/$clientId',
+        '/nutritionist-clients/$clientId',
         data: {
           if (nickname != null) 'nickname': nickname,
           if (age != null) 'age': age,
@@ -118,7 +118,7 @@ class ClientService {
   ) async {
     try {
       final response = await _dio.post(
-        '/api/nutritionist-clients/$clientId/progress',
+        '/nutritionist-clients/$clientId/progress',
         data: {
           if (params.weight != null) 'weight': params.weight,
           if (params.bodyFatPercentage != null) 'bodyFatPercentage': params.bodyFatPercentage,
@@ -145,7 +145,7 @@ class ClientService {
   }) async {
     try {
       final response = await _dio.post(
-        '/api/nutritionist-clients/$clientId/goals',
+        '/nutritionist-clients/$clientId/goals',
         data: {
           'type': type,
           'description': description,
@@ -169,7 +169,7 @@ class ClientService {
   }) async {
     try {
       final response = await _dio.put(
-        '/api/nutritionist-clients/$clientId/goals/$goalId',
+        '/nutritionist-clients/$clientId/goals/$goalId',
         data: {
           if (currentValue != null) 'currentValue': currentValue,
           if (status != null) 'status': status,
@@ -194,7 +194,7 @@ class ClientService {
   }) async {
     try {
       final response = await _dio.post(
-        '/api/nutritionist-clients/$clientId/reminders',
+        '/nutritionist-clients/$clientId/reminders',
         data: {
           'type': type,
           'title': title,
@@ -218,7 +218,7 @@ class ClientService {
   ) async {
     try {
       final response = await _dio.put(
-        '/api/nutritionist-clients/$clientId/reminders/$reminderId/complete',
+        '/nutritionist-clients/$clientId/reminders/$reminderId/complete',
       );
 
       return NutritionistClient.fromJson(response.data['data']);
@@ -230,7 +230,7 @@ class ClientService {
   /// 获取客户统计
   Future<ClientStats> getClientStats(String clientId) async {
     try {
-      final response = await _dio.get('/api/nutritionist-clients/$clientId/stats');
+      final response = await _dio.get('/nutritionist-clients/$clientId/stats');
       return ClientStats.fromJson(response.data['data']);
     } catch (e) {
       throw Exception('获取客户统计失败: $e');
@@ -241,7 +241,7 @@ class ClientService {
   Future<List<Map<String, dynamic>>> searchPotentialClients(String keyword) async {
     try {
       final response = await _dio.get(
-        '/api/nutritionist-clients/search-potential',
+        '/nutritionist-clients/search-potential',
         queryParameters: {'keyword': keyword},
       );
 
