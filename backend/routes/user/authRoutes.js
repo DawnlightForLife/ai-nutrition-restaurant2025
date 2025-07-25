@@ -14,6 +14,7 @@ const {
   updateAuth, 
   verifyToken 
 } = require('../../controllers/user/authController');
+const WechatMiniprogramController = require('../../controllers/user/wechatMiniprogramController');
 const { authenticate } = require('../../middleware/auth/authMiddleware');
 
 // [POST] 用户登录（账号+密码）
@@ -33,6 +34,15 @@ router.post('/reset-password', updateAuth);
 
 // [GET] 校验 token 是否有效
 router.get('/verify-token', verifyToken);
+
+// [POST] 微信小程序登录
+router.post('/wechat-miniprogram', WechatMiniprogramController.login);
+
+// [POST] 微信手机号快速登录
+router.post('/wechat-phone-login', WechatMiniprogramController.phoneLogin);
+
+// [POST] 绑定手机号
+router.post('/bind-phone', authenticate, WechatMiniprogramController.bindPhone);
 
 // [GET] 获取当前用户信息
 router.get('/me', authenticate, async (req, res) => {

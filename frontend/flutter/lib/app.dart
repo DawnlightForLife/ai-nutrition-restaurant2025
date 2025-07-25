@@ -27,16 +27,8 @@ class App extends ConsumerWidget {
           title: '营养立方',
           theme: appTheme.lightTheme,
           debugShowCheckedModeBanner: false,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('zh', 'CN'), // 中文
-            Locale('en', 'US'), // 英文
-          ],
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           navigatorObservers: [AppRouter.observer],
           initialRoute: AppRouter.initialRoute,
           onGenerateRoute: (settings) => AppRouter.onGenerateRoute(settings, ref),

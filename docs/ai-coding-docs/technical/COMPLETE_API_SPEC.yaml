@@ -1,0 +1,2121 @@
+openapi: 3.0.3
+info:
+  title: 营养立方 (Nutrition Cube) - AI智能营养餐厅系统API规范
+  version: 3.0.0
+  description: |
+    营养立方AI智能营养餐厅系统V3的完整API规范文档，基于MVP优先原则设计。
+    
+    **核心MVP功能**:
+    - 用户注册登录与基础档案管理
+    - AI营养分析与推荐 (基于DeepSeek API)
+    - 餐厅和菜品基础管理
+    - 简化订单流程
+    - 基础通知系统
+    
+    **技术栈**:
+    - 后端: Node.js 20.18.0 + NestJS 10.4.4
+    - 数据库: PostgreSQL 15.4 + pgvector 0.5.0 + TypeORM 0.3.17
+    - 缓存: Redis 7.0.12
+    - AI服务: DeepSeek API + LangChain 0.3.7抽象层
+    - 认证: JWT + bcrypt
+    
+    **设计原则**:
+    - MVP优先：核心功能先行，后续渐进增强
+    - 安全合规：符合GDPR和《个人信息保护法》
+    - 性能优化：合理缓存和分页设计
+    - 可扩展性：预留扩展空间
+    
+  contact:
+    name: AI智能营养餐厅开发团队
+    email: dev@ai-nutrition-restaurant.com
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: 本地开发环境
+  - url: https://api-dev.ai-nutrition-restaurant.com/api/v1
+    description: 开发环境
+  - url: https://api.ai-nutrition-restaurant.com/api/v1
+    description: 生产环境
+
+tags:
+  - name: Auth
+    description: 用户认证相关接口
+  - name: Users
+    description: 用户管理接口
+  - name: Nutrition
+    description: 营养档案和分析接口
+  - name: AI
+    description: AI营养分析和推荐接口
+  - name: Restaurants
+    description: 餐厅管理接口
+  - name: MenuItems
+    description: 菜品管理接口
+  - name: Orders
+    description: 订单管理接口
+  - name: Notifications
+    description: 通知系统接口
+  - name: Health
+    description: 系统健康检查接口
+
+paths:
+  # ==========================================
+  # 系统健康检查
+  # ==========================================
+  /health:
+    get:
+      tags: [Health]
+      summary: 系统健康检查
+      description: 检查系统各组件的健康状态
+      responses:
+        '200':
+          description: 系统健康
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: 系统异常
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==========================================
+  # 用户认证
+  # ==========================================
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: 用户注册
+      description: 新用户注册账户
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 用户已存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: 用户登录
+      description: 用户账户登录
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: 认证失败
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: 用户登出
+      description: 用户退出登录
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 登出成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: 刷新访问令牌
+      description: 使用刷新令牌获取新的访问令牌
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: 刷新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: 刷新令牌无效
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==========================================
+  # 用户管理
+  # ==========================================
+  /users/profile:
+    get:
+      tags: [Users]
+      summary: 获取用户档案
+      description: 获取当前用户的个人档案信息
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: 未认证
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [Users]
+      summary: 更新用户档案
+      description: 更新当前用户的个人档案信息
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserProfileRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==========================================
+  # 营养档案管理
+  # ==========================================
+  /nutrition/profile:
+    get:
+      tags: [Nutrition]
+      summary: 获取营养档案
+      description: 获取当前用户的营养档案
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NutritionProfile'
+        '404':
+          description: 营养档案不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags: [Nutrition]
+      summary: 创建营养档案
+      description: 为当前用户创建营养档案
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNutritionProfileRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NutritionProfile'
+        '409':
+          description: 营养档案已存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [Nutrition]
+      summary: 更新营养档案
+      description: 更新当前用户的营养档案
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNutritionProfileRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NutritionProfile'
+
+  # ==========================================
+  # AI营养分析和推荐
+  # ==========================================
+  /ai/analyze-nutrition:
+    post:
+      tags: [AI]
+      summary: AI营养分析
+      description: 基于用户输入的食物信息进行AI营养分析
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NutritionAnalysisRequest'
+      responses:
+        '200':
+          description: 分析成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NutritionAnalysisResponse'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ai/recommend-dishes:
+    post:
+      tags: [AI]
+      summary: AI菜品推荐
+      description: 基于用户营养档案和偏好推荐合适的菜品
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DishRecommendationRequest'
+      responses:
+        '200':
+          description: 推荐成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DishRecommendationResponse'
+
+  /ai/consultation/sessions:
+    get:
+      tags: [AI]
+      summary: 获取咨询会话列表
+      description: 获取用户的AI咨询会话列表
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsultationSessionListResponse'
+
+    post:
+      tags: [AI]
+      summary: 创建咨询会话
+      description: 创建新的AI营养咨询会话
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConsultationSessionRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsultationSession'
+
+  /ai/consultation/sessions/{sessionId}/messages:
+    get:
+      tags: [AI]
+      summary: 获取会话消息
+      description: 获取咨询会话的消息记录
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessageListResponse'
+
+    post:
+      tags: [AI]
+      summary: 发送消息
+      description: 向AI咨询会话发送消息
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '201':
+          description: 发送成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessage'
+
+  # ==========================================
+  # 餐厅管理
+  # ==========================================
+  /restaurants:
+    get:
+      tags: [Restaurants]
+      summary: 获取餐厅列表
+      description: 获取附近的餐厅列表
+      parameters:
+        - name: latitude
+          in: query
+          schema:
+            type: number
+            format: float
+        - name: longitude
+          in: query
+          schema:
+            type: number
+            format: float
+        - name: radius
+          in: query
+          schema:
+            type: integer
+            default: 5000
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: cuisine_type
+          in: query
+          schema:
+            type: string
+        - name: price_range
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high]
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestaurantListResponse'
+
+  /restaurants/{restaurantId}:
+    get:
+      tags: [Restaurants]
+      summary: 获取餐厅详情
+      description: 获取指定餐厅的详细信息
+      parameters:
+        - name: restaurantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Restaurant'
+        '404':
+          description: 餐厅不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==========================================
+  # 菜品管理
+  # ==========================================
+  /restaurants/{restaurantId}/menu-items:
+    get:
+      tags: [MenuItems]
+      summary: 获取餐厅菜单
+      description: 获取指定餐厅的菜品列表
+      parameters:
+        - name: restaurantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuItemListResponse'
+
+  /menu-items/{itemId}:
+    get:
+      tags: [MenuItems]
+      summary: 获取菜品详情
+      description: 获取指定菜品的详细信息
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuItem'
+        '404':
+          description: 菜品不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==========================================
+  # 订单管理
+  # ==========================================
+  /orders:
+    get:
+      tags: [Orders]
+      summary: 获取订单列表
+      description: 获取当前用户的订单列表
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, preparing, ready, delivering, completed, cancelled]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+
+    post:
+      tags: [Orders]
+      summary: 创建订单
+      description: 创建新的订单
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /orders/{orderId}:
+    get:
+      tags: [Orders]
+      summary: 获取订单详情
+      description: 获取指定订单的详细信息
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          description: 订单不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [Orders]
+      summary: 更新订单状态
+      description: 更新订单状态（仅限餐厅方使用）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrderRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+  /orders/{orderId}/cancel:
+    post:
+      tags: [Orders]
+      summary: 取消订单
+      description: 取消指定的订单
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelOrderRequest'
+      responses:
+        '200':
+          description: 取消成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+  /orders/{orderId}/nutrition-label:
+    post:
+      tags: [Orders]
+      summary: 生成营养标签
+      description: 为指定订单生成包含营养信息和取餐码的打印标签
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 标签生成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NutritionLabelResponse'
+        '404':
+          description: 订单不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==========================================
+  # 通知系统
+  # ==========================================
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: 获取通知列表
+      description: 获取当前用户的通知列表
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: read
+          in: query
+          schema:
+            type: boolean
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [order, system, promotion]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+
+  /notifications/{notificationId}/read:
+    post:
+      tags: [Notifications]
+      summary: 标记通知为已读
+      description: 将指定通知标记为已读
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 标记成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /notifications/read-all:
+    post:
+      tags: [Notifications]
+      summary: 标记所有通知为已读
+      description: 将当前用户的所有未读通知标记为已读
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 标记成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+components:
+  # ==========================================
+  # 安全方案
+  # ==========================================
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 使用Bearer Token进行身份验证
+
+  # ==========================================
+  # 数据模型定义
+  # ==========================================
+  schemas:
+    # 通用响应模型
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "操作成功"
+        timestamp:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              example: "请求参数验证失败"
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        totalPages:
+          type: integer
+          example: 5
+        totalItems:
+          type: integer
+          example: 50
+        hasNext:
+          type: boolean
+          example: true
+        hasPrev:
+          type: boolean
+          example: false
+
+    # 系统健康检查
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          example: "healthy"
+        version:
+          type: string
+          example: "2.0.0"
+        uptime:
+          type: integer
+          example: 86400
+        timestamp:
+          type: string
+          format: date-time
+        services:
+          type: object
+          properties:
+            database:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [healthy, unhealthy]
+                responseTime:
+                  type: integer
+                  example: 5
+            redis:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [healthy, unhealthy]
+                responseTime:
+                  type: integer
+                  example: 2
+            ai_service:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [healthy, unhealthy]
+                responseTime:
+                  type: integer
+                  example: 1200
+
+    # 认证相关模型
+    RegisterRequest:
+      type: object
+      required:
+        - phone
+        - password
+      properties:
+        phone:
+          type: string
+          pattern: '^1[3-9]\d{9}$'
+          example: "13812345678"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          minLength: 8
+          example: "SecurePass123"
+        nickname:
+          type: string
+          maxLength: 50
+          example: "营养爱好者"
+
+    LoginRequest:
+      type: object
+      required:
+        - identifier
+        - password
+      properties:
+        identifier:
+          type: string
+          description: "手机号或邮箱"
+          example: "13812345678"
+        password:
+          type: string
+          example: "SecurePass123"
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserProfile'
+        tokens:
+          type: object
+          properties:
+            accessToken:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            refreshToken:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            expiresIn:
+              type: integer
+              example: 7200
+
+    # 用户相关模型
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        phone:
+          type: string
+          example: "138****5678"
+        email:
+          type: string
+          example: "user@example.com"
+        nickname:
+          type: string
+          example: "营养爱好者"
+        avatar:
+          type: string
+          example: "https://example.com/avatar.jpg"
+        gender:
+          type: string
+          enum: [male, female, other]
+          example: "female"
+        birthDate:
+          type: string
+          format: date
+          example: "1990-01-01"
+        isEmailVerified:
+          type: boolean
+          example: true
+        isPhoneVerified:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UpdateUserProfileRequest:
+      type: object
+      properties:
+        nickname:
+          type: string
+          maxLength: 50
+        avatar:
+          type: string
+        gender:
+          type: string
+          enum: [male, female, other]
+        birthDate:
+          type: string
+          format: date
+
+    # 营养档案相关模型
+    NutritionProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        height:
+          type: number
+          format: float
+          example: 165.5
+        weight:
+          type: number
+          format: float
+          example: 60.0
+        activityLevel:
+          type: string
+          enum: [sedentary, light, moderate, active, very_active]
+          example: "moderate"
+        healthGoal:
+          type: string
+          enum: [weight_loss, weight_gain, maintain_weight, muscle_gain, general_health]
+          example: "weight_loss"
+        allergies:
+          type: array
+          items:
+            type: string
+          example: ["peanuts", "shellfish"]
+        dietaryRestrictions:
+          type: array
+          items:
+            type: string
+          example: ["vegetarian"]
+        preferredCuisines:
+          type: array
+          items:
+            type: string
+          example: ["chinese", "italian"]
+        dislikedFoods:
+          type: array
+          items:
+            type: string
+          example: ["spicy", "bitter"]
+        healthConditions:
+          type: array
+          items:
+            type: string
+          example: ["diabetes", "hypertension"]
+        dailyCalorieGoal:
+          type: integer
+          example: 1800
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateNutritionProfileRequest:
+      type: object
+      required:
+        - height
+        - weight
+        - activityLevel
+        - healthGoal
+      properties:
+        height:
+          type: number
+          format: float
+          minimum: 100
+          maximum: 250
+        weight:
+          type: number
+          format: float
+          minimum: 30
+          maximum: 300
+        activityLevel:
+          type: string
+          enum: [sedentary, light, moderate, active, very_active]
+        healthGoal:
+          type: string
+          enum: [weight_loss, weight_gain, maintain_weight, muscle_gain, general_health]
+        allergies:
+          type: array
+          items:
+            type: string
+        dietaryRestrictions:
+          type: array
+          items:
+            type: string
+        preferredCuisines:
+          type: array
+          items:
+            type: string
+        dislikedFoods:
+          type: array
+          items:
+            type: string
+        healthConditions:
+          type: array
+          items:
+            type: string
+
+    UpdateNutritionProfileRequest:
+      type: object
+      properties:
+        height:
+          type: number
+          format: float
+          minimum: 100
+          maximum: 250
+        weight:
+          type: number
+          format: float
+          minimum: 30
+          maximum: 300
+        activityLevel:
+          type: string
+          enum: [sedentary, light, moderate, active, very_active]
+        healthGoal:
+          type: string
+          enum: [weight_loss, weight_gain, maintain_weight, muscle_gain, general_health]
+        allergies:
+          type: array
+          items:
+            type: string
+        dietaryRestrictions:
+          type: array
+          items:
+            type: string
+        preferredCuisines:
+          type: array
+          items:
+            type: string
+        dislikedFoods:
+          type: array
+          items:
+            type: string
+        healthConditions:
+          type: array
+          items:
+            type: string
+
+    # AI分析相关模型
+    NutritionAnalysisRequest:
+      type: object
+      required:
+        - foodDescription
+      properties:
+        foodDescription:
+          type: string
+          example: "一碗白米饭，100克鸡胸肉，一份西兰花"
+        mealType:
+          type: string
+          enum: [breakfast, lunch, dinner, snack]
+          example: "lunch"
+        context:
+          type: string
+          example: "运动后补充能量"
+
+    NutritionAnalysisResponse:
+      type: object
+      properties:
+        analysisId:
+          type: string
+          format: uuid
+        foodItems:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "鸡胸肉"
+              amount:
+                type: string
+                example: "100g"
+              calories:
+                type: number
+                example: 165
+              protein:
+                type: number
+                example: 31
+              carbs:
+                type: number
+                example: 0
+              fat:
+                type: number
+                example: 3.6
+              fiber:
+                type: number
+                example: 0
+        totalNutrition:
+          type: object
+          properties:
+            calories:
+              type: number
+              example: 445
+            protein:
+              type: number
+              example: 38.2
+            carbs:
+              type: number
+              example: 58.3
+            fat:
+              type: number
+              example: 5.1
+            fiber:
+              type: number
+              example: 4.2
+        recommendations:
+          type: array
+          items:
+            type: string
+          example: ["建议增加蔬菜摄入", "减少碳水化合物"]
+        nutritionScore:
+          type: number
+          format: float
+          example: 8.5
+        createdAt:
+          type: string
+          format: date-time
+
+    DishRecommendationRequest:
+      type: object
+      properties:
+        mealType:
+          type: string
+          enum: [breakfast, lunch, dinner, snack]
+          example: "lunch"
+        maxCalories:
+          type: integer
+          example: 600
+        cuisinePreference:
+          type: string
+          example: "chinese"
+        excludeIngredients:
+          type: array
+          items:
+            type: string
+          example: ["peanuts"]
+
+    DishRecommendationResponse:
+      type: object
+      properties:
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              dishId:
+                type: string
+                format: uuid
+              dishName:
+                type: string
+                example: "蒸蛋羹"
+              restaurantId:
+                type: string
+                format: uuid
+              restaurantName:
+                type: string
+                example: "健康轻食馆"
+              calories:
+                type: number
+                example: 120
+              protein:
+                type: number
+                example: 8.5
+              matchScore:
+                type: number
+                format: float
+                example: 9.2
+              reason:
+                type: string
+                example: "低热量，高蛋白，符合您的减重目标"
+              imageUrl:
+                type: string
+                example: "https://example.com/dish.jpg"
+              price:
+                type: number
+                format: float
+                example: 18.8
+
+    # 咨询会话相关模型
+    ConsultationSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: "减重营养咨询"
+        status:
+          type: string
+          enum: [active, ended]
+          example: "active"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        lastMessageAt:
+          type: string
+          format: date-time
+
+    CreateConsultationSessionRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          maxLength: 100
+          example: "减重营养咨询"
+
+    ConsultationSessionListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsultationSession'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [user, assistant]
+          example: "user"
+        content:
+          type: string
+          example: "我最近想减肥，应该怎么安排饮食？"
+        timestamp:
+          type: string
+          format: date-time
+
+    SendMessageRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          maxLength: 1000
+          example: "我最近想减肥，应该怎么安排饮食？"
+
+    ChatMessageListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    # 餐厅相关模型
+    Restaurant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "健康轻食馆"
+        description:
+          type: string
+          example: "专注健康饮食的轻食餐厅"
+        address:
+          type: string
+          example: "北京市朝阳区三里屯路19号"
+        latitude:
+          type: number
+          format: float
+          example: 39.9342
+        longitude:
+          type: number
+          format: float
+          example: 116.4442
+        phone:
+          type: string
+          example: "010-12345678"
+        openingHours:
+          type: object
+          properties:
+            monday:
+              type: string
+              example: "09:00-21:00"
+            tuesday:
+              type: string
+              example: "09:00-21:00"
+            # ... 其他日期
+        cuisineType:
+          type: string
+          example: "健康轻食"
+        priceRange:
+          type: string
+          enum: [low, medium, high]
+          example: "medium"
+        rating:
+          type: number
+          format: float
+          example: 4.5
+        reviewCount:
+          type: integer
+          example: 328
+        imageUrls:
+          type: array
+          items:
+            type: string
+          example: ["https://example.com/restaurant1.jpg"]
+        isActive:
+          type: boolean
+          example: true
+        deliveryAvailable:
+          type: boolean
+          example: true
+        estimatedDeliveryTime:
+          type: integer
+          description: "预估配送时间（分钟）"
+          example: 30
+        minimumOrderAmount:
+          type: number
+          format: float
+          example: 20.0
+        createdAt:
+          type: string
+          format: date-time
+
+    RestaurantListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Restaurant'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    # 菜品相关模型
+    MenuItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        restaurantId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "香煎鸡胸肉沙拉"
+        description:
+          type: string
+          example: "新鲜蔬菜配香煎鸡胸肉，营养均衡"
+        category:
+          type: string
+          example: "主菜"
+        price:
+          type: number
+          format: float
+          example: 28.8
+        imageUrls:
+          type: array
+          items:
+            type: string
+          example: ["https://example.com/dish1.jpg"]
+        isAvailable:
+          type: boolean
+          example: true
+        preparationTime:
+          type: integer
+          description: "制作时间（分钟）"
+          example: 15
+        spicyLevel:
+          type: integer
+          minimum: 0
+          maximum: 5
+          example: 1
+        nutrition:
+          type: object
+          properties:
+            calories:
+              type: number
+              example: 285
+            protein:
+              type: number
+              example: 32.5
+            carbs:
+              type: number
+              example: 12.3
+            fat:
+              type: number
+              example: 11.2
+            fiber:
+              type: number
+              example: 5.8
+            sodium:
+              type: number
+              example: 580
+        allergens:
+          type: array
+          items:
+            type: string
+          example: ["eggs"]
+        ingredients:
+          type: array
+          items:
+            type: string
+          example: ["鸡胸肉", "生菜", "番茄", "橄榄油"]
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["低卡", "高蛋白", "健康"]
+        createdAt:
+          type: string
+          format: date-time
+
+    MenuItemListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MenuItem'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    # 订单相关模型
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderNumber:
+          type: string
+          example: "ORD20250714001"
+        pickupCode:
+          type: string
+          example: "A001"
+          description: "取餐码，用于配送员识别和派餐"
+        userId:
+          type: string
+          format: uuid
+        restaurantId:
+          type: string
+          format: uuid
+        restaurantName:
+          type: string
+          example: "健康轻食馆"
+        status:
+          type: string
+          enum: [pending, confirmed, preparing, ready, delivering, completed, cancelled]
+          example: "confirmed"
+        orderType:
+          type: string
+          enum: [delivery, pickup]
+          example: "delivery"
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              menuItemId:
+                type: string
+                format: uuid
+              name:
+                type: string
+                example: "香煎鸡胸肉沙拉"
+              quantity:
+                type: integer
+                example: 2
+              unitPrice:
+                type: number
+                format: float
+                example: 28.8
+              totalPrice:
+                type: number
+                format: float
+                example: 57.6
+              specialInstructions:
+                type: string
+                example: "少盐"
+        subtotal:
+          type: number
+          format: float
+          example: 57.6
+        deliveryFee:
+          type: number
+          format: float
+          example: 5.0
+        serviceFee:
+          type: number
+          format: float
+          example: 2.0
+        totalAmount:
+          type: number
+          format: float
+          example: 64.6
+        deliveryAddress:
+          type: object
+          properties:
+            address:
+              type: string
+              example: "北京市朝阳区望京SOHO T1"
+            latitude:
+              type: number
+              format: float
+            longitude:
+              type: number
+              format: float
+            contactPhone:
+              type: string
+              example: "13812345678"
+            contactName:
+              type: string
+              example: "张三"
+        paymentMethod:
+          type: string
+          enum: [wechat, alipay, cash]
+          example: "wechat"
+        paymentStatus:
+          type: string
+          enum: [pending, paid, failed, refunded]
+          example: "paid"
+        estimatedDeliveryTime:
+          type: string
+          format: date-time
+        actualDeliveryTime:
+          type: string
+          format: date-time
+        notes:
+          type: string
+          example: "请送到楼下"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateOrderRequest:
+      type: object
+      required:
+        - restaurantId
+        - items
+        - orderType
+      properties:
+        restaurantId:
+          type: string
+          format: uuid
+        orderType:
+          type: string
+          enum: [delivery, pickup]
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - menuItemId
+              - quantity
+            properties:
+              menuItemId:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+              specialInstructions:
+                type: string
+                maxLength: 200
+        deliveryAddress:
+          type: object
+          properties:
+            address:
+              type: string
+            latitude:
+              type: number
+              format: float
+            longitude:
+              type: number
+              format: float
+            contactPhone:
+              type: string
+            contactName:
+              type: string
+        paymentMethod:
+          type: string
+          enum: [wechat, alipay, cash]
+        notes:
+          type: string
+          maxLength: 500
+
+    UpdateOrderRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [confirmed, preparing, ready, delivering, completed]
+
+    CancelOrderRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          maxLength: 200
+          example: "临时有事，无法用餐"
+
+    OrderListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    NutritionLabelResponse:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        orderNumber:
+          type: string
+          example: "ORD20250714001"
+        pickupCode:
+          type: string
+          example: "A001"
+        customerName:
+          type: string
+          example: "张三"
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "香煎三文鱼配蔬菜"
+              quantity:
+                type: integer
+                example: 1
+              nutrition:
+                type: object
+                properties:
+                  calories:
+                    type: number
+                    example: 450.5
+                    description: "热量(千卡)"
+                  protein:
+                    type: number
+                    example: 35.2
+                    description: "蛋白质(g)"
+                  fat:
+                    type: number
+                    example: 18.6
+                    description: "脂肪(g)"
+                  carbohydrates:
+                    type: number
+                    example: 25.8
+                    description: "碳水化合物(g)"
+                  fiber:
+                    type: number
+                    example: 4.2
+                    description: "膳食纤维(g)"
+                  sodium:
+                    type: number
+                    example: 680
+                    description: "钠(mg)"
+        totalNutrition:
+          type: object
+          properties:
+            calories:
+              type: number
+              example: 450.5
+            protein:
+              type: number
+              example: 35.2
+            fat:
+              type: number
+              example: 18.6
+            carbohydrates:
+              type: number
+              example: 25.8
+            fiber:
+              type: number
+              example: 4.2
+            sodium:
+              type: number
+              example: 680
+        qrCode:
+          type: string
+          description: "订单追溯二维码数据"
+          example: "https://app.example.com/orders/123e4567-e89b-12d3-a456-426614174000"
+        printTemplate:
+          type: string
+          description: "打印模板HTML"
+          example: "<div class='nutrition-label'>...</div>"
+
+    # 通知相关模型
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [order, system, promotion]
+          example: "order"
+        title:
+          type: string
+          example: "订单状态更新"
+        content:
+          type: string
+          example: "您的订单已确认，餐厅正在准备中"
+        data:
+          type: object
+          description: "通知相关的数据"
+          example:
+            orderId: "123e4567-e89b-12d3-a456-426614174000"
+            status: "preparing"
+        isRead:
+          type: boolean
+          example: false
+        readAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    NotificationListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+        unreadCount:
+          type: integer
+          example: 3
+
+# ==========================================
+# WebSocket事件定义
+# ==========================================
+x-websocket-events:
+  description: |
+    WebSocket实时通信事件定义，用于订单状态更新、AI咨询消息等实时功能。
+    连接URL: ws://localhost:3000/ws
+    
+  connection:
+    endpoint: "/ws"
+    authentication: "Bearer Token in query parameter or header"
+    protocols: ["ws", "wss"]
+    
+  events:
+    # 订单相关事件
+    order_status_changed:
+      direction: server-to-client
+      description: "订单状态发生变化时推送"
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: "order_status_changed"
+          orderId:
+            type: string
+            format: uuid
+          status:
+            type: string
+            enum: [confirmed, preparing, ready, delivering, completed, cancelled]
+          timestamp:
+            type: string
+            format: date-time
+            
+    # AI咨询事件
+    ai_message_received:
+      direction: server-to-client
+      description: "AI回复消息时推送"
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: "ai_message_received"
+          sessionId:
+            type: string
+            format: uuid
+          message:
+            $ref: '#/components/schemas/ChatMessage'
+            
+    # 通知事件
+    notification_received:
+      direction: server-to-client
+      description: "新通知推送"
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: "notification_received"
+          notification:
+            $ref: '#/components/schemas/Notification'
+
+# ==========================================
+# 错误码定义
+# ==========================================
+x-error-codes:
+  description: "统一错误码定义"
+  codes:
+    # 通用错误 (1000-1999)
+    VALIDATION_ERROR:
+      code: 1001
+      message: "请求参数验证失败"
+      httpStatus: 400
+      
+    INTERNAL_SERVER_ERROR:
+      code: 1002
+      message: "服务器内部错误"
+      httpStatus: 500
+      
+    RATE_LIMIT_EXCEEDED:
+      code: 1003
+      message: "请求频率超出限制"
+      httpStatus: 429
+      
+    # 认证错误 (2000-2999)
+    UNAUTHORIZED:
+      code: 2001
+      message: "未认证的请求"
+      httpStatus: 401
+      
+    TOKEN_EXPIRED:
+      code: 2002
+      message: "访问令牌已过期"
+      httpStatus: 401
+      
+    INVALID_CREDENTIALS:
+      code: 2003
+      message: "用户名或密码错误"
+      httpStatus: 401
+      
+    # 资源错误 (3000-3999)
+    RESOURCE_NOT_FOUND:
+      code: 3001
+      message: "资源不存在"
+      httpStatus: 404
+      
+    RESOURCE_ALREADY_EXISTS:
+      code: 3002
+      message: "资源已存在"
+      httpStatus: 409
+      
+    # 业务错误 (4000-4999)
+    INSUFFICIENT_BALANCE:
+      code: 4001
+      message: "余额不足"
+      httpStatus: 400
+      
+    ORDER_CANNOT_BE_CANCELLED:
+      code: 4002
+      message: "订单无法取消"
+      httpStatus: 400
+      
+    RESTAURANT_NOT_AVAILABLE:
+      code: 4003
+      message: "餐厅暂停营业"
+      httpStatus: 400
+      
+    MENU_ITEM_NOT_AVAILABLE:
+      code: 4004
+      message: "菜品暂时售罄"
+      httpStatus: 400
+      
+    # AI服务错误 (5000-5999)
+    AI_SERVICE_UNAVAILABLE:
+      code: 5001
+      message: "AI服务暂时不可用"
+      httpStatus: 503
+      
+    AI_ANALYSIS_FAILED:
+      code: 5002
+      message: "AI分析失败"
+      httpStatus: 500
+
+# ==========================================
+# 性能和监控
+# ==========================================
+x-performance-requirements:
+  response-times:
+    authentication: "< 200ms"
+    data-queries: "< 500ms"
+    ai-analysis: "< 3000ms"
+    file-uploads: "< 5000ms"
+    
+  rate-limits:
+    authentication: "5 requests per minute per IP"
+    api-calls: "100 requests per minute per user"
+    ai-services: "20 requests per minute per user"
+    file-uploads: "10 requests per minute per user"
+    
+  monitoring:
+    health-check: "/health"
+    metrics: "/metrics"
+    logs: "structured JSON logs"
+    tracing: "OpenTelemetry compatible"

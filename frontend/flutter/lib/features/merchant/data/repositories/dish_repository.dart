@@ -25,9 +25,7 @@ class DishRepositoryImpl implements DishRepository {
   @override
   Future<Either<Failure, List<DishEntity>>> getDishes(String merchantId) async {
     try {
-      final response = await _apiClient.get('/merchant/dishes-enhanced', 
-        queryParameters: {'merchantId': merchantId}
-      );
+      final response = await _apiClient.get('/dishes');
       
       final responseData = response.data['data'] ?? {};
       final List<dynamic> dishesJson = responseData['dishes'] ?? [];
@@ -60,7 +58,7 @@ class DishRepositoryImpl implements DishRepository {
   @override
   Future<Either<Failure, DishEntity>> createDish(DishCreateRequest request) async {
     try {
-      final response = await _apiClient.post('/merchant/dishes-enhanced', 
+      final response = await _apiClient.post('/dishes', 
         data: request.toJson()
       );
       

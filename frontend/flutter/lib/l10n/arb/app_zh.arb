@@ -1,0 +1,12 @@
+{
+  "@@locale": "zh",
+  "appTitle": "AI营养餐厅",
+  "welcome": "欢迎",
+  "loading": "加载中...",
+  "error": "错误",
+  "retry": "重试",
+  "ok": "确定",
+  "cancel": "取消",
+  "settings": "设置",
+  "logout": "退出登录"
+}

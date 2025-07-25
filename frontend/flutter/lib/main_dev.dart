@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'config/flavor_config.dart';
 import 'config/app_config.dart';
 import 'core/utils/logger.dart';
+import 'core/network/dio_client.dart';
 import 'app.dart';
 
 /// 开发环境入口
@@ -28,9 +29,12 @@ Future<void> _initializeDevApp() async {
     // 设置开发环境配置
     FlavorConfig(
       flavor: Flavor.development,
-      apiBaseUrl: 'http://localhost:3000/api',  // Environment 类会自动处理 Android 的情况
+      apiBaseUrl: 'http://localhost:8080/api',  // Environment 类会自动处理 Android 的情况
       appTitle: '营养立方 (开发版)',
     );
+    
+    // 重置DioClient以使用新的配置
+    DioClient.reset();
     
     // 初始化日志（开发环境开启调试日志）
     AppLogger.init(

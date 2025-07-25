@@ -1,0 +1,2 @@
+# 跳过这些文件的格式化
+lib/l10n/app_localizations*.dart

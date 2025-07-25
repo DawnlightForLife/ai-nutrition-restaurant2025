@@ -1,0 +1,39 @@
+{
+  "@@locale": "en",
+  "appTitle": "AI Nutrition Restaurant",
+  "@appTitle": {
+    "description": "应用标题"
+  },
+  "welcome": "Welcome",
+  "@welcome": {
+    "description": "欢迎消息"
+  },
+  "loading": "Loading...",
+  "@loading": {
+    "description": "加载中提示"
+  },
+  "error": "Error",
+  "@error": {
+    "description": "错误提示"
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "重试按钮"
+  },
+  "ok": "OK",
+  "@ok": {
+    "description": "确定按钮"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "取消按钮"
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "设置页面标题"
+  },
+  "logout": "Logout",
+  "@logout": {
+    "description": "退出登录"
+  }
+}

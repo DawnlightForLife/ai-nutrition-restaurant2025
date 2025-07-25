@@ -43,6 +43,11 @@ class DioClient {
     _instance ??= DioClient._();
     return _instance!;
   }
+  
+  /// 重置DioClient实例（用于重新配置）
+  static void reset() {
+    _instance = null;
+  }
 
   Dio get dio => _dio;
 }

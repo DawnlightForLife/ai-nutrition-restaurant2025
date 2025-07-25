@@ -138,7 +138,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  generate: true  # 启用l10n生成
+  generate: true
   assets:
     - assets/images/
     - assets/icons/
@@ -149,4 +149,3 @@ flutter_icons:
   ios: true
   image_path: "assets/icons/app_icon.png"
   web:
-    generate: true
